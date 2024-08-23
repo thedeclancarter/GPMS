@@ -1,3 +1,14 @@
+##### API-SERVER SPECIFIC #####
+# Virtual environment directory
+venv/
+env/
+.venv/
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+
+##### APPLICATION SPECIFIC #####
 # C++ objects and libs
 *.slo
 *.lo
@@ -52,3 +63,22 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+##### MISC ITEMS #####
+# VSCode Settings and Server Files
+.vscode/
+.vscode-server/
+.vscode-remote/
+.vscode-test/
+
+# MacOS Metadata Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows Metadata Files
+Thumbs.db
+Desktop.ini
+
+# Linux Metadata Files
+*~
