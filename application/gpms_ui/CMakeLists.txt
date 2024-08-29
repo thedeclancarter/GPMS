@@ -17,13 +17,23 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/mainwindow.h
         src/mainwindow.ui
+
+        src/pages/sidebar_pages/userpage.h src/pages/sidebar_pages/userpage.cpp src/pages/sidebar_pages/userpage.ui
+        src/pages/sidebar_pages/favoritespage.h src/pages/sidebar_pages/favoritespage.cpp src/pages/sidebar_pages/favoritespage.ui
+        src/pages/sidebar_pages/settingspage.h src/pages/sidebar_pages/settingspage.cpp src/pages/sidebar_pages/settingspage.ui
+
         src/pages/createpage.h src/pages/createpage.cpp src/pages/createpage.ui
+
+
         src/pages/picturepage.h src/pages/picturepage.cpp src/pages/picturepage.ui
         src/pages/acceptpicturepage.h src/pages/acceptpicturepage.cpp src/pages/acceptpicturepage.ui
         src/pages/sensitivitypage.h src/pages/sensitivitypage.cpp src/pages/sensitivitypage.ui
         src/pages/textvisionpage.h src/pages/textvisionpage.cpp src/pages/textvisionpage.ui
         src/pages/pickimagespage.h src/pages/pickimagespage.cpp src/pages/pickimagespage.ui
         src/pages/projectpage.h src/pages/projectpage.cpp src/pages/projectpage.ui
+
+        resources/images.qrc
+        resources/styles.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -31,6 +41,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 qt_add_executable(gpms_ui
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET gpms_ui APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

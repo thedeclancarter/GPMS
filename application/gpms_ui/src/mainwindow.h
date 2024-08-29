@@ -2,8 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QPushButton>
 #include <QStackedWidget>
+
+#include "pages/sidebar_pages/userpage.h"
+#include "pages/sidebar_pages/favoritespage.h"
+#include "pages/sidebar_pages/settingspage.h"
+
 #include "pages/createpage.h"
+
 #include "pages/picturepage.h"
 #include "pages/acceptpicturepage.h"
 #include "pages/sensitivitypage.h"
@@ -24,14 +31,25 @@ class MainWindow : public QMainWindow
         ~MainWindow();
 
     private:
+        // functions
+        void loadStyleSheet();
         void setupUI();
         void setupPages();
         void setupConnections();
+        QWidget* createSidebar();
+        QPushButton* createSidebarButton(const QIcon& icon);
+
 
         Ui::MainWindow *ui;
         QStackedWidget *stackedWidget;
 
+        // pages
+        UserPage *userPage;
+        FavoritesPage *favoritesPage;
+        SettingsPage *settingsPage;
+
         CreatePage *createPage;
+
         PicturePage *picturePage;
         AcceptPicturePage *acceptPicturePage;
         SensitivityPage *sensitivityPage;
@@ -39,7 +57,20 @@ class MainWindow : public QMainWindow
         PickImagesPage *pickImagesPage;
         ProjectPage *projectPage;
 
+        // sidebar buttons
+        QPushButton *userButton;
+        QPushButton *favoriteButton;
+        QPushButton *createButton;
+        QPushButton *settingsButton;
+
     private slots:
+        // main pages
+        void navigateToUserPage();
+        void navigateToFavoritesPage();
+        void navigateToSettingsPage();
+        void navigateToCreatePage();
+
+        // create page pages
         void navigateToPicturePage();
         void navigateToAcceptPicturePage();
         void navigateToSensitivityPage();
