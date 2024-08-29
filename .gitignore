@@ -82,3 +82,10 @@ Desktop.ini
 
 # Linux Metadata Files
 *~
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+
+application/gpms_ui/build/
