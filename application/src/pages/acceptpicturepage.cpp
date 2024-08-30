@@ -10,6 +10,7 @@ AcceptPicturePage::AcceptPicturePage(QWidget *parent)
     ui->setupUi(this);
     connect(ui->AcceptPictureButton, &QPushButton::clicked, this, &AcceptPicturePage::onAcceptButtonClicked);
     connect(ui->RejectPictureButton, &QPushButton::clicked, this, &AcceptPicturePage::onRejectButtonClicked);
+
 }
 
 AcceptPicturePage::~AcceptPicturePage()
@@ -19,30 +20,28 @@ AcceptPicturePage::~AcceptPicturePage()
 
 void AcceptPicturePage::onRejectButtonClicked()
 {
+
     emit navigateToPicturePage();
 }
 
 void AcceptPicturePage::onAcceptButtonClicked()
 {
-    emit navigateToSensitivityPage();
+    if (!currentImage.isNull()) {
+        emit navigateToSensitivityPage(currentImage);  // Make sure to pass the image
+    } else {
+        qDebug() << "No image to accept";
+    }
 }
 
 void AcceptPicturePage::setImage(const QImage &image)
 {
-    qDebug() << "Setting image in QGraphicsView";
+    qDebug() << "Received image in AcceptPicturePage";
+    currentImage = image;
 
-    // Convert QImage to QPixmap
-    QPixmap pixmap = QPixmap::fromImage(image);
-
-    // Create a scene
+    // Display the image
+    QPixmap pixmap = QPixmap::fromImage(currentImage);
     QGraphicsScene *scene = new QGraphicsScene(this);
-
-    // Add the pixmap to the scene
     scene->addPixmap(pixmap);
-
-    // Assuming imageWidget is a QGraphicsView, set the scene
     ui->graphicsView->setScene(scene);
-
-    // Optionally, adjust the view settings
-    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio); // Fits the image to the view
+    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
 }

@@ -182,11 +182,13 @@ void MainWindow::setupConnections()
     connect(createPage, &CreatePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
     // from take picture page
     connect(takePicture, &TakePicture::navigateToAcceptPicturePage, this, &MainWindow::navigateToAcceptPicturePage);
+        // passing the image from take picture to accept
     connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
 
     // from accept page
     connect(acceptPicturePage, &AcceptPicturePage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
     connect(acceptPicturePage, &AcceptPicturePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
+
     // from sensitivity page
     connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(sensitivityPage, &SensitivityPage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
@@ -227,8 +229,9 @@ void MainWindow::navigateToAcceptPicturePage()
     stackedWidget->setCurrentWidget(acceptPicturePage);
 }
 
-void MainWindow::navigateToSensitivityPage()
+void MainWindow::navigateToSensitivityPage(const QImage &image)
 {
+    sensitivityPage->setAcceptedImage(image);
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
 
@@ -246,6 +249,8 @@ void MainWindow::navigateToProjectPage()
 {
     stackedWidget->setCurrentWidget(projectPage);
 }
+
+// pictures
 
 void MainWindow::setImageForAcceptPage(const QImage &image)
 {
