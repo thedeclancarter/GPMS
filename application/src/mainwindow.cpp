@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    qDebug() << "Qt version:" << QT_VERSION_STR;
     ui->setupUi(this);
     setupUI();
     setupPages();
@@ -99,10 +100,10 @@ QWidget* MainWindow::createSidebar()
     QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebar);
 
     // Create sidebar buttons with icons
-    userButton = createSidebarButton(QIcon(":/icons/user.png"));
-    favoriteButton = createSidebarButton(QIcon(":/icons/favorites.png"));
+    userButton = createSidebarButton(QIcon(":/icons/user-solid.svg"));
+    favoriteButton = createSidebarButton(QIcon(":/icons/heart-solid.svg"));
     createButton = createSidebarButton(QIcon(":/icons/create.svg"));
-    settingsButton = createSidebarButton(QIcon(":/icons/settings.png"));
+    settingsButton = createSidebarButton(QIcon(":/icons/gear-solid.svg"));
 
     // Add buttons to the sidebar layout with centering
     sidebarLayout->addWidget(userButton, 0, Qt::AlignCenter);
@@ -143,8 +144,8 @@ void MainWindow::setupPages()
     settingsPage = new SettingsPage(this);
 
     createPage = new CreatePage(this);
+    takePicture = new TakePicture(this);
 
-    picturePage = new PicturePage(this);
     acceptPicturePage = new AcceptPicturePage(this);
     sensitivityPage = new SensitivityPage(this);
     textVisionPage = new TextVisionPage(this);
@@ -157,8 +158,8 @@ void MainWindow::setupPages()
     stackedWidget->addWidget(settingsPage);
 
     stackedWidget->addWidget(createPage);
+    stackedWidget->addWidget(takePicture);
 
-    stackedWidget->addWidget(picturePage);
     stackedWidget->addWidget(acceptPicturePage);
     stackedWidget->addWidget(sensitivityPage);
     stackedWidget->addWidget(textVisionPage);
@@ -179,8 +180,10 @@ void MainWindow::setupConnections()
 
     // from create page
     connect(createPage, &CreatePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
-    // from picture page
-    connect(picturePage, &PicturePage::navigateToAcceptPicturePage, this, &MainWindow::navigateToAcceptPicturePage);
+    // from take picture page
+    connect(takePicture, &TakePicture::navigateToAcceptPicturePage, this, &MainWindow::navigateToAcceptPicturePage);
+    connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
+
     // from accept page
     connect(acceptPicturePage, &AcceptPicturePage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
     connect(acceptPicturePage, &AcceptPicturePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
@@ -216,7 +219,7 @@ void MainWindow::navigateToCreatePage()
 
 void MainWindow::navigateToPicturePage()
 {
-    stackedWidget->setCurrentWidget(picturePage);
+    stackedWidget->setCurrentWidget(takePicture);
 }
 
 void MainWindow::navigateToAcceptPicturePage()
@@ -244,4 +247,9 @@ void MainWindow::navigateToProjectPage()
     stackedWidget->setCurrentWidget(projectPage);
 }
 
+void MainWindow::setImageForAcceptPage(const QImage &image)
+{
+    // Assuming you have an AcceptPicturePage class
+    acceptPicturePage->setImage(image);
+}
 

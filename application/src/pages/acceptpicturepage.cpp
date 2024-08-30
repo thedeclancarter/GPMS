@@ -1,5 +1,7 @@
 #include "acceptpicturepage.h"
 #include "ui_acceptpicturepage.h"
+#include <QGraphicsScene>
+
 
 AcceptPicturePage::AcceptPicturePage(QWidget *parent)
     : QWidget(parent)
@@ -23,4 +25,24 @@ void AcceptPicturePage::onRejectButtonClicked()
 void AcceptPicturePage::onAcceptButtonClicked()
 {
     emit navigateToSensitivityPage();
+}
+
+void AcceptPicturePage::setImage(const QImage &image)
+{
+    qDebug() << "Setting image in QGraphicsView";
+
+    // Convert QImage to QPixmap
+    QPixmap pixmap = QPixmap::fromImage(image);
+
+    // Create a scene
+    QGraphicsScene *scene = new QGraphicsScene(this);
+
+    // Add the pixmap to the scene
+    scene->addPixmap(pixmap);
+
+    // Assuming imageWidget is a QGraphicsView, set the scene
+    ui->graphicsView->setScene(scene);
+
+    // Optionally, adjust the view settings
+    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio); // Fits the image to the view
 }
