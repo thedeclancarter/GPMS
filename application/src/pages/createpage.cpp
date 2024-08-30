@@ -37,7 +37,7 @@ void CreatePage::setupUI()
 
 void CreatePage::setupHeader(QVBoxLayout *layout)
 {
-    QLabel *headerLabel = new QLabel("MAKE YOUR VISION COME TO LIFE", this);
+    QLabel *headerLabel = new QLabel("MAKE YOUR VISION COME TO LIFE!!", this);
     headerLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: white;");
 
     // Create a container widget for the header to apply rounded corners

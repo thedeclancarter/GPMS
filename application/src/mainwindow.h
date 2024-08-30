@@ -73,12 +73,13 @@ class MainWindow : public QMainWindow
         // create page pages
         void navigateToPicturePage();
         void navigateToAcceptPicturePage();
-        void navigateToSensitivityPage();
+        void navigateToSensitivityPage(const QImage &image);
         void navigateToTextVisionPage();
         void navigateToPickImagesPage();
         void navigateToProjectPage();
 
         // for the picture
         void setImageForAcceptPage(const QImage &image);
+
 };
 #endif // MAINWINDOW_H

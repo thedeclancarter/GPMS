@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(gpms_ui VERSION 0.1 LANGUAGES CXX)
 
+# Set the project root directory
+set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -13,30 +16,52 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 COMPONENTS Multimedia MultimediaWidgets REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(PROJECT_SOURCES
-        src/main.cpp
-        src/mainwindow.cpp
-        src/mainwindow.h
-        src/mainwindow.ui
+    ${PROJECT_ROOT}/src/main.cpp
+        ${PROJECT_ROOT}/src/mainwindow.cpp
+        ${PROJECT_ROOT}/src/mainwindow.h
+        ${PROJECT_ROOT}/src/mainwindow.ui
 
-        src/pages/sidebar_pages/userpage.h src/pages/sidebar_pages/userpage.cpp src/pages/sidebar_pages/userpage.ui
-        src/pages/sidebar_pages/favoritespage.h src/pages/sidebar_pages/favoritespage.cpp src/pages/sidebar_pages/favoritespage.ui
-        src/pages/sidebar_pages/settingspage.h src/pages/sidebar_pages/settingspage.cpp src/pages/sidebar_pages/settingspage.ui
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.h
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.cpp
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.ui
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.h
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.cpp
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.ui
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.h
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.cpp
+        ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.ui
 
-        src/pages/createpage.h src/pages/createpage.cpp src/pages/createpage.ui
+        ${PROJECT_ROOT}/src/pages/createpage.h
+        ${PROJECT_ROOT}/src/pages/createpage.cpp
+        ${PROJECT_ROOT}/src/pages/createpage.ui
 
-        src/pages/acceptpicturepage.h src/pages/acceptpicturepage.cpp src/pages/acceptpicturepage.ui
-        src/pages/sensitivitypage.h src/pages/sensitivitypage.cpp src/pages/sensitivitypage.ui
-        src/pages/textvisionpage.h src/pages/textvisionpage.cpp src/pages/textvisionpage.ui
-        src/pages/pickimagespage.h src/pages/pickimagespage.cpp src/pages/pickimagespage.ui
-        src/pages/projectpage.h src/pages/projectpage.cpp src/pages/projectpage.ui
+        ${PROJECT_ROOT}/src/pages/acceptpicturepage.h
+        ${PROJECT_ROOT}/src/pages/acceptpicturepage.cpp
+        ${PROJECT_ROOT}/src/pages/acceptpicturepage.ui
+        ${PROJECT_ROOT}/src/pages/sensitivitypage.h
+        ${PROJECT_ROOT}/src/pages/sensitivitypage.cpp
+        ${PROJECT_ROOT}/src/pages/sensitivitypage.ui
+        ${PROJECT_ROOT}/src/pages/textvisionpage.h
+        ${PROJECT_ROOT}/src/pages/textvisionpage.cpp
+        ${PROJECT_ROOT}/src/pages/textvisionpage.ui
+        ${PROJECT_ROOT}/src/pages/pickimagespage.h
+        ${PROJECT_ROOT}/src/pages/pickimagespage.cpp
+        ${PROJECT_ROOT}/src/pages/pickimagespage.ui
+        ${PROJECT_ROOT}/src/pages/projectpage.h
+        ${PROJECT_ROOT}/src/pages/projectpage.cpp
+        ${PROJECT_ROOT}/src/pages/projectpage.ui
 
-        src/pages/takepicture.h src/pages/takepicture.cpp src/pages/takepicture.ui
+        ${PROJECT_ROOT}/src/pages/takepicture.h
+        ${PROJECT_ROOT}/src/pages/takepicture.cpp
+        ${PROJECT_ROOT}/src/pages/takepicture.ui
 
-        resources/images.qrc
-        resources/styles.qrc
+        ${PROJECT_ROOT}/resources/images.qrc
+        ${PROJECT_ROOT}/resources/styles.qrc
 )
+
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(gpms_ui
@@ -68,6 +93,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt6::MultimediaWidgets
     Qt6::Core
     Qt6::Gui
+    ${OpenCV_LIBS}
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -85,6 +111,15 @@ set_target_properties(gpms_ui PROPERTIES
     WIN32_EXECUTABLE TRUE
     # $<$<PLATFORM_ID:Darwin>:MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist>
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist
+)
+
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${PROJECT_ROOT}/src
+    ${PROJECT_ROOT}/src/pages
+    ${PROJECT_ROOT}/src/pages/sidebar_pages
+    ${CMAKE_BINARY_DIR}
 )
 
 if(APPLE)
