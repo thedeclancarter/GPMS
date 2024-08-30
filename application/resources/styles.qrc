@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/sidebar">
+        <file>menubar_styles.qss</file>
+    </qresource>
+</RCC>

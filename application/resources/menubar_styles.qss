@@ -1,0 +1,19 @@
+QWidget#sideMenuBar {
+    background-color: #2D2D2D;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+QPushButton {
+    background-color: #3D3D3D;
+    border-radius: 15px;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #4D4D4D;
+}
+
+QPushButton:pressed {
+    background-color: #5D5D5D;
+}
