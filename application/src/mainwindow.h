@@ -10,8 +10,8 @@
 #include "pages/sidebar_pages/settingspage.h"
 
 #include "pages/createpage.h"
+#include "pages/takepicture.h"
 
-#include "pages/picturepage.h"
 #include "pages/acceptpicturepage.h"
 #include "pages/sensitivitypage.h"
 #include "pages/textvisionpage.h"
@@ -49,8 +49,8 @@ class MainWindow : public QMainWindow
         SettingsPage *settingsPage;
 
         CreatePage *createPage;
+        TakePicture *takePicture;
 
-        PicturePage *picturePage;
         AcceptPicturePage *acceptPicturePage;
         SensitivityPage *sensitivityPage;
         TextVisionPage *textVisionPage;
@@ -77,5 +77,8 @@ class MainWindow : public QMainWindow
         void navigateToTextVisionPage();
         void navigateToPickImagesPage();
         void navigateToProjectPage();
+
+        // for the picture
+        void setImageForAcceptPage(const QImage &image);
 };
 #endif // MAINWINDOW_H

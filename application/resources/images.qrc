@@ -5,5 +5,8 @@
         <file>create.png</file>
         <file>favorites.png</file>
         <file>create.svg</file>
+        <file>gear-solid.svg</file>
+        <file>user-solid.svg</file>
+        <file>heart-solid.svg</file>
     </qresource>
 </RCC>

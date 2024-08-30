@@ -85,7 +85,7 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
     createButton = new QPushButton("+ CREATE YOUR VISION", this);
     createButton->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4A4AFF;"
+        "   background-color: #4A5A9F;"
         "   color: white;"
         "   border-radius: 20px;"
         "   padding: 10px 20px;"
@@ -93,7 +93,7 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
         "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #5A5AFF;"
+        "   background-color: #6F81CD;"
         "}"
         );
     createButton->setFixedSize(250, 50);  // Adjust size as needed

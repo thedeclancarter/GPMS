@@ -88,4 +88,4 @@ CMakeCache.txt
 CMakeFiles/
 *.cmake
 
-application/gpms_ui/build/
+application/build/
