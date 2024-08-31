@@ -1,6 +1,5 @@
 #include "createpage.h"
 #include "ui_createpage.h"
-
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -22,7 +21,6 @@ CreatePage::~CreatePage()
     delete ui;
 }
 
-
 void CreatePage::setupUI()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -30,29 +28,33 @@ void CreatePage::setupUI()
     mainLayout->setContentsMargins(30, 30, 30, 30);
 
     setupHeader(mainLayout);
-    setupStepsSection(mainLayout);
-    setupImagePreviewSection(mainLayout);
+
+    // Create a horizontal layout for the main content
+    QHBoxLayout *contentLayout = new QHBoxLayout();
+    mainLayout->addLayout(contentLayout);
+
+    // Add steps and image preview sections side by side
+    setupStepsSection(contentLayout);
+    setupImagePreviewSection(contentLayout);
+
     setupCreateButton(mainLayout);
 }
 
 void CreatePage::setupHeader(QVBoxLayout *layout)
 {
-    QLabel *headerLabel = new QLabel("MAKE YOUR VISION COME TO LIFE!!", this);
+    QLabel *headerLabel = new QLabel("MAKE YOUR VISION COME TO LIFE", this);
     headerLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: white;");
 
-    // Create a container widget for the header to apply rounded corners
     QWidget *headerContainer = new QWidget(this);
     QHBoxLayout *headerLayout = new QHBoxLayout(headerContainer);
-
-    headerLayout->setContentsMargins(20, 10, 20, 10); // Padding inside the header
+    headerLayout->setContentsMargins(20, 10, 20, 10);
     headerLayout->addWidget(headerLabel);
-
     headerContainer->setStyleSheet("background-color: #2C2C2E; border-radius: 15px; padding: 10px;");
 
     layout->addWidget(headerContainer);
 }
 
-void CreatePage::setupStepsSection(QVBoxLayout *layout)
+void CreatePage::setupStepsSection(QHBoxLayout *layout)
 {
     QWidget *stepsContainer = new QWidget(this);
     QVBoxLayout *stepsLayout = new QVBoxLayout(stepsContainer);
@@ -69,15 +71,16 @@ void CreatePage::setupStepsSection(QVBoxLayout *layout)
     }
 
     stepsContainer->setStyleSheet("background-color: #2C2C2E; border-radius: 15px; padding: 15px;");
+    stepsContainer->setFixedWidth(300);  // Adjust width as needed
     layout->addWidget(stepsContainer);
 }
 
-void CreatePage::setupImagePreviewSection(QVBoxLayout *layout)
+void CreatePage::setupImagePreviewSection(QHBoxLayout *layout)
 {
     QWidget *previewContainer = new QWidget(this);
     previewContainer->setFixedSize(300, 200);  // Adjust size as needed
     previewContainer->setStyleSheet("background-color: #2C2C2E; border-radius: 15px;");
-    layout->addWidget(previewContainer, 0, Qt::AlignCenter);
+    layout->addWidget(previewContainer);
 }
 
 void CreatePage::setupCreateButton(QVBoxLayout *layout)
@@ -111,7 +114,6 @@ void CreatePage::setupConnections()
 {
     if (createButton) {
         connect(createButton, &QPushButton::clicked, this, &CreatePage::onCreateButtonClicked);
-        qDebug() << "Create button connected successfully.";
     }
 }
 
