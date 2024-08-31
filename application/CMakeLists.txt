@@ -60,6 +60,9 @@ set(PROJECT_SOURCES
 
         ${PROJECT_ROOT}/resources/images.qrc
         ${PROJECT_ROOT}/resources/styles.qrc
+        ${PROJECT_ROOT}/src/pages/imageprojectionwindow.h
+        ${PROJECT_ROOT}/src/pages/imageprojectionwindow.cpp
+        ${PROJECT_ROOT}/src/pages/imageprojectionwindow.ui
 )
 
 

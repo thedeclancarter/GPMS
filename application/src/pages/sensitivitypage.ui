@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QSlider" name="horizontalSlider">
+  <widget class="QSlider" name="slider">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -52,23 +52,13 @@
     <string>LETS TRY AGAIN!</string>
    </property>
   </widget>
-  <widget class="QGraphicsView" name="graphicsView2">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>30</y>
-     <width>151</width>
-     <height>161</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QGraphicsView" name="graphicsView">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>20</y>
-     <width>256</width>
-     <height>161</height>
+     <x>90</x>
+     <y>60</y>
+     <width>481</width>
+     <height>221</height>
     </rect>
    </property>
   </widget>

@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QHBoxLayout>
+#include <QPushButton>
 
 namespace Ui {
 class AcceptPicturePage;
@@ -31,6 +33,12 @@ class AcceptPicturePage : public QWidget
         void onRejectButtonClicked();
 
     private:
+        void initializeUI();
+        QLabel* createTitleLabel();
+        QFrame* createImageFrame();
+        QHBoxLayout* createButtonLayout();
+        QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+
         Ui::AcceptPicturePage *ui;
         // QLabel *imageLabel;
         QImage currentImage; // store the current image
