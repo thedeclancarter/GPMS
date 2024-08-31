@@ -3,6 +3,10 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QtWidgets/qslider.h>
+#include <QSlider>
+#include <QHBoxLayout>
+#include <QPushButton>
 
 namespace Ui {
 class SensitivityPage;
@@ -28,9 +32,18 @@ class SensitivityPage : public QWidget
 
     private:
         Ui::SensitivityPage *ui;
-        QLabel *imageLabel;
         QImage currentImage;
-        void updateImageDisplay();
+        QSlider *lowerSlider;
+        QSlider *upperSlider;
+
+        void initializeUI();
+        QLabel* createTitleLabel();
+        QFrame* createImageFrame();
+        QSlider* createSlider(QSlider* slider);
+        QHBoxLayout* createButtonLayout();
+        QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+
+        void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
 };
 
 #endif // SENSITIVITYPAGE_H

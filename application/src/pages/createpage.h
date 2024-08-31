@@ -22,16 +22,17 @@ class CreatePage : public QWidget
 
     private slots:
         void onCreateButtonClicked();
-        void setupUI();
-        void setupHeader(QVBoxLayout *layout);
-        void setupStepsSection(QVBoxLayout *layout);
-        void setupImagePreviewSection(QVBoxLayout *layout);
-        void setupCreateButton(QVBoxLayout *layout);
-        void setupConnections();
 
     private:
         Ui::CreatePage *ui;
         QPushButton *createButton;
+
+        void setupUI();
+        void setupHeader(QVBoxLayout *layout);
+        void setupStepsSection(QHBoxLayout *layout);
+        void setupImagePreviewSection(QHBoxLayout *layout);
+        void setupCreateButton(QVBoxLayout *layout);
+        void setupConnections();
 };
 
 #endif // CREATEPAGE_H

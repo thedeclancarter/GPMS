@@ -5,6 +5,8 @@
 #include <QCamera>
 #include <QMediaCaptureSession>
 #include <QVideoWidget>
+#include <QLabel>
+#include <QFrame>
 #include <QPushButton>
 
 namespace Ui {
@@ -38,6 +40,12 @@ private:
     void handleCameraError(QCamera::Error error);
     void captureImage();
     void handleImageCaptured(int id, const QImage &preview);
+
+    void initializeUI();
+    QLabel* createTitleLabel();
+    QFrame* createCameraFrame();
+    QPushButton* createSubmitButton();
+    void initializeCamera();
 
 };
 
