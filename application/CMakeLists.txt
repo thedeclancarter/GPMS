@@ -16,7 +16,10 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 COMPONENTS Multimedia MultimediaWidgets REQUIRED)
+
+find_package(Qt6 REQUIRED COMPONENTS QuickControls2)
 find_package(OpenCV REQUIRED)
+
 
 set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/main.cpp
@@ -97,6 +100,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt6::Core
     Qt6::Gui
     ${OpenCV_LIBS}
+    Qt6::QuickControls2
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -118,11 +122,9 @@ set_target_properties(gpms_ui PROPERTIES
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${OpenCV_INCLUDE_DIRS}
     ${PROJECT_ROOT}/src
     ${PROJECT_ROOT}/src/pages
     ${PROJECT_ROOT}/src/pages/sidebar_pages
-    ${CMAKE_BINARY_DIR}
 )
 
 if(APPLE)
