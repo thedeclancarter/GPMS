@@ -144,8 +144,8 @@ QFrame* SensitivityPage::createImageFrame()
 QSlider* SensitivityPage::createSlider(QSlider* slider)
 {
     slider->setOrientation(Qt::Horizontal);
-    slider->setRange(0, 100);  // Adjust range as needed
-    slider->setValue(50);     // Default value
+    slider->setRange(0, 300);  // Adjust range as needed
+    slider->setValue(150);     // Default value
     slider->setStyleSheet(
         "QSlider::groove:horizontal {"
         "    border: 1px solid #999999;"
