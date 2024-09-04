@@ -122,11 +122,9 @@ set_target_properties(gpms_ui PROPERTIES
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${_INCLUDE_DIRS}
     ${PROJECT_ROOT}/src
     ${PROJECT_ROOT}/src/pages
     ${PROJECT_ROOT}/src/pages/sidebar_pages
-    ${CMAKE_BINARY_DIR}
 )
 
 if(APPLE)
