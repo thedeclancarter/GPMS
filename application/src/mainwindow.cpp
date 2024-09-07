@@ -12,8 +12,11 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "Qt version:" << QT_VERSION_STR;
     ui->setupUi(this);
     setupUI();
+    qDebug("Finished setting up UI");
     setupPages();
+    qDebug("Finished setting up all functions");
     setupConnections();
+    qDebug("Finished making all connections");
 }
 
 
@@ -46,28 +49,6 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
 }
 
-void MainWindow::loadStyleSheet()
-{
-    // QFile styleFile(":/styles/menubar_styles.qss");
-    QFile styleFile(QCoreApplication::applicationDirPath() + "/../Resources/menubar_styles.qss");
-
-    qDebug() << "Resource file exists:" << QFile::exists(":/styles/menubar_styles.qss");
-    qDebug() << "Current working directory:" << QDir::currentPath();
-    qDebug() << "Resource file size:" << styleFile.size();
-
-
-    if (styleFile.open(QFile::ReadOnly | QFile::Text))
-    {
-        QTextStream styleStream(&styleFile);
-        QString style = styleStream.readAll();
-        setStyleSheet(style);
-        styleFile.close();
-    }
-    else
-    {
-        qWarning() << "Failed to open style sheet file:" << styleFile.errorString();
-    }
-}
 
 QPushButton* MainWindow::createSidebarButton(const QIcon& icon)
 {
@@ -144,9 +125,13 @@ void MainWindow::setupPages()
     settingsPage = new SettingsPage(this);
 
     createPage = new CreatePage(this);
-    takePicture = new TakePicture(this);
 
-    acceptPicturePage = new AcceptPicturePage(this);
+    imageProjectionWindow = new ImageProjectionWindow();
+    imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+
+    // variable in the .h
+    calibrationPage = new CalibrationPage(imageProjectionWindow, this);
+
     sensitivityPage = new SensitivityPage(this);
     textVisionPage = new TextVisionPage(this);
     pickImagesPage = new PickImagesPage(this);
@@ -158,9 +143,8 @@ void MainWindow::setupPages()
     stackedWidget->addWidget(settingsPage);
 
     stackedWidget->addWidget(createPage);
-    stackedWidget->addWidget(takePicture);
 
-    stackedWidget->addWidget(acceptPicturePage);
+    stackedWidget->addWidget(calibrationPage);
     stackedWidget->addWidget(sensitivityPage);
     stackedWidget->addWidget(textVisionPage);
     stackedWidget->addWidget(pickImagesPage);
@@ -178,25 +162,39 @@ void MainWindow::setupConnections()
     connect(createButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
     connect(settingsButton, &QPushButton::clicked, this, &MainWindow::navigateToSettingsPage);
 
-    // from create page
-    connect(createPage, &CreatePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
-    // from take picture page
-    connect(takePicture, &TakePicture::navigateToAcceptPicturePage, this, &MainWindow::navigateToAcceptPicturePage);
-        // passing the image from take picture to accept
-    connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
 
-    // from accept page
-    connect(acceptPicturePage, &AcceptPicturePage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
-    connect(acceptPicturePage, &AcceptPicturePage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
+    // from create page
+    // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
+        // connect to make projection page
+    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
+
+    // from calibration page
+    connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 
     // from sensitivity page
     connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
-    connect(sensitivityPage, &SensitivityPage::navigateToPicturePage, this, &MainWindow::navigateToPicturePage);
+    // change to navigateToCalibrationPage
+
     // from text vision page
     connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
+        // take picture here when clicked
+
+    // from take picture page
+        // passing the image from take picture to accept
+    // connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
+
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
+}
+
+
+void MainWindow::showProjectionWindow()
+{
+    if (imageProjectionWindow) {
+        imageProjectionWindow->show();
+        stackedWidget->setCurrentWidget(calibrationPage);
+    }
 }
 
 void MainWindow::navigateToUserPage()
@@ -219,19 +217,14 @@ void MainWindow::navigateToCreatePage()
     stackedWidget->setCurrentWidget(createPage);
 }
 
-void MainWindow::navigateToPicturePage()
+void MainWindow::navigateToCalibrationPage()
 {
-    stackedWidget->setCurrentWidget(takePicture);
+    stackedWidget->setCurrentWidget(calibrationPage);
 }
 
-void MainWindow::navigateToAcceptPicturePage()
+void MainWindow::navigateToSensitivityPage()
 {
-    stackedWidget->setCurrentWidget(acceptPicturePage);
-}
-
-void MainWindow::navigateToSensitivityPage(const QImage &image)
-{
-    sensitivityPage->setAcceptedImage(image);
+    sensitivityPage->setProjectionWindow(imageProjectionWindow);
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
 
@@ -255,6 +248,6 @@ void MainWindow::navigateToProjectPage()
 void MainWindow::setImageForAcceptPage(const QImage &image)
 {
     // Assuming you have an AcceptPicturePage class
-    acceptPicturePage->setImage(image);
+    // acceptPicturePage->setImage(image);
 }
 

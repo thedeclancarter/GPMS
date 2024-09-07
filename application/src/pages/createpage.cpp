@@ -1,5 +1,6 @@
 #include "createpage.h"
 #include "ui_createpage.h"
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -119,5 +120,6 @@ void CreatePage::setupConnections()
 
 void CreatePage::onCreateButtonClicked()
 {
-    emit navigateToPicturePage();
+    emit navigateToCalibrationPage();
+
 }

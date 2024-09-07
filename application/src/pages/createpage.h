@@ -18,7 +18,7 @@ class CreatePage : public QWidget
         ~CreatePage();
 
     signals:
-        void navigateToPicturePage();
+        void navigateToCalibrationPage();
 
     private slots:
         void onCreateButtonClicked();
