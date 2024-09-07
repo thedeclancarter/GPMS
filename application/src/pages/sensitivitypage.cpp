@@ -61,7 +61,7 @@ void SensitivityPage::initializeUI()
 void SensitivityPage::applyCannyEdgeDetection(int lowerThreshold, int upperThreshold)
 {
     if (currentImage.isNull()) {
-        qDebug() << "No image received in applyCannyEdgeDetection";
+        qDebug("No image received in applyCannyEdgeDetection");
         return; // No image to process
     }
 

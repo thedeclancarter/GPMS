@@ -3,8 +3,8 @@
 
 #include <QWidget>
 #include <QCamera>
-#include <QMediaCaptureSession>
-#include <QVideoWidget>
+#include <QCameraViewfinder>
+#include <QCameraImageCapture>
 #include <QLabel>
 #include <QFrame>
 #include <QPushButton>
@@ -27,26 +27,27 @@ signals:
 
 private:
     Ui::TakePicture *ui;
-
     QCamera *m_camera;
-    QMediaCaptureSession *m_captureSession;
-    QVideoWidget *m_viewfinder;
+    QCameraViewfinder *m_viewfinder;
     QPushButton *m_captureButton;
-    QImageCapture *m_imageCapture;
+    QCameraImageCapture *m_imageCapture;
 
     void init();
     bool checkCameraAvailability();
     void setupCamera();
     void handleCameraError(QCamera::Error error);
+    void handleReadyForCaptureChanged(bool ready);
+    void handleCaptureError(int id, QCameraImageCapture::Error error, const QString &errorString);
+    void handleImageSaved(int id, const QString &fileName);
+
+    void handleImageAvailable(int id, const QVideoFrame &buffer);
     void captureImage();
     void handleImageCaptured(int id, const QImage &preview);
-
     void initializeUI();
     QLabel* createTitleLabel();
     QFrame* createCameraFrame();
     QPushButton* createSubmitButton();
     void initializeCamera();
-
 };
 
 #endif // TAKEPICTURE_H
