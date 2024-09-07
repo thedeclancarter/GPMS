@@ -27,7 +27,7 @@ void ClickableFrame::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton) {
         setSelected(!m_selected);
         emit clicked();
-        qDebug() << "pressed";
+        qDebug("pressed");
     }
     QFrame::mousePressEvent(event);
 }
@@ -43,7 +43,7 @@ void ClickableFrame::updateStyle()
                         ).arg(m_selected ? "4" : "2")
                         .arg(m_selected ? "#FFD700" : "#3E3E3E");
 
-    qDebug() << "Applying stylesheet:" << style;
+    qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
 }
 
@@ -178,12 +178,12 @@ void PickImagesPage::onRejectButtonClicked()
 void PickImagesPage::onAcceptButtonClicked()
 {
     if (!m_selectedFrame) {
-        qDebug() << "No frame selected";
+        qDebug("No frame selected");
         return;
     }
 
     int selectedIndex = m_imageFrames.indexOf(m_selectedFrame);
-    qDebug() << "Selected frame index:" << selectedIndex;
+    qDebug("Selected frame index: %d", (selectedIndex));
 
     QList<int> selectedIndices;
     selectedIndices.append(selectedIndex);
