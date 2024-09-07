@@ -5,16 +5,21 @@
 #include <QGraphicsScene>
 #include <QVBoxLayout>
 #include <opencv2/opencv.hpp>
+#include <QTimer>
+#include <QCameraInfo>
 
 
 SensitivityPage::SensitivityPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::SensitivityPage)
+    , m_projectionWindow(nullptr)
+    , m_camera(nullptr)
+    , m_viewfinder(nullptr)
 {
     ui->setupUi(this);
-    initializeUI();
+    init();
+
     connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
-    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
 
     connect(lowerSlider, &QSlider::valueChanged, this, [this]() {
         applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
@@ -23,6 +28,65 @@ SensitivityPage::SensitivityPage(QWidget *parent)
     connect(upperSlider, &QSlider::valueChanged, this, [this]() {
         applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
     });
+
+    // Set up timer for continuous frame capture
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &SensitivityPage::captureAndProcessFrame);
+    timer->start(33);
+}
+
+void SensitivityPage::captureAndProcessFrame()
+{
+    cv::Mat frame;
+    if (capture.read(frame)) {
+        cv::Mat edges;
+        cv::cvtColor(frame, edges, cv::COLOR_BGR2GRAY);
+        cv::Canny(edges, edges, lowerSlider->value(), upperSlider->value());
+
+        // Convert edges to QImage and display
+        QImage edgeImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8);
+        m_imageLabel->setPixmap(QPixmap::fromImage(edgeImage).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+}
+
+void SensitivityPage::init()
+{
+    // Qt5 doesn't have the QPermission system, so we remove the permission check
+
+    if (checkCameraAvailability()) {
+        qDebug() << "Cameras found!";
+        setupCamera();
+        initializeUI();
+    } else {
+        qDebug() << "No camera available";
+        // You might want to show an error message in the UI here
+    }
+}
+
+bool SensitivityPage::checkCameraAvailability()
+{
+    return !QCameraInfo::availableCameras().isEmpty();
+}
+
+void SensitivityPage::setupCamera()
+{
+    m_camera = new QCamera(this);
+    m_viewfinder = new QCameraViewfinder(this);
+
+    m_camera->setViewfinder(m_viewfinder);
+
+    m_viewfinder->setAspectRatioMode(Qt::KeepAspectRatio);
+    m_viewfinder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    m_camera->start();
+}
+
+
+void SensitivityPage::setProjectionWindow(ImageProjectionWindow *projectionWindow)
+{
+    // m_projectionWindow = projectionWindow;
+    qDebug("calling set projection window");
+
 }
 
 void SensitivityPage::initializeUI()
@@ -57,57 +121,6 @@ void SensitivityPage::initializeUI()
     setLayout(mainLayout);
 }
 
-
-void SensitivityPage::applyCannyEdgeDetection(int lowerThreshold, int upperThreshold)
-{
-    if (currentImage.isNull()) {
-        qDebug("No image received in applyCannyEdgeDetection");
-        return; // No image to process
-    }
-
-    // Convert QImage to cv::Mat
-    cv::Mat mat = cv::Mat(currentImage.height(), currentImage.width(), CV_8UC4, const_cast<uchar*>(currentImage.bits()), currentImage.bytesPerLine()).clone();
-
-    // Convert the image to grayscale
-    cv::Mat grayMat;
-    cv::cvtColor(mat, grayMat, cv::COLOR_BGR2GRAY);
-
-    // Apply Canny edge detection
-    cv::Mat edges;
-    cv::Canny(grayMat, edges, lowerThreshold, upperThreshold);
-
-    // Convert edges (cv::Mat) back to QImage
-    QImage edgeImage = QImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8).copy();
-
-    // Display the processed image
-    QPixmap pixmap = QPixmap::fromImage(edgeImage);
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    scene->addPixmap(pixmap);
-    ui->graphicsView->setScene(scene);
-    ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setSceneRect(pixmap.rect());
-    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-}
-
-void SensitivityPage::setAcceptedImage(const QImage &image)
-{
-    currentImage = image;
-
-    // Display the image
-    QPixmap pixmap = QPixmap::fromImage(currentImage);
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    scene->addPixmap(pixmap);
-    ui->graphicsView->setScene(scene);
-    ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setSceneRect(pixmap.rect());
-    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-
-    // Apply Canny edge detection with default values
-    applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
-}
-
 QLabel* SensitivityPage::createTitleLabel()
 {
     QLabel *titleLabel = new QLabel("Change the sensitivity of the outline", this);
@@ -126,19 +139,20 @@ QLabel* SensitivityPage::createTitleLabel()
 
 QFrame* SensitivityPage::createImageFrame()
 {
-    QFrame *imageFrame = new QFrame(this);
-    imageFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
-    imageFrame->setLineWidth(2);
-    imageFrame->setStyleSheet("border-radius: 20px; background-color: #3E3E3E; border: 2px solid #3E3E3E;");
+    QFrame *cameraFrame = new QFrame(this);
+    cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
+    cameraFrame->setLineWidth(2);
+    cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
 
-    QVBoxLayout *imageLayout = new QVBoxLayout(imageFrame);
-    imageLayout->setContentsMargins(10, 10, 10, 10);
-    imageLayout->addWidget(ui->graphicsView);
-    ui->graphicsView->setStyleSheet("background: transparent; border: none;");
+    QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
+    if (m_viewfinder) {
+        cameraLayout->addWidget(m_viewfinder);
+        m_viewfinder->setStyleSheet("border-radius: 8px;");
+    } else {
+        qDebug() << "Viewfinder is null!";
+    }
 
-    imageFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    return imageFrame;
+    return cameraFrame;
 }
 
 QSlider* SensitivityPage::createSlider(QSlider* slider)
@@ -197,21 +211,72 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
 
 SensitivityPage::~SensitivityPage()
 {
+    if (timer) {
+        timer->stop();
+    }
+    if (capture.isOpened()) {
+        capture.release();
+    }
     delete ui;
-}
-
-void SensitivityPage::onRejectButtonClicked()
-{
-    emit navigateToPicturePage();
 }
 
 void SensitivityPage::onAcceptButtonClicked()
 {
-    if (!currentImage.isNull()) {
-        ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
-        projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
-        projectionWindow->show();
-    }
+    // if (!currentImage.isNull()) {
+    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
+    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
+    //     projectionWindow->show();
+    // }
 
     emit navigateToTextVisionPage();
 }
+
+void SensitivityPage::applyCannyEdgeDetection(int lowerThreshold, int upperThreshold)
+{
+    if (currentImage.isNull()) {
+        qDebug("No image received in applyCannyEdgeDetection");
+        return; // No image to process
+    }
+
+    // Convert QImage to cv::Mat
+    cv::Mat mat = cv::Mat(currentImage.height(), currentImage.width(), CV_8UC4, const_cast<uchar*>(currentImage.bits()), currentImage.bytesPerLine()).clone();
+
+    // Convert the image to grayscale
+    cv::Mat grayMat;
+    cv::cvtColor(mat, grayMat, cv::COLOR_BGR2GRAY);
+
+    // Apply Canny edge detection
+    cv::Mat edges;
+    cv::Canny(grayMat, edges, lowerThreshold, upperThreshold);
+
+    // Convert edges (cv::Mat) back to QImage
+    QImage edgeImage = QImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8).copy();
+
+    // Display the processed image
+    QPixmap pixmap = QPixmap::fromImage(edgeImage);
+    QGraphicsScene *scene = new QGraphicsScene(this);
+    scene->addPixmap(pixmap);
+    ui->graphicsView->setScene(scene);
+    ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->graphicsView->setSceneRect(pixmap.rect());
+    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+}
+
+// void SensitivityPage::setAcceptedImage(const QImage &image)
+// {
+//     currentImage = image;
+
+//     // Display the image
+//     QPixmap pixmap = QPixmap::fromImage(currentImage);
+//     QGraphicsScene *scene = new QGraphicsScene(this);
+//     scene->addPixmap(pixmap);
+//     ui->graphicsView->setScene(scene);
+//     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+//     ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+//     ui->graphicsView->setSceneRect(pixmap.rect());
+//     ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+
+//     // Apply Canny edge detection with default values
+//     applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
+// }

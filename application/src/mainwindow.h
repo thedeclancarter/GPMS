@@ -12,11 +12,13 @@
 #include "pages/createpage.h"
 #include "pages/takepicture.h"
 
-#include "pages/acceptpicturepage.h"
+#include "pages/creation_pages/calibrationpage.h"
 #include "pages/sensitivitypage.h"
 #include "pages/textvisionpage.h"
 #include "pages/pickimagespage.h"
 #include "pages/projectpage.h"
+
+#include "pages/imageprojectionwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,10 +34,12 @@ class MainWindow : public QMainWindow
 
     private:
         // functions
-        void loadStyleSheet();
         void setupUI();
         void setupPages();
         void setupConnections();
+
+        void showProjectionWindow();
+
         QWidget* createSidebar();
         QPushButton* createSidebarButton(const QIcon& icon);
 
@@ -51,11 +55,14 @@ class MainWindow : public QMainWindow
         CreatePage *createPage;
         TakePicture *takePicture;
 
-        AcceptPicturePage *acceptPicturePage;
+        CalibrationPage *calibrationPage;
         SensitivityPage *sensitivityPage;
         TextVisionPage *textVisionPage;
         PickImagesPage *pickImagesPage;
         ProjectPage *projectPage;
+
+        // image projection page
+        ImageProjectionWindow *imageProjectionWindow;
 
         // sidebar buttons
         QPushButton *userButton;
@@ -71,9 +78,8 @@ class MainWindow : public QMainWindow
         void navigateToCreatePage();
 
         // create page pages
-        void navigateToPicturePage();
-        void navigateToAcceptPicturePage();
-        void navigateToSensitivityPage(const QImage &image);
+        void navigateToCalibrationPage();
+        void navigateToSensitivityPage();
         void navigateToTextVisionPage();
         void navigateToPickImagesPage();
         void navigateToProjectPage();
