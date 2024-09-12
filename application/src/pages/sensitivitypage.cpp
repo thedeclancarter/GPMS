@@ -4,6 +4,7 @@
 
 #include <QGraphicsScene>
 #include <QVBoxLayout>
+#include <QtMultimedia/qcameraimagecapture.h>
 #include <opencv2/opencv.hpp>
 #include <QTimer>
 #include <QCameraInfo>
@@ -13,49 +14,46 @@ SensitivityPage::SensitivityPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::SensitivityPage)
     , m_projectionWindow(nullptr)
+    , m_imageLabel(nullptr)
+    , lowerSlider(nullptr)
+    , upperSlider(nullptr)
+    , timer(nullptr)
     , m_camera(nullptr)
     , m_viewfinder(nullptr)
+    , m_imageCapture(nullptr)
 {
     ui->setupUi(this);
     init();
 
     connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
 
-    connect(lowerSlider, &QSlider::valueChanged, this, [this]() {
-        applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
-    });
-
-    connect(upperSlider, &QSlider::valueChanged, this, [this]() {
-        applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
-    });
+    connect(lowerSlider, &QSlider::valueChanged, this, &SensitivityPage::updateCannyEdgeDetection);
+    connect(upperSlider, &QSlider::valueChanged, this, &SensitivityPage::updateCannyEdgeDetection);
 
     // Set up timer for continuous frame capture
     timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &SensitivityPage::captureAndProcessFrame);
+    connect(timer, &QTimer::timeout,  this, &SensitivityPage::captureImage);
     timer->start(33);
 }
 
 void SensitivityPage::captureAndProcessFrame()
 {
-    cv::Mat frame;
-    if (capture.read(frame)) {
-        cv::Mat edges;
-        cv::cvtColor(frame, edges, cv::COLOR_BGR2GRAY);
-        cv::Canny(edges, edges, lowerSlider->value(), upperSlider->value());
+    // cv::Mat frame;
+    // if (capture.read(frame)) {
+    //     cv::Mat edges;
+    //     cv::cvtColor(frame, edges, cv::COLOR_BGR2GRAY);
+    //     cv::Canny(edges, edges, lowerSlider->value(), upperSlider->value());
 
-        // Convert edges to QImage and display
-        QImage edgeImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8);
-        m_imageLabel->setPixmap(QPixmap::fromImage(edgeImage).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    }
+    //     // Convert edges to QImage and display
+    //     QImage edgeImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8);
+    //     m_imageLabel->setPixmap(QPixmap::fromImage(edgeImage).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // }
 }
 
 void SensitivityPage::init()
 {
-    // Qt5 doesn't have the QPermission system, so we remove the permission check
-
     if (checkCameraAvailability()) {
         qDebug() << "Cameras found!";
-        setupCamera();
         initializeUI();
     } else {
         qDebug() << "No camera available";
@@ -63,20 +61,42 @@ void SensitivityPage::init()
     }
 }
 
-bool SensitivityPage::checkCameraAvailability()
+void SensitivityPage::captureImage()
 {
-    return !QCameraInfo::availableCameras().isEmpty();
+    if (m_imageCapture->isReadyForCapture()) {
+        qDebug() << "Image about to be taken";
+        int id = m_imageCapture->capture();
+        qDebug() << "Capture initiated with id:" << id;
+    } else {
+        qDebug() << "Image capture is not ready";
+    }
 }
 
 void SensitivityPage::setupCamera()
 {
     m_camera = new QCamera(this);
     m_viewfinder = new QCameraViewfinder(this);
+    m_imageCapture = new QCameraImageCapture(m_camera);
 
     m_camera->setViewfinder(m_viewfinder);
 
     m_viewfinder->setAspectRatioMode(Qt::KeepAspectRatio);
     m_viewfinder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+
+    // connect(ui->takePictureButton, &QPushButton::clicked, this, &TakePicture::captureImage);
+    // connect(m_imageCapture, &QCameraImageCapture::imageCaptured, this, &TakePicture::handleImageCaptured);
+
+
+    // // Add these new connections for more detailed reporting
+    // connect(m_imageCapture, &QCameraImageCapture::readyForCaptureChanged, this, &TakePicture::handleReadyForCaptureChanged);
+    // connect(m_imageCapture, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
+    //         this, &TakePicture::handleCaptureError);
+    // connect(m_imageCapture, &QCameraImageCapture::imageAvailable, this, &TakePicture::handleImageAvailable);
+    // connect(m_imageCapture, &QCameraImageCapture::imageSaved, this, &TakePicture::handleImageSaved);
+
+    // Set capture mode to CaptureToBuffer
+    m_imageCapture->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
 
     m_camera->start();
 }
@@ -84,7 +104,7 @@ void SensitivityPage::setupCamera()
 
 void SensitivityPage::setProjectionWindow(ImageProjectionWindow *projectionWindow)
 {
-    // m_projectionWindow = projectionWindow;
+    m_projectionWindow = projectionWindow;
     qDebug("calling set projection window");
 
 }
@@ -139,6 +159,8 @@ QLabel* SensitivityPage::createTitleLabel()
 
 QFrame* SensitivityPage::createImageFrame()
 {
+    setupCamera();
+
     QFrame *cameraFrame = new QFrame(this);
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
@@ -182,8 +204,8 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN!", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAINN!", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOODD!", "#6FCD6F"));
     return buttonLayout;
 }
 
@@ -214,9 +236,6 @@ SensitivityPage::~SensitivityPage()
     if (timer) {
         timer->stop();
     }
-    if (capture.isOpened()) {
-        capture.release();
-    }
     delete ui;
 }
 
@@ -231,52 +250,23 @@ void SensitivityPage::onAcceptButtonClicked()
     emit navigateToTextVisionPage();
 }
 
-void SensitivityPage::applyCannyEdgeDetection(int lowerThreshold, int upperThreshold)
+bool SensitivityPage::checkCameraAvailability()
 {
-    if (currentImage.isNull()) {
-        qDebug("No image received in applyCannyEdgeDetection");
-        return; // No image to process
-    }
-
-    // Convert QImage to cv::Mat
-    cv::Mat mat = cv::Mat(currentImage.height(), currentImage.width(), CV_8UC4, const_cast<uchar*>(currentImage.bits()), currentImage.bytesPerLine()).clone();
-
-    // Convert the image to grayscale
-    cv::Mat grayMat;
-    cv::cvtColor(mat, grayMat, cv::COLOR_BGR2GRAY);
-
-    // Apply Canny edge detection
-    cv::Mat edges;
-    cv::Canny(grayMat, edges, lowerThreshold, upperThreshold);
-
-    // Convert edges (cv::Mat) back to QImage
-    QImage edgeImage = QImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8).copy();
-
-    // Display the processed image
-    QPixmap pixmap = QPixmap::fromImage(edgeImage);
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    scene->addPixmap(pixmap);
-    ui->graphicsView->setScene(scene);
-    ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->graphicsView->setSceneRect(pixmap.rect());
-    ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+    return !QCameraInfo::availableCameras().isEmpty();
 }
 
-// void SensitivityPage::setAcceptedImage(const QImage &image)
-// {
-//     currentImage = image;
+void SensitivityPage::updateCannyEdgeDetection()
+{
+    // QMutexLocker locker(&m_frameMutex);
+    // if (!m_lastFrame.empty())
+    // {
+    //     cv::Mat edges;
+    //     cv::cvtColor(m_lastFrame, edges, cv::COLOR_BGR2GRAY);
+    //     cv::Canny(edges, edges, lowerSlider->value(), upperSlider->value());
 
-//     // Display the image
-//     QPixmap pixmap = QPixmap::fromImage(currentImage);
-//     QGraphicsScene *scene = new QGraphicsScene(this);
-//     scene->addPixmap(pixmap);
-//     ui->graphicsView->setScene(scene);
-//     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-//     ui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-//     ui->graphicsView->setSceneRect(pixmap.rect());
-//     ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+    //     // Convert edges to QImage and display
+    //     QImage edgeImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8);
+    //     m_imageLabel->setPixmap(QPixmap::fromImage(edgeImage).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // }
+}
 
-//     // Apply Canny edge detection with default values
-//     applyCannyEdgeDetection(lowerSlider->value(), upperSlider->value());
-// }

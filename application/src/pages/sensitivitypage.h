@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <QCamera>
 #include <QCameraViewfinder>
+#include <QCameraImageCapture>
 
 namespace Ui {
 class SensitivityPage;
@@ -31,34 +32,38 @@ class SensitivityPage : public QWidget
 
     private slots:
         void onAcceptButtonClicked();
+        void captureAndProcessFrame();
+        void updateCannyEdgeDetection();
 
     private:
         Ui::SensitivityPage *ui;
         ImageProjectionWindow *m_projectionWindow;
-        QCameraViewfinder *m_viewfinder;
-        QCamera *m_camera;
 
-        QImage currentImage;
+        QLabel *m_imageLabel;
         QSlider *lowerSlider;
         QSlider *upperSlider;
-
-        cv::VideoCapture capture;
         QTimer *timer;
-        QImage currentFrame;
+        QCamera *m_camera;
+        QCameraViewfinder *m_viewfinder;
+        QCameraImageCapture *m_imageCapture;
+
+        cv::Mat m_lastFrame;
+        QMutex m_frameMutex;
 
         void init();
         void initializeUI();
         bool checkCameraAvailability();
-        void setupCamera();
-        void processFrame();
-        void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
-        void captureAndProcessFrame();
 
         QLabel* createTitleLabel();
         QFrame* createImageFrame();
         QSlider* createSlider(QSlider* slider);
         QHBoxLayout* createButtonLayout();
         QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+
+        void setupCamera();
+        void captureImage();
+        // void processFrame();
+        // void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
 };
 
 #endif // SENSITIVITYPAGE_H
