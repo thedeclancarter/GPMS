@@ -32,6 +32,9 @@ class MainWindow : public QMainWindow
         MainWindow(QWidget *parent = nullptr);
         ~MainWindow();
 
+        // image projection page
+        ImageProjectionWindow *imageProjectionWindow;
+
     private:
         // functions
         void setupUI();
@@ -60,9 +63,6 @@ class MainWindow : public QMainWindow
         TextVisionPage *textVisionPage;
         PickImagesPage *pickImagesPage;
         ProjectPage *projectPage;
-
-        // image projection page
-        ImageProjectionWindow *imageProjectionWindow;
 
         // sidebar buttons
         QPushButton *userButton;
