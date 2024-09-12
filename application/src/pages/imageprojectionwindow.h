@@ -11,9 +11,10 @@ class ImageProjectionWindow : public QWidget
 
 public:
     explicit ImageProjectionWindow(QWidget *parent = nullptr);
+    void updateImage(const QImage &image);
 
 private:
-    QLabel *imageLabel;
+    QLabel *m_imageLabel;
 
     void setupUI();
 };

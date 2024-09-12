@@ -195,6 +195,9 @@ void MainWindow::showProjectionWindow()
         imageProjectionWindow->show();
         stackedWidget->setCurrentWidget(calibrationPage);
     }
+    else{
+        qDebug("In showProjectionWindow imageprojectionwindow is null");
+    }
 }
 
 void MainWindow::navigateToUserPage()
@@ -224,7 +227,11 @@ void MainWindow::navigateToCalibrationPage()
 
 void MainWindow::navigateToSensitivityPage()
 {
-    sensitivityPage->setProjectionWindow(imageProjectionWindow);
+    if (imageProjectionWindow) {
+        sensitivityPage->setProjectionWindow(imageProjectionWindow);
+    } else {
+        qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
+    }
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
 

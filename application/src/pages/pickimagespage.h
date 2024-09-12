@@ -42,11 +42,13 @@ class PickImagesPage : public QWidget
 
     signals:
         void navigateToTextVisionPage();
+        void navigateToSensitivityPage();
         void navigateToProjectPage(const QList<int>& selectedIndices);
 
     private slots:
         void onAcceptButtonClicked();
         void onRejectButtonClicked();
+        void onRetakePhotoButtonClicked();
 
     private:
         Ui::PickImagesPage *ui;

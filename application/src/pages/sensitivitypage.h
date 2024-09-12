@@ -26,6 +26,7 @@ class SensitivityPage : public QWidget
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
 
         // void setAcceptedImage(const QImage &image);
+        ImageProjectionWindow *m_projectionWindow;
 
     signals:
         void navigateToTextVisionPage();
@@ -33,11 +34,9 @@ class SensitivityPage : public QWidget
     private slots:
         void onAcceptButtonClicked();
         void captureAndProcessFrame();
-        void updateCannyEdgeDetection();
 
     private:
         Ui::SensitivityPage *ui;
-        ImageProjectionWindow *m_projectionWindow;
 
         QLabel *m_imageLabel;
         QSlider *lowerSlider;
@@ -46,8 +45,9 @@ class SensitivityPage : public QWidget
         QCamera *m_camera;
         QCameraViewfinder *m_viewfinder;
         QCameraImageCapture *m_imageCapture;
+        QVideoFrame *m_lastFrame;
 
-        cv::Mat m_lastFrame;
+        // cv::Mat m_lastFrame;
         QMutex m_frameMutex;
 
         void init();
@@ -62,6 +62,9 @@ class SensitivityPage : public QWidget
 
         void setupCamera();
         void captureImage();
+        // void processFrame(const QVideoFrame &frame);
+        void processFrame(int id, const QVideoFrame &frame);
+        void updateDisplays(const QImage &image);
         // void processFrame();
         // void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
 };
