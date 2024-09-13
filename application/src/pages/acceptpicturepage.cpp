@@ -2,6 +2,7 @@
 #include "ui_acceptpicturepage.h"
 #include <QGraphicsScene>
 #include <QVBoxLayout>
+#include <QDebug>
 
 
 AcceptPicturePage::AcceptPicturePage(QWidget *parent)
@@ -112,13 +113,13 @@ void AcceptPicturePage::onAcceptButtonClicked()
     if (!currentImage.isNull()) {
         emit navigateToSensitivityPage(currentImage);  // Make sure to pass the image
     } else {
-        qDebug() << "No image to accept";
+        qDebug() << QString("No image to accept");
     }
 }
 
 void AcceptPicturePage::setImage(const QImage &image)
 {
-    qDebug() << "Received image in AcceptPicturePage";
+    qDebug("Received image in AcceptPicturePage");
     currentImage = image;
 
     // Display the image

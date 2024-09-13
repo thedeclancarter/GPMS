@@ -1,9 +1,7 @@
 #include "takepicture.h"
 #include "ui_takepicture.h"
-#include <QMediaDevices>
-#include <QImageCapture>
+#include <QCameraInfo>
 #include <QVBoxLayout>
-#include <QPermissions>
 #include <QDateTime>
 #include <QStandardPaths>
 #include <QUrl>
@@ -14,35 +12,17 @@ TakePicture::TakePicture(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TakePicture)
     , m_camera(nullptr)
-    , m_captureSession(nullptr)
     , m_viewfinder(nullptr)
     , m_imageCapture(nullptr)
 {
     ui->setupUi(this);
     init();
-
 }
-
 
 void TakePicture::init()
 {
-#if QT_CONFIG(permissions)
-    // Camera permission
-    QCameraPermission cameraPermission;
-    switch (qApp->checkPermission(cameraPermission)) {
-    case Qt::PermissionStatus::Undetermined:
-        qApp->requestPermission(cameraPermission, this, &TakePicture::init);
-        return;
-    case Qt::PermissionStatus::Denied:
-        qWarning("Camera permission is not granted!");
-        return;
-    case Qt::PermissionStatus::Granted:
-        break;
-    }
-#endif
+    // Qt5 doesn't have the QPermission system, so we remove the permission check
 
-    // If we've reached here, permissions are granted (or not required)
-    // So we can proceed with camera setup and UI initialization
     if (checkCameraAvailability()) {
         qDebug() << "Cameras found!";
         setupCamera();
@@ -76,9 +56,9 @@ QLabel* TakePicture::createTitleLabel()
         "color: white;"
         "font-size: 24px;"
         "font-weight: bold;"
-        "background-color: #3E3E3E;"  // Same as webcam frame background
+        "background-color: #3E3E3E;"
         "border-radius: 20px;"
-        "padding: 15px 20px;"  // Vertical and horizontal padding
+        "padding: 15px 20px;"
         );
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -136,19 +116,35 @@ void TakePicture::initializeCamera()
 void TakePicture::setupCamera()
 {
     m_camera = new QCamera(this);
-    m_captureSession = new QMediaCaptureSession(this);
-    m_viewfinder = new QVideoWidget(this);
-    m_imageCapture = new QImageCapture(this);
+    m_viewfinder = new QCameraViewfinder(this);
+    m_imageCapture = new QCameraImageCapture(m_camera);
 
-    m_captureSession->setCamera(m_camera);
-    m_captureSession->setVideoOutput(m_viewfinder);
-    m_captureSession->setImageCapture(m_imageCapture);
+    m_camera->setViewfinder(m_viewfinder);
 
     m_viewfinder->setAspectRatioMode(Qt::KeepAspectRatio);
     m_viewfinder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+
     connect(ui->takePictureButton, &QPushButton::clicked, this, &TakePicture::captureImage);
-    connect(m_imageCapture, &QImageCapture::imageCaptured, this, &TakePicture::handleImageCaptured);
+    connect(m_imageCapture, &QCameraImageCapture::imageCaptured, this, &TakePicture::handleImageCaptured);
+
+
+    // Add these new connections for more detailed reporting
+    connect(m_imageCapture, &QCameraImageCapture::readyForCaptureChanged, this, &TakePicture::handleReadyForCaptureChanged);
+    connect(m_imageCapture, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
+            this, &TakePicture::handleCaptureError);
+    connect(m_imageCapture, &QCameraImageCapture::imageAvailable, this, &TakePicture::handleImageAvailable);
+    connect(m_imageCapture, &QCameraImageCapture::imageSaved, this, &TakePicture::handleImageSaved);
+
+    // Set capture mode to CaptureToBuffer
+    m_imageCapture->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
+
+
+
+    // // Add these new connections for more detailed error reporting
+    // connect(m_imageCapture, &QCameraImageCapture::readyForCaptureChanged, this, &TakePicture::handleReadyForCaptureChanged);
+    // connect(m_imageCapture, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
+    //         this, &TakePicture::handleCaptureError);
 
     m_camera->start();
 }
@@ -156,7 +152,9 @@ void TakePicture::setupCamera()
 void TakePicture::captureImage()
 {
     if (m_imageCapture->isReadyForCapture()) {
-        m_imageCapture->capture();
+        qDebug() << "Image about to be taken";
+        int id = m_imageCapture->capture();
+        qDebug() << "Capture initiated with id:" << id;
     } else {
         qDebug() << "Image capture is not ready";
     }
@@ -165,14 +163,40 @@ void TakePicture::captureImage()
 void TakePicture::handleImageCaptured(int id, const QImage &preview)
 {
     qDebug() << "Image captured with id:" << id;
+
+    if (preview.isNull()) {
+        qDebug() << "Captured image preview is null!";
+        return;
+    }
+
     QImage scaledImage = preview.scaled(1280, 720, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     emit imageCaptured(scaledImage);
     emit navigateToAcceptPicturePage();
 }
 
+void TakePicture::handleImageAvailable(int id, const QVideoFrame &buffer)
+{
+    qDebug() << "Image available with id:" << id;
+    if (buffer.isValid()) {
+        QImage image = buffer.image();
+        if (!image.isNull()) {
+            handleImageCaptured(id, image);
+        } else {
+            qDebug() << "Converted image is null";
+        }
+    } else {
+        qDebug() << "Video frame buffer is not valid";
+    }
+}
+
+void TakePicture::handleImageSaved(int id, const QString &fileName)
+{
+    qDebug() << "Image saved with id:" << id << "to file:" << fileName;
+}
+
 bool TakePicture::checkCameraAvailability()
 {
-    return QMediaDevices::videoInputs().count() > 0;
+    return !QCameraInfo::availableCameras().isEmpty();
 }
 
 void TakePicture::handleCameraError(QCamera::Error error)
@@ -189,11 +213,21 @@ void TakePicture::handleCameraError(QCamera::Error error)
     }
 }
 
+void TakePicture::handleReadyForCaptureChanged(bool ready)
+{
+    qDebug() << "Ready for capture changed:" << ready;
+}
+
+void TakePicture::handleCaptureError(int id, QCameraImageCapture::Error error, const QString &errorString)
+{
+    qDebug() << "Capture error for id" << id << ":" << errorString;
+}
+
+
 TakePicture::~TakePicture()
 {
     delete ui;
     delete m_camera;
-    delete m_captureSession;
     delete m_viewfinder;
     delete m_imageCapture;
 }
