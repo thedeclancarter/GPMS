@@ -1,12 +1,16 @@
 #ifndef SENSITIVITYPAGE_H
 #define SENSITIVITYPAGE_H
-
+#include "imageprojectionwindow.h"
 #include <QWidget>
 #include <QLabel>
 #include <QtWidgets/qslider.h>
 #include <QSlider>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <opencv2/opencv.hpp>
+#include <QCamera>
+#include <QCameraViewfinder>
+#include <QCameraImageCapture>
 
 namespace Ui {
 class SensitivityPage;
@@ -19,31 +23,50 @@ class SensitivityPage : public QWidget
     public:
         explicit SensitivityPage(QWidget *parent = nullptr);
         ~SensitivityPage();
+        void setProjectionWindow(ImageProjectionWindow *projectionWindow);
 
-        void setAcceptedImage(const QImage &image);
+        // void setAcceptedImage(const QImage &image);
+        ImageProjectionWindow *m_projectionWindow;
 
     signals:
-        void navigateToPicturePage();
         void navigateToTextVisionPage();
 
     private slots:
         void onAcceptButtonClicked();
-        void onRejectButtonClicked();
+        void captureAndProcessFrame();
 
     private:
         Ui::SensitivityPage *ui;
-        QImage currentImage;
+
+        QLabel *m_imageLabel;
         QSlider *lowerSlider;
         QSlider *upperSlider;
+        QTimer *timer;
+        QCamera *m_camera;
+        QCameraViewfinder *m_viewfinder;
+        QCameraImageCapture *m_imageCapture;
+        QVideoFrame *m_lastFrame;
 
+        // cv::Mat m_lastFrame;
+        QMutex m_frameMutex;
+
+        void init();
         void initializeUI();
+        bool checkCameraAvailability();
+
         QLabel* createTitleLabel();
         QFrame* createImageFrame();
         QSlider* createSlider(QSlider* slider);
         QHBoxLayout* createButtonLayout();
         QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
 
-        void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
+        void setupCamera();
+        void captureImage();
+        // void processFrame(const QVideoFrame &frame);
+        void processFrame(int id, const QVideoFrame &frame);
+        void updateDisplays(const QImage &image);
+        // void processFrame();
+        // void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
 };
 
 #endif // SENSITIVITYPAGE_H

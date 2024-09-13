@@ -40,9 +40,6 @@ set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/pages/createpage.cpp
     ${PROJECT_ROOT}/src/pages/createpage.ui
 
-    ${PROJECT_ROOT}/src/pages/acceptpicturepage.h
-    ${PROJECT_ROOT}/src/pages/acceptpicturepage.cpp
-    ${PROJECT_ROOT}/src/pages/acceptpicturepage.ui
     ${PROJECT_ROOT}/src/pages/sensitivitypage.h
     ${PROJECT_ROOT}/src/pages/sensitivitypage.cpp
     ${PROJECT_ROOT}/src/pages/sensitivitypage.ui
