@@ -15,20 +15,20 @@ class ClickableFrame : public QFrame
 {
     Q_OBJECT
 
-    public:
-        explicit ClickableFrame(QWidget *parent = nullptr);
-        void setSelected(bool selected);
-        bool isSelected() const;
+public:
+    explicit ClickableFrame(QWidget *parent = nullptr);
+    void setSelected(bool selected);
+    bool isSelected() const;
 
-    protected:
-        void mousePressEvent(QMouseEvent *event) override;
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
 
-    signals:
-        void clicked();
+signals:
+    void clicked();
 
-    private:
-        bool m_selected;
-        void updateStyle();
+private:
+    bool m_selected;
+    void updateStyle();
 };
 
 
@@ -36,31 +36,32 @@ class PickImagesPage : public QWidget
 {
     Q_OBJECT
 
-    public:
-        explicit PickImagesPage(QWidget *parent = nullptr);
-        ~PickImagesPage();
+public:
+    explicit PickImagesPage(QWidget *parent = nullptr);
+    ~PickImagesPage();
 
-    signals:
-        void navigateToTextVisionPage();
-        void navigateToSensitivityPage();
-        void navigateToProjectPage(const QList<int>& selectedIndices);
+signals:
+    void navigateToTextVisionPage();
+    void navigateToSensitivityPage();
+    void navigateToProjectPage(const QList<int>& selectedIndices);
 
-    private slots:
-        void onAcceptButtonClicked();
-        void onRejectButtonClicked();
-        void onRetakePhotoButtonClicked();
+private slots:
+    void onAcceptButtonClicked();
+    void onRejectButtonClicked();
+    void onRetakePhotoButtonClicked();
 
-    private:
-        Ui::PickImagesPage *ui;
-        QList<ClickableFrame*> m_imageFrames;
-        ClickableFrame* m_selectedFrame;  // Member variable to store the selected frame
+private:
+    Ui::PickImagesPage *ui;
+    QList<ClickableFrame*> m_imageFrames;
+    ClickableFrame* m_selectedFrame;  // Member variable to store the selected frame
 
-        void initializeUI();
-        QLabel* createTitleLabel();
-        QFrame* createImagesGrid();
-        QHBoxLayout* createButtonLayout();
-        QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
-        void updateSelectedImages(ClickableFrame *clickedFrame);
+    void initializeUI();
+    QLabel* createTitleLabel();
+    QFrame* createImagesGrid();
+    QHBoxLayout* createButtonLayout();
+    QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+    void updateSelectedImages(ClickableFrame *clickedFrame);
+
 };
 
 #endif // PICKIMAGESPAGE_H

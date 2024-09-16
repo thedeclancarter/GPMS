@@ -215,7 +215,7 @@ void SensitivityPage::initializeUI()
 
 QLabel* SensitivityPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Change the sensitivity of the outline", this);
+    QLabel *titleLabel = new QLabel("Change The Sensitivity of the Outline", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -276,8 +276,8 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAINN!", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOODD!", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN!", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#6FCD6F"));
     return buttonLayout;
 }
 
@@ -294,7 +294,7 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
         "   font-size: 16px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: darker(%1, 120%);"
+        "   background-color: #FFD700;"
         "}"
         "QPushButton:pressed {"
         "   background-color: darker(%1, 140%);"

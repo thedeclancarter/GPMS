@@ -48,7 +48,7 @@ class SensitivityPage : public QWidget
         QVideoFrame *m_lastFrame;
 
         // cv::Mat m_lastFrame;
-        QMutex m_frameMutex;
+        // QMutex m_frameMutex;
 
         void init();
         void initializeUI();
