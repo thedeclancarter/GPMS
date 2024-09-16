@@ -126,16 +126,16 @@ void MainWindow::setupPages()
 
     createPage = new CreatePage(this);
 
-    imageProjectionWindow = new ImageProjectionWindow();
-    imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    // imageProjectionWindow = new ImageProjectionWindow();
+    // imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
 
-    // variable in the .h
-    calibrationPage = new CalibrationPage(imageProjectionWindow, this);
+    // // variable in the .h
+    // calibrationPage = new CalibrationPage(imageProjectionWindow, this);
 
-    sensitivityPage = new SensitivityPage(this);
-    textVisionPage = new TextVisionPage(this);
-    pickImagesPage = new PickImagesPage(this);
-    projectPage = new ProjectPage(this);
+    // sensitivityPage = new SensitivityPage(this);
+    // textVisionPage = new TextVisionPage(this);
+    // pickImagesPage = new PickImagesPage(this);
+    // projectPage = new ProjectPage(this);
 
     // add each page
     stackedWidget->addWidget(userPage);
@@ -144,11 +144,11 @@ void MainWindow::setupPages()
 
     stackedWidget->addWidget(createPage);
 
-    stackedWidget->addWidget(calibrationPage);
-    stackedWidget->addWidget(sensitivityPage);
-    stackedWidget->addWidget(textVisionPage);
-    stackedWidget->addWidget(pickImagesPage);
-    stackedWidget->addWidget(projectPage);
+    // stackedWidget->addWidget(calibrationPage);
+    // stackedWidget->addWidget(sensitivityPage);
+    // stackedWidget->addWidget(textVisionPage);
+    // stackedWidget->addWidget(pickImagesPage);
+    // stackedWidget->addWidget(projectPage);
 
     // Start with the create page
     stackedWidget->setCurrentWidget(createPage);
@@ -163,29 +163,29 @@ void MainWindow::setupConnections()
     connect(settingsButton, &QPushButton::clicked, this, &MainWindow::navigateToSettingsPage);
 
 
-    // from create page
-    // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
-        // connect to make projection page
-    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
+    // // from create page
+    // // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
+    //     // connect to make projection page
+    // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
 
-    // from calibration page
-    connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
+    // // from calibration page
+    // connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 
-    // from sensitivity page
-    connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
-    // change to navigateToCalibrationPage
+    // // from sensitivity page
+    // connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
+    // // change to navigateToCalibrationPage
 
-    // from text vision page
-    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
-        // take picture here when clicked
+    // // from text vision page
+    // connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
+    //     // take picture here when clicked
 
-    // from take picture page
-        // passing the image from take picture to accept
-    // connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
+    // // from take picture page
+    //     // passing the image from take picture to accept
+    // // connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
 
-    // from pick images page
-    connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
-    connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
+    // // from pick images page
+    // connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
+    // connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
 }
 
 

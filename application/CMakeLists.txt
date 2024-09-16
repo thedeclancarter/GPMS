@@ -40,32 +40,32 @@ set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/pages/createpage.cpp
     ${PROJECT_ROOT}/src/pages/createpage.ui
 
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.h
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.cpp
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.ui
-    ${PROJECT_ROOT}/src/pages/textvisionpage.h
-    ${PROJECT_ROOT}/src/pages/textvisionpage.cpp
-    ${PROJECT_ROOT}/src/pages/textvisionpage.ui
-    ${PROJECT_ROOT}/src/pages/pickimagespage.h
-    ${PROJECT_ROOT}/src/pages/pickimagespage.cpp
-    ${PROJECT_ROOT}/src/pages/pickimagespage.ui
-    ${PROJECT_ROOT}/src/pages/projectpage.h
-    ${PROJECT_ROOT}/src/pages/projectpage.cpp
-    ${PROJECT_ROOT}/src/pages/projectpage.ui
+    # ${PROJECT_ROOT}/src/pages/sensitivitypage.h
+    # ${PROJECT_ROOT}/src/pages/sensitivitypage.cpp
+    # ${PROJECT_ROOT}/src/pages/sensitivitypage.ui
+    # ${PROJECT_ROOT}/src/pages/textvisionpage.h
+    # ${PROJECT_ROOT}/src/pages/textvisionpage.cpp
+    # ${PROJECT_ROOT}/src/pages/textvisionpage.ui
+    # ${PROJECT_ROOT}/src/pages/pickimagespage.h
+    # ${PROJECT_ROOT}/src/pages/pickimagespage.cpp
+    # ${PROJECT_ROOT}/src/pages/pickimagespage.ui
+    # ${PROJECT_ROOT}/src/pages/projectpage.h
+    # ${PROJECT_ROOT}/src/pages/projectpage.cpp
+    # ${PROJECT_ROOT}/src/pages/projectpage.ui
 
-    ${PROJECT_ROOT}/src/pages/takepicture.h
-    ${PROJECT_ROOT}/src/pages/takepicture.cpp
-    ${PROJECT_ROOT}/src/pages/takepicture.ui
+    # ${PROJECT_ROOT}/src/pages/takepicture.h
+    # ${PROJECT_ROOT}/src/pages/takepicture.cpp
+    # ${PROJECT_ROOT}/src/pages/takepicture.ui
 
-    ${PROJECT_ROOT}/resources/images.qrc
-    ${PROJECT_ROOT}/resources/styles.qrc
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.h
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.cpp
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.ui
+    # ${PROJECT_ROOT}/resources/images.qrc
+    # ${PROJECT_ROOT}/resources/styles.qrc
+    # ${PROJECT_ROOT}/src/pages/imageprojectionwindow.h
+    # ${PROJECT_ROOT}/src/pages/imageprojectionwindow.cpp
+    # ${PROJECT_ROOT}/src/pages/imageprojectionwindow.ui
 
-    src/pages/creation_pages/calibrationpage.h
-    src/pages/creation_pages/calibrationpage.cpp
-    src/pages/creation_pages/calibrationpage.ui
+    # src/pages/creation_pages/calibrationpage.h
+    # src/pages/creation_pages/calibrationpage.cpp
+    # src/pages/creation_pages/calibrationpage.ui
 )
 
 add_executable(gpms_ui ${PROJECT_SOURCES})
