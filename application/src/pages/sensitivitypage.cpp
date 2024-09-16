@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 #include <QTimer>
 #include <QCameraInfo>
+#include <QProcess>
 
 
 SensitivityPage::SensitivityPage(QWidget *parent)
@@ -124,6 +125,7 @@ void SensitivityPage::init()
         initializeUI();
     } else {
         qDebug() << "No camera available";
+        initializeUIWithoutCamera();
         // You might want to show an error message in the UI here
     }
 }
@@ -327,3 +329,40 @@ bool SensitivityPage::checkCameraAvailability()
     return !QCameraInfo::availableCameras().isEmpty();
 }
 
+void SensitivityPage::initializeUIWithoutCamera()
+{
+    setStyleSheet("background-color: #1E1E1E;");
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(15);
+
+    mainLayout->addWidget(createTitleLabel());
+
+    QLabel *noCameraLabel = new QLabel("No camera detected. Please connect a camera and restart the application.", this);
+    noCameraLabel->setStyleSheet(
+        "color: white;"
+        "font-size: 18px;"
+        "background-color: #3E3E3E;"
+        "border-radius: 10px;"
+        "padding: 15px 20px;"
+        );
+    noCameraLabel->setAlignment(Qt::AlignCenter);
+    noCameraLabel->setWordWrap(true);
+    mainLayout->addWidget(noCameraLabel);
+
+    mainLayout->addStretch();
+
+    QPushButton *restartButton = new QPushButton("Restart Application", this);
+    styleButton(restartButton, "Restart Application", "#6FCD6F");
+    connect(restartButton, &QPushButton::clicked, this, &SensitivityPage::restartApplication);
+    mainLayout->addWidget(restartButton, 0, Qt::AlignCenter);
+
+    setLayout(mainLayout);
+}
+
+void SensitivityPage::restartApplication()
+{
+    qApp->quit();
+    QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
+}

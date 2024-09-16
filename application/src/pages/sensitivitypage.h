@@ -47,12 +47,12 @@ class SensitivityPage : public QWidget
         QCameraImageCapture *m_imageCapture;
         QVideoFrame *m_lastFrame;
 
-        // cv::Mat m_lastFrame;
-        QMutex m_frameMutex;
-
         void init();
         void initializeUI();
         bool checkCameraAvailability();
+
+        void initializeUIWithoutCamera();
+        void restartApplication();
 
         QLabel* createTitleLabel();
         QFrame* createImageFrame();
