@@ -13,7 +13,6 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupLayouts();
     setupStyleSheets();
     setupConnections();
-    connect(ui->submitVisionButton, &QPushButton::clicked, this, &TextVisionPage::onSubmitButtonClicked);
 }
 
 void TextVisionPage::setupUI()
@@ -29,7 +28,7 @@ void TextVisionPage::setupUI()
 
 QLabel* TextVisionPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Tell us your vision in 1-2 sentences", this);
+    QLabel *titleLabel = new QLabel("Describe Your Vision In 1-2 Sentences!", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -79,7 +78,7 @@ QPushButton* TextVisionPage::createSubmitButton()
         "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #4A5A9F;"
+        "   background-color: #FFD700;"
         "}"
         "QPushButton:pressed {"
         "   background-color: #5D5D5D;"

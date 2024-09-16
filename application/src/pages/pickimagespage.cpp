@@ -9,6 +9,11 @@
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
     updateStyle();
+
+    // Newly added 9/14
+    // Add a layout to the frame for displaying an image
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    this->setLayout(layout);
 }
 
 void ClickableFrame::setSelected(bool selected)
@@ -42,8 +47,7 @@ void ClickableFrame::updateStyle()
                         "   background-color: #3E3E3E;"
                         "   border: %1px solid %2;"
                         "}"
-                        ).arg(m_selected ? "4" : "2")
-                        .arg(m_selected ? "#FFD700" : "#3E3E3E");
+                        ).arg(m_selected ? "4" : "2", m_selected ? "#FFD700" : "#3E3E3E");
 
     qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
@@ -52,6 +56,7 @@ void ClickableFrame::updateStyle()
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
+    ,m_selectedFrame(nullptr)  // Initialize to nullptr
 {
     ui->setupUi(this);
     initializeUI();
@@ -83,7 +88,7 @@ void PickImagesPage::initializeUI()
 
 QLabel* PickImagesPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Pick the images you like best", this);
+    QLabel *titleLabel = new QLabel("Pick The Images You like Best", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -149,7 +154,7 @@ QHBoxLayout* PickImagesPage::createButtonLayout()
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOSE PICTURE", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#6FCD6F"));
     ui->selectImagesButton->setEnabled(false);  // Initially disabled
     return buttonLayout;
 }
@@ -168,7 +173,7 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
                               "   padding: 0 20px;"
                               "}"
                               "QPushButton:hover {"
-                              "   background-color: darker(%1, 120%);"
+                              "   background-color: #FFD700;"
                               "}"
                               "QPushButton:pressed {"
                               "   background-color: darker(%1, 140%);"

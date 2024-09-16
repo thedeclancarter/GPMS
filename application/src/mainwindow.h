@@ -28,64 +28,64 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    public:
-        MainWindow(QWidget *parent = nullptr);
-        ~MainWindow();
+public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
 
-        // image projection page
-        ImageProjectionWindow *imageProjectionWindow;
+    // image projection page
+    ImageProjectionWindow *imageProjectionWindow;
 
-    private:
-        // functions
-        void setupUI();
-        void setupPages();
-        void setupConnections();
+private:
+    // functions
+    void setupUI();
+    void setupPages();
+    void setupConnections();
 
-        void showProjectionWindow();
+    void showProjectionWindow();
 
-        QWidget* createSidebar();
-        QPushButton* createSidebarButton(const QIcon& icon);
+    QWidget* createSidebar();
+    QPushButton* createSidebarButton(const QIcon& icon);
 
 
-        Ui::MainWindow *ui;
-        QStackedWidget *stackedWidget;
+    Ui::MainWindow *ui;
+    QStackedWidget *stackedWidget;
 
-        // pages
-        UserPage *userPage;
-        FavoritesPage *favoritesPage;
-        SettingsPage *settingsPage;
+    // pages
+    UserPage *userPage;
+    FavoritesPage *favoritesPage;
+    SettingsPage *settingsPage;
 
-        CreatePage *createPage;
-        TakePicture *takePicture;
+    CreatePage *createPage;
+    TakePicture *takePicture;
 
-        CalibrationPage *calibrationPage;
-        SensitivityPage *sensitivityPage;
-        TextVisionPage *textVisionPage;
-        PickImagesPage *pickImagesPage;
-        ProjectPage *projectPage;
+    CalibrationPage *calibrationPage;
+    SensitivityPage *sensitivityPage;
+    TextVisionPage *textVisionPage;
+    PickImagesPage *pickImagesPage;
+    ProjectPage *projectPage;
 
-        // sidebar buttons
-        QPushButton *userButton;
-        QPushButton *favoriteButton;
-        QPushButton *createButton;
-        QPushButton *settingsButton;
+    // sidebar buttons
+    QPushButton *userButton;
+    QPushButton *favoriteButton;
+    QPushButton *createButton;
+    QPushButton *settingsButton;
 
-    private slots:
-        // main pages
-        void navigateToUserPage();
-        void navigateToFavoritesPage();
-        void navigateToSettingsPage();
-        void navigateToCreatePage();
+private slots:
+    // main pages
+    void navigateToUserPage();
+    void navigateToFavoritesPage();
+    void navigateToSettingsPage();
+    void navigateToCreatePage();
 
-        // create page pages
-        void navigateToCalibrationPage();
-        void navigateToSensitivityPage();
-        void navigateToTextVisionPage();
-        void navigateToPickImagesPage();
-        void navigateToProjectPage();
+    // create page pages
+    void navigateToCalibrationPage();
+    void navigateToSensitivityPage();
+    void navigateToTextVisionPage();
+    void navigateToPickImagesPage();
+    void navigateToProjectPage();
 
-        // for the picture
-        void setImageForAcceptPage(const QImage &image);
+    // for the picture
+    void setImageForAcceptPage(const QImage &image);
 
 };
 #endif // MAINWINDOW_H

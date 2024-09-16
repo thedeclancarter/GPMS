@@ -12,6 +12,7 @@ set(Qt5_DIR $ENV{Qt5_DIR})
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_PREFIX_PATH "C:/opencv/opencv/build/x64/vc16/lib" ${CMAKE_PREFIX_PATH})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -77,6 +78,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt5::Core
     Qt5::Gui
     Qt5::QuickControls2
+    Qt5::Network #Newly added
     ${OpenCV_LIBS}
 )
 

@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QGraphicsDropShadowEffect>
+#include <QSslSocket>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -63,7 +65,7 @@ QPushButton* MainWindow::createSidebarButton(const QIcon& icon)
         "   padding: 5px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #4D4D4D;"
+        "   background-color: #FFD700;"
         "}"
         "QPushButton:pressed {"
         "   background-color: #5D5D5D;"
@@ -165,7 +167,7 @@ void MainWindow::setupConnections()
 
     // from create page
     // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
-        // connect to make projection page
+    // connect to make projection page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
 
     // from calibration page
@@ -180,12 +182,13 @@ void MainWindow::setupConnections()
         // take picture here when clicked
 
     // from take picture page
-        // passing the image from take picture to accept
+    // passing the image from take picture to accept
     // connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
 
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
+    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
 }
 
 
@@ -257,4 +260,3 @@ void MainWindow::setImageForAcceptPage(const QImage &image)
     // Assuming you have an AcceptPicturePage class
     // acceptPicturePage->setImage(image);
 }
-
