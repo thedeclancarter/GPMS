@@ -191,13 +191,13 @@ void MainWindow::setupConnections()
 
 void MainWindow::showProjectionWindow()
 {
-    if (imageProjectionWindow) {
-        imageProjectionWindow->show();
-        stackedWidget->setCurrentWidget(calibrationPage);
-    }
-    else{
-        qDebug("In showProjectionWindow imageprojectionwindow is null");
-    }
+    // if (imageProjectionWindow) {
+    //     imageProjectionWindow->show();
+    //     stackedWidget->setCurrentWidget(calibrationPage);
+    // }
+    // else{
+    //     qDebug("In showProjectionWindow imageprojectionwindow is null");
+    // }
 }
 
 void MainWindow::navigateToUserPage()
@@ -222,32 +222,32 @@ void MainWindow::navigateToCreatePage()
 
 void MainWindow::navigateToCalibrationPage()
 {
-    stackedWidget->setCurrentWidget(calibrationPage);
+    // stackedWidget->setCurrentWidget(calibrationPage);
 }
 
 void MainWindow::navigateToSensitivityPage()
 {
-    if (imageProjectionWindow) {
-        sensitivityPage->setProjectionWindow(imageProjectionWindow);
-    } else {
-        qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
-    }
-    stackedWidget->setCurrentWidget(sensitivityPage);
+    // if (imageProjectionWindow) {
+    //     sensitivityPage->setProjectionWindow(imageProjectionWindow);
+    // } else {
+    //     qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
+    // }
+    // stackedWidget->setCurrentWidget(sensitivityPage);
 }
 
 void MainWindow::navigateToTextVisionPage()
 {
-    stackedWidget->setCurrentWidget(textVisionPage);
+    // stackedWidget->setCurrentWidget(textVisionPage);
 }
 
 void MainWindow::navigateToPickImagesPage()
 {
-    stackedWidget->setCurrentWidget(pickImagesPage);
+    // stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
 void MainWindow::navigateToProjectPage()
 {
-    stackedWidget->setCurrentWidget(projectPage);
+    // stackedWidget->setCurrentWidget(projectPage);
 }
 
 // pictures
