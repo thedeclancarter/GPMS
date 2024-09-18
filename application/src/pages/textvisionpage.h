@@ -30,6 +30,8 @@ private slots:
     void onSubmitButtonClicked();
     void onRealisticButtonClicked();
     void onAnimatedButtonClicked();
+    void onTextChanged(); // Added
+
 
 private:
     Ui::TextVisionPage *ui;

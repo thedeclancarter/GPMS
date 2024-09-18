@@ -30,10 +30,12 @@ class SensitivityPage : public QWidget
 
     signals:
         void navigateToTextVisionPage();
+        void navigateToCalibrationPage();
 
     private slots:
         void onAcceptButtonClicked();
         void captureAndProcessFrame();
+        void onRejectButtonClicked();
 
     private:
         Ui::SensitivityPage *ui;

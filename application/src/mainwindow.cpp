@@ -4,7 +4,6 @@
 #include <QFile>
 #include <QDir>
 #include <QGraphicsDropShadowEffect>
-#include <QSslSocket>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -60,17 +59,19 @@ QPushButton* MainWindow::createSidebarButton(const QIcon& icon)
     button->setFixedSize(60, 60);
     button->setStyleSheet(
         "QPushButton {"
-        "   background-color: #1E1E1E;"
         "   border-radius: 15px;"
         "   padding: 5px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #FFD700;"
+        "   background-color: #D3D3D3;"
         "}"
         "QPushButton:pressed {"
         "   background-color: #5D5D5D;"
         "}"
         );
+
+    // Set the hand cursor when hovering over the button
+    button->setCursor(Qt::PointingHandCursor);
 
     return button;
 }
@@ -175,7 +176,9 @@ void MainWindow::setupConnections()
 
     // from sensitivity page
     connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
-    // change to navigateToCalibrationPage
+
+    // change to calibration page
+    connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
     connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
@@ -190,7 +193,6 @@ void MainWindow::setupConnections()
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
     connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
 }
-
 
 void MainWindow::showProjectionWindow()
 {
