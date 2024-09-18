@@ -2,6 +2,7 @@
 #include "ui_textvisionpage.h"
 
 #include <QVBoxLayout>
+#include <QMessageBox>  // Include this header for QMessageBox on onSubmitButtonClicked function
 
 
 TextVisionPage::TextVisionPage(QWidget *parent)
@@ -24,6 +25,10 @@ void TextVisionPage::setupUI()
     m_visionInput = new QTextEdit(this);
     m_visionInput->setFixedSize(600, 200);
     m_submitButton = createSubmitButton();
+    m_submitButton->setEnabled(false); // Initially disabled
+    // Set the hand cursor when hovering over the button
+    m_realisticButton->setCursor(Qt::PointingHandCursor);
+    m_animatedButton->setCursor(Qt::PointingHandCursor);
 }
 
 QLabel* TextVisionPage::createTitleLabel()
@@ -78,12 +83,15 @@ QPushButton* TextVisionPage::createSubmitButton()
         "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #FFD700;"
+        "   background-color: #4E5A90;"
         "}"
         "QPushButton:pressed {"
         "   background-color: #5D5D5D;"
         "}"
         );
+
+    // Set the hand cursor when hovering over the button
+    submit_button->setCursor(Qt::PointingHandCursor);
     return submit_button;
 }
 
@@ -92,6 +100,7 @@ void TextVisionPage::setupConnections()
     connect(m_submitButton, &QPushButton::clicked, this, &TextVisionPage::onSubmitButtonClicked);
     connect(m_realisticButton, &QPushButton::clicked, this, &TextVisionPage::onRealisticButtonClicked);
     connect(m_animatedButton, &QPushButton::clicked, this, &TextVisionPage::onAnimatedButtonClicked);
+    connect(m_visionInput, &QTextEdit::textChanged, this, &TextVisionPage::onTextChanged);
 }
 
 TextVisionPage::~TextVisionPage()
@@ -105,11 +114,25 @@ void TextVisionPage::updateButtonStyles()
     m_animatedButton->setStyleSheet(m_isRealistic ? UNSELECTED_STYLE : SELECTED_STYLE);
 }
 
+// void TextVisionPage::onSubmitButtonClicked()
+// {
+//     m_visionText = m_visionInput->toPlainText();
+//     emit navigateToPickImagesPage();
+// }
+
 void TextVisionPage::onSubmitButtonClicked()
 {
     m_visionText = m_visionInput->toPlainText();
+
+    if (m_visionText.isEmpty()) {
+        // Optionally, show a message box to inform the user
+        QMessageBox::warning(this, "Input Required", "Please enter text before submitting.");
+        return;
+    }
+
     emit navigateToPickImagesPage();
 }
+
 
 void TextVisionPage::onRealisticButtonClicked()
 {
@@ -122,3 +145,10 @@ void TextVisionPage::onAnimatedButtonClicked()
     m_isRealistic = false;
     updateButtonStyles();
 }
+
+void TextVisionPage::onTextChanged()
+{
+    bool hasText = !m_visionInput->toPlainText().isEmpty();
+    m_submitButton->setEnabled(hasText);
+}
+

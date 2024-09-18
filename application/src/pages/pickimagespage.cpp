@@ -161,11 +161,21 @@ QHBoxLayout* PickImagesPage::createButtonLayout()
 
 QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& text, const QString& bgColor)
 {
+    // Define hover colors as 30% darker versions of the original colors
+    QString hoverColor;
+    if (bgColor == "#CD6F6F") {
+        hoverColor = "#9F5D5D"; // 30% darker version of #CD6F6F
+    } else if (bgColor == "#6FCD6F") {
+        hoverColor = "#4C9A4C"; // 30% darker version of #6FCD6F
+    } else {
+        hoverColor = "#FFD700"; // Fallback hover color (for other cases)
+    }
+
     button->setText(text);
     button->setFixedHeight(50);
     button->setStyleSheet(QString(
                               "QPushButton {"
-                              "   background-color: %1;"
+                              "   background-color: %1;"   // Original color
                               "   color: white;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
@@ -173,15 +183,18 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
                               "   padding: 0 20px;"
                               "}"
                               "QPushButton:hover {"
-                              "   background-color: #FFD700;"
+                              "   background-color: %2;"   // 30% darker color for hover
                               "}"
                               "QPushButton:pressed {"
-                              "   background-color: darker(%1, 140%);"
+                              "   background-color: darker(%1, 140%);" // Ensure the pressed color is darker
                               "}"
                               "QPushButton:disabled {"
-                              "   background-color: #808080;"
+                              "   background-color: #808080;"  // Disabled state color
                               "}"
-                              ).arg(bgColor));
+                              ).arg(bgColor).arg(hoverColor));
+
+    // Set the hand cursor when hovering over the button
+    button->setCursor(Qt::PointingHandCursor);
     return button;
 }
 

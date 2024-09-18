@@ -99,7 +99,7 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
         "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #FFD700;"
+        "   background-color: #33407A;"
         "}"
         );
     createButton->setFixedSize(250, 50);  // Adjust size as needed
@@ -111,6 +111,9 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
     createButton->setGraphicsEffect(shadowEffect);
 
     layout->addWidget(createButton, 0, Qt::AlignCenter);
+
+    // Set the hand cursor when hovering over the button
+    createButton->setCursor(Qt::PointingHandCursor);
 }
 
 void CreatePage::setupConnections()
