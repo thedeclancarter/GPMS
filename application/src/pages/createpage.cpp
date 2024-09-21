@@ -90,7 +90,7 @@ void CreatePage::setupLeftColumn(QGridLayout *layout, int row, int column)
     stepsLayout->setSpacing(10);  // Add some spacing between items
     stepsLayout->setContentsMargins(20, 20, 20, 20);  // Keep padding inside the container
 
-    QLabel *stepsHeader = new QLabel("3 Easy Steps", stepsContainer);
+    QLabel *stepsHeader = new QLabel("Projection Steps", stepsContainer);
     stepsHeader->setStyleSheet("font-size: 24px; font-weight: bold; color: white;");
     stepsLayout->addWidget(stepsHeader);
 

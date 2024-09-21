@@ -79,7 +79,7 @@ void PickImagesPage::initializeUI()
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
-    mainLayout->addWidget(createTitleLabel());
+    mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
     mainLayout->addWidget(createImagesGrid(), 1);
     mainLayout->addLayout(createButtonLayout());
 
@@ -99,6 +99,7 @@ QLabel* PickImagesPage::createTitleLabel()
         );
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    titleLabel->setFixedWidth(800);
     return titleLabel;
 }
 
@@ -173,6 +174,7 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
 
     button->setText(text);
     button->setFixedHeight(50);
+    button->setFixedWidth(250);
     button->setStyleSheet(QString(
                               "QPushButton {"
                               "   background-color: %1;"   // Original color
