@@ -14,14 +14,68 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupLayouts();
     setupStyleSheets();
     setupConnections();
+    setupVirtualKeyboard();
+}
+
+void TextVisionPage::setupConnections()
+{
+    connect(m_submitButton, &QPushButton::clicked, this, &TextVisionPage::onSubmitButtonClicked);
+    connect(m_realisticButton, &QPushButton::clicked, this, &TextVisionPage::onRealisticButtonClicked);
+    connect(m_animatedButton, &QPushButton::clicked, this, &TextVisionPage::onAnimatedButtonClicked);
+}
+
+bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == m_visionInput) {
+        if (event->type() == QEvent::FocusIn) {
+            showVirtualKeyboard();
+        } else if (event->type() == QEvent::FocusOut) {
+            hideVirtualKeyboard();
+        }
+    }
+    return QWidget::eventFilter(obj, event);
+}
+
+void TextVisionPage::showVirtualKeyboard()
+{
+    QInputMethod *inputMethod = QApplication::inputMethod();
+    if (!inputMethod->isVisible()) {
+        inputMethod->show();
+    }
+}
+
+void TextVisionPage::hideVirtualKeyboard()
+{
+    QInputMethod *inputMethod = QApplication::inputMethod();
+    if (inputMethod->isVisible()) {
+        inputMethod->hide();
+    }
+}
+
+void TextVisionPage::toggleVirtualKeyboard()
+{
+    QInputMethod *inputMethod = QApplication::inputMethod();
+    if (inputMethod->isVisible()) {
+        hideVirtualKeyboard();
+    } else {
+        showVirtualKeyboard();
+    }
+}
+
+void TextVisionPage::setupVirtualKeyboard()
+{
+    // Ensure that the application is configured to use the virtual keyboard
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
 }
 
 void TextVisionPage::setupUI()
 {
     m_title = createTitleLabel();
+
     m_realisticButton = new QPushButton("Realistic", this);
     m_animatedButton = new QPushButton("Animated", this);
     updateButtonStyles();
+
     m_visionInput = new QTextEdit(this);
     m_visionInput->setFixedSize(600, 200);
     m_submitButton = createSubmitButton();
