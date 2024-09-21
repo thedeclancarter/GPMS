@@ -51,7 +51,7 @@ void TakePicture::initializeUI()
 
 QLabel* TakePicture::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Take a picture of your structure", this);
+    QLabel *titleLabel = new QLabel("Take A Picture Of Your Structure", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -73,6 +73,7 @@ QFrame* TakePicture::createCameraFrame()
     cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
 
     QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
+    cameraLayout->setContentsMargins(0, 0, 0, 0); // Optional: to avoid unwanted margins
     if (m_viewfinder) {
         cameraLayout->addWidget(m_viewfinder);
         m_viewfinder->setStyleSheet("border-radius: 8px;");
@@ -80,8 +81,11 @@ QFrame* TakePicture::createCameraFrame()
         qDebug() << "Viewfinder is null!";
     }
 
+    cameraFrame->setLayout(cameraLayout); // Ensure layout is set for the frame
+
     return cameraFrame;
 }
+
 
 QPushButton* TakePicture::createSubmitButton()
 {

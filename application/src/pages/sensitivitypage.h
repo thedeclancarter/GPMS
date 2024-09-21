@@ -30,10 +30,12 @@ class SensitivityPage : public QWidget
 
     signals:
         void navigateToTextVisionPage();
+        void navigateToCalibrationPage();
 
     private slots:
         void onAcceptButtonClicked();
         void captureAndProcessFrame();
+        void onRejectButtonClicked();
 
     private:
         Ui::SensitivityPage *ui;
@@ -48,7 +50,7 @@ class SensitivityPage : public QWidget
         QVideoFrame *m_lastFrame;
 
         // cv::Mat m_lastFrame;
-        QMutex m_frameMutex;
+        // QMutex m_frameMutex;
 
         void init();
         void initializeUI();
