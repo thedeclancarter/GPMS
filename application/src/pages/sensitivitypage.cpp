@@ -276,8 +276,8 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN!", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#BB64C7"));
+    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN", "#CD6F6F"));
     return buttonLayout;
 }
 
@@ -287,8 +287,8 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
     QString darkerColor;
     if (bgColor == "#CD6F6F") {
         darkerColor = "#8B4D4D";  // 30% darker color for red
-    } else if (bgColor == "#6FCD6F") {
-        darkerColor = "#4B8A4B";  // 30% darker color for green
+    } else if (bgColor == "#BB64C7") {
+        darkerColor = "#83468B";  // 30% darker color for purple
     } else {
         darkerColor = "#4A5A9F";  // Default color (if none of the above match)
     }
@@ -298,7 +298,7 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
     button->setStyleSheet(QString(
                               "QPushButton {"
                               "   background-color: %1;"  // Original color
-                              "   color: white;"
+                              "   color: black;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
                               "   font-size: 16px;"

@@ -152,9 +152,9 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 QHBoxLayout* PickImagesPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#BB64c7"));
     buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#6FCD6F"));
     ui->selectImagesButton->setEnabled(false);  // Initially disabled
     return buttonLayout;
 }
@@ -165,8 +165,8 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
     QString hoverColor;
     if (bgColor == "#CD6F6F") {
         hoverColor = "#9F5D5D"; // 30% darker version of #CD6F6F
-    } else if (bgColor == "#6FCD6F") {
-        hoverColor = "#4C9A4C"; // 30% darker version of #6FCD6F
+    } else if (bgColor == "#BB64c7") {
+        hoverColor = "#83468B"; // 30% darker version of #6FCD6F
     } else {
         hoverColor = "#FFD700"; // Fallback hover color (for other cases)
     }
@@ -176,7 +176,7 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
     button->setStyleSheet(QString(
                               "QPushButton {"
                               "   background-color: %1;"   // Original color
-                              "   color: white;"
+                              "   color: black;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
                               "   font-size: 16px;"
