@@ -9,6 +9,11 @@
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
     updateStyle();
+
+    // Newly added 9/14
+    // Add a layout to the frame for displaying an image
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    this->setLayout(layout);
 }
 
 void ClickableFrame::setSelected(bool selected)
@@ -42,8 +47,7 @@ void ClickableFrame::updateStyle()
                         "   background-color: #3E3E3E;"
                         "   border: %1px solid %2;"
                         "}"
-                        ).arg(m_selected ? "4" : "2")
-                        .arg(m_selected ? "#FFD700" : "#3E3E3E");
+                        ).arg(m_selected ? "4" : "2", m_selected ? "#FFD700" : "#3E3E3E");
 
     qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
@@ -52,6 +56,7 @@ void ClickableFrame::updateStyle()
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
+    ,m_selectedFrame(nullptr)  // Initialize to nullptr
 {
     ui->setupUi(this);
     initializeUI();
@@ -83,7 +88,7 @@ void PickImagesPage::initializeUI()
 
 QLabel* PickImagesPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Pick the images you like best", this);
+    QLabel *titleLabel = new QLabel("Pick The Images You like Best", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -149,18 +154,28 @@ QHBoxLayout* PickImagesPage::createButtonLayout()
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOSE PICTURE", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#6FCD6F"));
     ui->selectImagesButton->setEnabled(false);  // Initially disabled
     return buttonLayout;
 }
 
 QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& text, const QString& bgColor)
 {
+    // Define hover colors as 30% darker versions of the original colors
+    QString hoverColor;
+    if (bgColor == "#CD6F6F") {
+        hoverColor = "#9F5D5D"; // 30% darker version of #CD6F6F
+    } else if (bgColor == "#6FCD6F") {
+        hoverColor = "#4C9A4C"; // 30% darker version of #6FCD6F
+    } else {
+        hoverColor = "#FFD700"; // Fallback hover color (for other cases)
+    }
+
     button->setText(text);
     button->setFixedHeight(50);
     button->setStyleSheet(QString(
                               "QPushButton {"
-                              "   background-color: %1;"
+                              "   background-color: %1;"   // Original color
                               "   color: white;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
@@ -168,15 +183,18 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
                               "   padding: 0 20px;"
                               "}"
                               "QPushButton:hover {"
-                              "   background-color: darker(%1, 120%);"
+                              "   background-color: %2;"   // 30% darker color for hover
                               "}"
                               "QPushButton:pressed {"
-                              "   background-color: darker(%1, 140%);"
+                              "   background-color: darker(%1, 140%);" // Ensure the pressed color is darker
                               "}"
                               "QPushButton:disabled {"
-                              "   background-color: #808080;"
+                              "   background-color: #808080;"  // Disabled state color
                               "}"
-                              ).arg(bgColor));
+                              ).arg(bgColor).arg(hoverColor));
+
+    // Set the hand cursor when hovering over the button
+    button->setCursor(Qt::PointingHandCursor);
     return button;
 }
 

@@ -44,6 +44,7 @@ void CreatePage::setupUI()
 void CreatePage::setupHeader(QVBoxLayout *layout)
 {
     QLabel *headerLabel = new QLabel("MAKE YOUR VISION COME TO LIFE", this);
+    headerLabel->setAlignment(Qt::AlignCenter);
     headerLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: white;");
 
     QWidget *headerContainer = new QWidget(this);
@@ -60,11 +61,12 @@ void CreatePage::setupStepsSection(QHBoxLayout *layout)
     QWidget *stepsContainer = new QWidget(this);
     QVBoxLayout *stepsLayout = new QVBoxLayout(stepsContainer);
 
-    QLabel *stepsHeader = new QLabel("3 easy steps", stepsContainer);
+    QLabel *stepsHeader = new QLabel("3 Easy Steps", stepsContainer);
+    stepsHeader->setAlignment(Qt::AlignCenter);
     stepsHeader->setStyleSheet("font-size: 20px; font-weight: bold; color: white;");
     stepsLayout->addWidget(stepsHeader);
 
-    QStringList steps = {"1. Take a picture & calibrate", "2. Input your vision", "3. Choose your image"};
+    QStringList steps = {"1) Take a picture & calibrate.", "2) Input your vision.", "3) Choose your image."};
     for (const QString &step : steps) {
         QLabel *stepLabel = new QLabel(step, stepsContainer);
         stepLabel->setStyleSheet("font-size: 16px; color: white;");
@@ -97,7 +99,7 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
         "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #6F81CD;"
+        "   background-color: #33407A;"
         "}"
         );
     createButton->setFixedSize(250, 50);  // Adjust size as needed
@@ -109,6 +111,9 @@ void CreatePage::setupCreateButton(QVBoxLayout *layout)
     createButton->setGraphicsEffect(shadowEffect);
 
     layout->addWidget(createButton, 0, Qt::AlignCenter);
+
+    // Set the hand cursor when hovering over the button
+    createButton->setCursor(Qt::PointingHandCursor);
 }
 
 void CreatePage::setupConnections()

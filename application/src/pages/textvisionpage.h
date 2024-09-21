@@ -33,6 +33,7 @@ private slots:
     void onSubmitButtonClicked();
     void onRealisticButtonClicked();
     void onAnimatedButtonClicked();
+    void onTextChanged();
     void toggleVirtualKeyboard();
 
 private:

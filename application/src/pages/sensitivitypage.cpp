@@ -27,6 +27,7 @@ SensitivityPage::SensitivityPage(QWidget *parent)
     init();
 
     connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
+    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
 
     // Set up timer for continuous frame capture
     timer = new QTimer(this);
@@ -215,7 +216,7 @@ void SensitivityPage::initializeUI()
 
 QLabel* SensitivityPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Change the sensitivity of the outline", this);
+    QLabel *titleLabel = new QLabel("Change The Sensitivity of the Outline", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 24px;"
@@ -276,32 +277,46 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAINN!", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOODD!", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN!", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#6FCD6F"));
     return buttonLayout;
 }
 
 QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& text, const QString& bgColor)
 {
+    // Compute the darker color by applying a 30% reduction
+    QString darkerColor;
+    if (bgColor == "#CD6F6F") {
+        darkerColor = "#8B4D4D";  // 30% darker color for red
+    } else if (bgColor == "#6FCD6F") {
+        darkerColor = "#4B8A4B";  // 30% darker color for green
+    } else {
+        darkerColor = "#4A5A9F";  // Default color (if none of the above match)
+    }
+
     button->setText(text);
     button->setFixedSize(200, 50);
     button->setStyleSheet(QString(
-        "QPushButton {"
-        "   background-color: %1;"
-        "   color: white;"
-        "   border-radius: 25px;"
-        "   font-weight: bold;"
-        "   font-size: 16px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: darker(%1, 120%);"
-        "}"
-        "QPushButton:pressed {"
-        "   background-color: darker(%1, 140%);"
-        "}"
-    ).arg(bgColor));
+                              "QPushButton {"
+                              "   background-color: %1;"  // Original color
+                              "   color: white;"
+                              "   border-radius: 25px;"
+                              "   font-weight: bold;"
+                              "   font-size: 16px;"
+                              "}"
+                              "QPushButton:hover {"
+                              "   background-color: %2;"  // 30% darker color for hover
+                              "}"
+                              "QPushButton:pressed {"
+                              "   background-color: %3;"  // 30% darker color for pressed
+                              "}"
+                              ).arg(bgColor).arg(darkerColor).arg(darkerColor));
+
+    // Set the hand cursor when hovering over the button
+    button->setCursor(Qt::PointingHandCursor);
     return button;
 }
+
 
 SensitivityPage::~SensitivityPage()
 {
@@ -309,6 +324,17 @@ SensitivityPage::~SensitivityPage()
         timer->stop();
     }
     delete ui;
+}
+
+void SensitivityPage::onRejectButtonClicked()
+{
+    // if (!currentImage.isNull()) {
+    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
+    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
+    //     projectionWindow->show();
+    // }
+
+    emit navigateToCalibrationPage();
 }
 
 void SensitivityPage::onAcceptButtonClicked()
