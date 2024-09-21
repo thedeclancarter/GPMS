@@ -190,9 +190,9 @@ void SensitivityPage::initializeUI()
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
-    mainLayout->addWidget(createTitleLabel());
+    mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
 
-    mainLayout->addWidget(createImageFrame(), 1);
+    mainLayout->addWidget(createImageFrame(), 1, Qt::AlignHCenter);
 
     QFrame *sliderFrame = new QFrame(this);
     QHBoxLayout *sliderLayout = new QHBoxLayout(sliderFrame);
@@ -225,28 +225,27 @@ QLabel* SensitivityPage::createTitleLabel()
         "border-radius: 20px;"
         "padding: 15px 20px;"
         );
-    titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    titleLabel->setFixedWidth(800);
+    titleLabel->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
     return titleLabel;
 }
 
 QFrame* SensitivityPage::createImageFrame()
 {
     setupCamera();
-
     QFrame *cameraFrame = new QFrame(this);
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
     cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
+    cameraFrame->setFixedWidth(800);
+
 
     QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
-
-
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     cameraLayout->addWidget(m_imageLabel);
-
     return cameraFrame;
 }
 

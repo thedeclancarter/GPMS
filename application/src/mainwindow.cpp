@@ -43,6 +43,24 @@ void MainWindow::setupUI()
 
     // Set the central widget
     setCentralWidget(centralWidget);
+
+    // Create and set up the logo
+    logoButton = new QPushButton(this);
+    QPixmap logo(":/icons/GPMS_logo2.webp");
+    logoButton->setIcon(QIcon(logo));
+    logoButton->setIconSize(QSize(60, 60));  // Set the size of the icon
+    logoButton->setFixedSize(60, 60);  // Set the size of the button
+    logoButton->setCursor(Qt::PointingHandCursor);
+    logoButton->setToolTip("Go to Create Page");
+
+    // Style the button to look like a label
+    logoButton->setStyleSheet(
+        "QPushButton { border: none; background-color: transparent; }"
+        // "QPushButton:hover { background-color: rgba(255, 255, 255, 30); }"  // Optional: add hover effect
+        );
+
+    logoButton->move(35, 35);  // X, Y
+    logoButton->raise(); // Ensure the logo is always on top
 }
 
 void MainWindow::setupPages()
@@ -74,6 +92,9 @@ void MainWindow::setupPages()
 
 void MainWindow::setupConnections()
 {
+    // logo
+    connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
+
     // from create page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
 

@@ -31,19 +31,11 @@ public:
     // image projection page
     ImageProjectionWindow *imageProjectionWindow;
 
+
 private:
-    // functions
-    void setupUI();
-    void setupPages();
-    void setupConnections();
-
-    void showProjectionWindow();
-
-    QWidget* createSidebar();
-    QPushButton* createSidebarButton(const QIcon& icon);
-
 
     Ui::MainWindow *ui;
+    QPushButton *logoButton;
     QStackedWidget *stackedWidget;
 
     // pages
@@ -55,6 +47,16 @@ private:
     TextVisionPage *textVisionPage;
     PickImagesPage *pickImagesPage;
     ProjectPage *projectPage;
+
+    // functions
+    void setupUI();
+    void setupPages();
+    void setupConnections();
+
+    void showProjectionWindow();
+
+    QWidget* createSidebar();
+    QPushButton* createSidebarButton(const QIcon& icon);
 
 private slots:
     // main page

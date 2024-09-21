@@ -19,6 +19,7 @@ class CreatePage : public QWidget
 
     signals:
         void navigateToCalibrationPage();
+        void goBack();
 
     private slots:
         void onCreateButtonClicked();
@@ -26,13 +27,20 @@ class CreatePage : public QWidget
     private:
         Ui::CreatePage *ui;
         QPushButton *createButton;
+        QPushButton *backButton;
 
         void setupUI();
         void setupHeader(QVBoxLayout *layout);
+
         void setupStepsSection(QHBoxLayout *layout);
         void setupImagePreviewSection(QHBoxLayout *layout);
         void setupCreateButton(QVBoxLayout *layout);
+
         void setupConnections();
+
+        void setupLeftColumn(QGridLayout *layout, int row, int column);
+        void setupStepsSection(QVBoxLayout *layout);
+        void setupRightColumn(QGridLayout *layout, int row, int column);
 };
 
 #endif // CREATEPAGE_H
