@@ -26,12 +26,15 @@ public:
 signals:
     void navigateToPickImagesPage();
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private slots:
     void onSubmitButtonClicked();
     void onRealisticButtonClicked();
     void onAnimatedButtonClicked();
-    void onTextChanged(); // Added
-
+    void onTextChanged();
+    void toggleVirtualKeyboard();
 
 private:
     Ui::TextVisionPage *ui;
@@ -40,7 +43,11 @@ private:
     void setupLayouts();
     void setupStyleSheets();
     void setupConnections();
+    void setupVirtualKeyboard();
     QLabel* createTitleLabel();
+
+    void showVirtualKeyboard();
+    void hideVirtualKeyboard();
 
     void updateButtonStyles();
     QPushButton* createSubmitButton();
@@ -50,6 +57,7 @@ private:
     QPushButton *m_animatedButton;
     QTextEdit *m_visionInput;
     QPushButton *m_submitButton;
+
 
     QString m_visionText;
     bool m_isRealistic;
