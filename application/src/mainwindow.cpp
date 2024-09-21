@@ -198,6 +198,7 @@ void MainWindow::showProjectionWindow()
 {
     if (imageProjectionWindow) {
         imageProjectionWindow->show();
+        imageProjectionWindow->lower();
         stackedWidget->setCurrentWidget(calibrationPage);
     }
     else{

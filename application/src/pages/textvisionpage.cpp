@@ -17,13 +17,6 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupVirtualKeyboard();
 }
 
-void TextVisionPage::setupConnections()
-{
-    connect(m_submitButton, &QPushButton::clicked, this, &TextVisionPage::onSubmitButtonClicked);
-    connect(m_realisticButton, &QPushButton::clicked, this, &TextVisionPage::onRealisticButtonClicked);
-    connect(m_animatedButton, &QPushButton::clicked, this, &TextVisionPage::onAnimatedButtonClicked);
-}
-
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_visionInput) {
