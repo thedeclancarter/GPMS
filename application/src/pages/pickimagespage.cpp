@@ -153,9 +153,9 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 QHBoxLayout* PickImagesPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#BB64c7"));
-    buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#BB64c7"));
     ui->selectImagesButton->setEnabled(false);  // Initially disabled
     return buttonLayout;
 }
