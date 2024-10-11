@@ -279,8 +279,8 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#BB64C7"));
     buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#BB64C7"));
     return buttonLayout;
 }
 
