@@ -33,11 +33,6 @@ void MainWindow::setupUI()
     // Create main layout
     QHBoxLayout *mainLayout = new QHBoxLayout();
 
-    // Create and add sidebar
-    QWidget *sidebar = createSidebar();
-    mainLayout->addWidget(sidebar);
-
-
     // Create a QStackedWidget
     stackedWidget = new QStackedWidget(this);
     mainLayout->addWidget(stackedWidget);
@@ -48,85 +43,28 @@ void MainWindow::setupUI()
 
     // Set the central widget
     setCentralWidget(centralWidget);
-}
 
+    // Create and set up the logo
+    logoButton = new QPushButton(this);
+    QPixmap logo(":/icons/GPMS_logo2.webp");
+    logoButton->setIcon(QIcon(logo));
+    logoButton->setIconSize(QSize(60, 60));  // Set the size of the icon
+    logoButton->setFixedSize(60, 60);  // Set the size of the button
+    logoButton->setCursor(Qt::PointingHandCursor);
+    logoButton->setToolTip("Go to Create Page");
 
-QPushButton* MainWindow::createSidebarButton(const QIcon& icon)
-{
-    QPushButton *button = new QPushButton();
-    button->setIcon(icon);
-    button->setIconSize(QSize(50, 50));
-    button->setFixedSize(60, 60);
-    button->setStyleSheet(
-        "QPushButton {"
-        "   border-radius: 15px;"
-        "   padding: 5px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #D3D3D3;"
-        "}"
-        "QPushButton:pressed {"
-        "   background-color: #5D5D5D;"
-        "}"
+    // Style the button to look like a label
+    logoButton->setStyleSheet(
+        "QPushButton { border: none; background-color: transparent; }"
+        // "QPushButton:hover { background-color: rgba(255, 255, 255, 30); }"  // Optional: add hover effect
         );
 
-    // Set the hand cursor when hovering over the button
-    button->setCursor(Qt::PointingHandCursor);
-
-    return button;
-}
-
-QWidget* MainWindow::createSidebar()
-{
-    QWidget *sidebar = new QWidget(this);
-    sidebar->setObjectName("sideMenuBar");
-
-    QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebar);
-
-    // Create sidebar buttons with icons
-    userButton = createSidebarButton(QIcon(":/icons/user-solid.svg"));
-    favoriteButton = createSidebarButton(QIcon(":/icons/heart-solid.svg"));
-    createButton = createSidebarButton(QIcon(":/icons/create.svg"));
-    settingsButton = createSidebarButton(QIcon(":/icons/gear-solid.svg"));
-
-    // Add buttons to the sidebar layout with centering
-    sidebarLayout->addWidget(userButton, 0, Qt::AlignCenter);
-    sidebarLayout->addWidget(favoriteButton, 0, Qt::AlignCenter);
-    sidebarLayout->addWidget(createButton, 0, Qt::AlignCenter);
-    sidebarLayout->addStretch(1); // This pushes the settings button to the bottom
-    sidebarLayout->addWidget(settingsButton, 0, Qt::AlignCenter);
-
-    // Set layout properties for even spacing
-    sidebarLayout->setAlignment(Qt::AlignCenter);
-    sidebarLayout->setSpacing(20); // Adjust this value for desired spacing between buttons
-    sidebarLayout->setContentsMargins(10, 20, 10, 20); // Add some padding inside the sidebar
-
-    sidebar->setFixedWidth(90); // Set a fixed width for the sidebar
-    // Style the sidebar
-    sidebar->setStyleSheet(
-        "QWidget {"
-        "   background-color: #2C2C2E;"
-        "   border-radius: 45px;"
-        "}"
-        );
-
-    // Create and apply the shadow effect
-    QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(sidebar);
-    shadowEffect->setBlurRadius(15);
-    shadowEffect->setColor(QColor(0, 0, 0, 80));  // Semi-transparent black
-    shadowEffect->setOffset(5, 5);  // Offset to bottom-right
-    sidebar->setGraphicsEffect(shadowEffect);
-
-    return sidebar;
+    logoButton->move(35, 35);  // X, Y
+    logoButton->raise(); // Ensure the logo is always on top
 }
 
 void MainWindow::setupPages()
 {
-    // create instance of page
-    userPage = new UserPage(this);
-    favoritesPage = new FavoritesPage(this);
-    settingsPage = new SettingsPage(this);
-
     createPage = new CreatePage(this);
 
     imageProjectionWindow = new ImageProjectionWindow();
@@ -139,11 +77,6 @@ void MainWindow::setupPages()
     textVisionPage = new TextVisionPage(this);
     pickImagesPage = new PickImagesPage(this);
     projectPage = new ProjectPage(this);
-
-    // add each page
-    stackedWidget->addWidget(userPage);
-    stackedWidget->addWidget(favoritesPage);
-    stackedWidget->addWidget(settingsPage);
 
     stackedWidget->addWidget(createPage);
 
@@ -159,16 +92,10 @@ void MainWindow::setupPages()
 
 void MainWindow::setupConnections()
 {
-    // Connect buttons to navigation slots
-    connect(userButton, &QPushButton::clicked, this, &MainWindow::navigateToUserPage);
-    connect(favoriteButton, &QPushButton::clicked, this, &MainWindow::navigateToFavoritesPage);
-    connect(createButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
-    connect(settingsButton, &QPushButton::clicked, this, &MainWindow::navigateToSettingsPage);
-
+    // logo
+    connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
 
     // from create page
-    // connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
-    // connect to make projection page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
 
     // from calibration page
@@ -176,17 +103,11 @@ void MainWindow::setupConnections()
 
     // from sensitivity page
     connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
-
-    // change to calibration page
     connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
     connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
         // take picture here when clicked
-
-    // from take picture page
-    // passing the image from take picture to accept
-    // connect(takePicture, &TakePicture::imageCaptured, this, &MainWindow::setImageForAcceptPage);
 
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
@@ -198,26 +119,12 @@ void MainWindow::showProjectionWindow()
 {
     if (imageProjectionWindow) {
         imageProjectionWindow->show();
+        imageProjectionWindow->lower();
         stackedWidget->setCurrentWidget(calibrationPage);
     }
     else{
         qDebug("In showProjectionWindow imageprojectionwindow is null");
     }
-}
-
-void MainWindow::navigateToUserPage()
-{
-    stackedWidget->setCurrentWidget(userPage);
-}
-
-void MainWindow::navigateToFavoritesPage()
-{
-    stackedWidget->setCurrentWidget(favoritesPage);
-}
-
-void MainWindow::navigateToSettingsPage()
-{
-    stackedWidget->setCurrentWidget(settingsPage);
 }
 
 void MainWindow::navigateToCreatePage()

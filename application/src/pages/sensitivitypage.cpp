@@ -187,12 +187,12 @@ void SensitivityPage::initializeUI()
     setStyleSheet("background-color: #1E1E1E;");
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setContentsMargins(30, 20, 30, 20);
     mainLayout->setSpacing(15);
 
-    mainLayout->addWidget(createTitleLabel());
+    mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
 
-    mainLayout->addWidget(createImageFrame(), 1);
+    mainLayout->addWidget(createImageFrame(), 1, Qt::AlignHCenter);
 
     QFrame *sliderFrame = new QFrame(this);
     QHBoxLayout *sliderLayout = new QHBoxLayout(sliderFrame);
@@ -219,34 +219,33 @@ QLabel* SensitivityPage::createTitleLabel()
     QLabel *titleLabel = new QLabel("Change The Sensitivity of the Outline", this);
     titleLabel->setStyleSheet(
         "color: white;"
-        "font-size: 24px;"
+        "font-size: 30px;"
         "font-weight: bold;"
         "background-color: #3E3E3E;"
         "border-radius: 20px;"
         "padding: 15px 20px;"
         );
-    titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    titleLabel->setFixedWidth(800);
+    titleLabel->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
     return titleLabel;
 }
 
 QFrame* SensitivityPage::createImageFrame()
 {
     setupCamera();
-
     QFrame *cameraFrame = new QFrame(this);
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
     cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
+    cameraFrame->setFixedWidth(800);
+
 
     QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
-
-
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     cameraLayout->addWidget(m_imageLabel);
-
     return cameraFrame;
 }
 
@@ -257,16 +256,17 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
     slider->setValue(150);     // Default value
     slider->setStyleSheet(
         "QSlider::groove:horizontal {"
-        "    border: 1px solid #999999;"
         "    height: 8px;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);"
+        "    background-color: #FFF9C4;"
         "    margin: 2px 0;"
+        "    border-radius: 4px;"
         "}"
         "QSlider::handle:horizontal {"
-        "    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);"
-        "    border: 1px solid #5c5c5c;"
+        "    background-color: #FFEB72;"
+        "    border: none;"
         "    width: 18px;"
-        "    margin: -2px 0;"
+        "    height: 18px;"
+        "    margin: -5px 0;"  // Centers the handle vertically with the groove
         "    border-radius: 9px;"
         "}"
         );
@@ -274,11 +274,13 @@ QSlider* SensitivityPage::createSlider(QSlider* slider)
     return slider;
 }
 
+
+
 QHBoxLayout* SensitivityPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN!", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectSensitivityButton, "LET'S TRY AGAIN", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->acceptSensitivityButton, "THIS LOOKS GOOD!", "#BB64C7"));
     return buttonLayout;
 }
 
@@ -288,8 +290,8 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
     QString darkerColor;
     if (bgColor == "#CD6F6F") {
         darkerColor = "#8B4D4D";  // 30% darker color for red
-    } else if (bgColor == "#6FCD6F") {
-        darkerColor = "#4B8A4B";  // 30% darker color for green
+    } else if (bgColor == "#BB64C7") {
+        darkerColor = "#83468B";  // 30% darker color for purple
     } else {
         darkerColor = "#4A5A9F";  // Default color (if none of the above match)
     }
@@ -299,7 +301,7 @@ QPushButton* SensitivityPage::styleButton(QPushButton* button, const QString& te
     button->setStyleSheet(QString(
                               "QPushButton {"
                               "   background-color: %1;"  // Original color
-                              "   color: white;"
+                              "   color: black;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
                               "   font-size: 16px;"

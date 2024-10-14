@@ -5,10 +5,6 @@
 #include <QPushButton>
 #include <QStackedWidget>
 
-#include "pages/sidebar_pages/userpage.h"
-#include "pages/sidebar_pages/favoritespage.h"
-#include "pages/sidebar_pages/settingspage.h"
-
 #include "pages/createpage.h"
 #include "pages/takepicture.h"
 
@@ -35,7 +31,23 @@ public:
     // image projection page
     ImageProjectionWindow *imageProjectionWindow;
 
+
 private:
+
+    Ui::MainWindow *ui;
+    QPushButton *logoButton;
+    QStackedWidget *stackedWidget;
+
+    // pages
+    CreatePage *createPage;
+    TakePicture *takePicture;
+
+    CalibrationPage *calibrationPage;
+    SensitivityPage *sensitivityPage;
+    TextVisionPage *textVisionPage;
+    PickImagesPage *pickImagesPage;
+    ProjectPage *projectPage;
+
     // functions
     void setupUI();
     void setupPages();
@@ -46,35 +58,8 @@ private:
     QWidget* createSidebar();
     QPushButton* createSidebarButton(const QIcon& icon);
 
-
-    Ui::MainWindow *ui;
-    QStackedWidget *stackedWidget;
-
-    // pages
-    UserPage *userPage;
-    FavoritesPage *favoritesPage;
-    SettingsPage *settingsPage;
-
-    CreatePage *createPage;
-    TakePicture *takePicture;
-
-    CalibrationPage *calibrationPage;
-    SensitivityPage *sensitivityPage;
-    TextVisionPage *textVisionPage;
-    PickImagesPage *pickImagesPage;
-    ProjectPage *projectPage;
-
-    // sidebar buttons
-    QPushButton *userButton;
-    QPushButton *favoriteButton;
-    QPushButton *createButton;
-    QPushButton *settingsButton;
-
 private slots:
-    // main pages
-    void navigateToUserPage();
-    void navigateToFavoritesPage();
-    void navigateToSettingsPage();
+    // main page
     void navigateToCreatePage();
 
     // create page pages

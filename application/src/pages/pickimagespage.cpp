@@ -47,7 +47,7 @@ void ClickableFrame::updateStyle()
                         "   background-color: #3E3E3E;"
                         "   border: %1px solid %2;"
                         "}"
-                        ).arg(m_selected ? "4" : "2", m_selected ? "#FFD700" : "#3E3E3E");
+                        ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
 
     qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
@@ -79,7 +79,7 @@ void PickImagesPage::initializeUI()
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
-    mainLayout->addWidget(createTitleLabel());
+    mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
     mainLayout->addWidget(createImagesGrid(), 1);
     mainLayout->addLayout(createButtonLayout());
 
@@ -99,6 +99,7 @@ QLabel* PickImagesPage::createTitleLabel()
         );
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    titleLabel->setFixedWidth(800);
     return titleLabel;
 }
 
@@ -152,9 +153,9 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 QHBoxLayout* PickImagesPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
-    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#6FCD6F"));
+    buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#BB64c7"));
     ui->selectImagesButton->setEnabled(false);  // Initially disabled
     return buttonLayout;
 }
@@ -165,18 +166,19 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
     QString hoverColor;
     if (bgColor == "#CD6F6F") {
         hoverColor = "#9F5D5D"; // 30% darker version of #CD6F6F
-    } else if (bgColor == "#6FCD6F") {
-        hoverColor = "#4C9A4C"; // 30% darker version of #6FCD6F
+    } else if (bgColor == "#BB64c7") {
+        hoverColor = "#83468B"; // 30% darker version of #6FCD6F
     } else {
         hoverColor = "#FFD700"; // Fallback hover color (for other cases)
     }
 
     button->setText(text);
     button->setFixedHeight(50);
+    button->setFixedWidth(250);
     button->setStyleSheet(QString(
                               "QPushButton {"
                               "   background-color: %1;"   // Original color
-                              "   color: white;"
+                              "   color: black;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
                               "   font-size: 16px;"
