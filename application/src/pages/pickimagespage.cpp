@@ -1,3 +1,5 @@
+#include <QGraphicsDropShadowEffect>
+#include <QPropertyAnimation>
 #include "pickimagespage.h"
 #include "ui_pickimagespage.h"
 #include <QVBoxLayout>
@@ -41,15 +43,43 @@ void ClickableFrame::mousePressEvent(QMouseEvent *event)
 
 void ClickableFrame::updateStyle()
 {
-    QString style = QString(
-                        "ClickableFrame {"
-                        "   border-radius: 20px;"
-                        "   background-color: #3E3E3E;"
-                        "   border: %1px solid %2;"
-                        "}"
-                        ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
+    // Define different styles for selected and unselected states
+    QString baseStyle = R"(
+        ClickableFrame {
+            border-radius: 20px;
+            background-color: #3E3E3E;
+            border: %1px solid %2;
+        })";
 
+    QString selectedBorderColor = "#FFD700";  // Gold color for the selected frame
+    QString unselectedBorderColor = "#3E3E3E";  // Default background color for unselected frames
+
+    // Update border thickness and color based on selection state
+    QString style = baseStyle.arg(m_selected ? "5" : "1", m_selected ? selectedBorderColor : unselectedBorderColor);
     setStyleSheet(style);
+
+    // Add a shadow effect when selected
+    if (m_selected) {
+        QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
+        shadowEffect->setBlurRadius(20);  // Shadow blur intensity
+        shadowEffect->setColor(QColor(255, 215, 0, 160));  // Semi-transparent gold shadow
+        shadowEffect->setOffset(0, 0);  // Position shadow directly under the frame
+        setGraphicsEffect(shadowEffect);
+
+        // Create a property animation to scale the frame when clicked (fun effect)
+        QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
+        animation->setDuration(300);
+        QRect startGeometry = geometry();
+        QRect endGeometry = QRect(startGeometry.x() - 10, startGeometry.y() - 10,
+                                  startGeometry.width() + 20, startGeometry.height() + 20);
+        animation->setStartValue(startGeometry);
+        animation->setEndValue(endGeometry);
+        animation->setEasingCurve(QEasingCurve::OutBounce);  // Fun bouncing effect
+        animation->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        // Remove shadow if the frame is unselected
+        setGraphicsEffect(nullptr);
+    }
 }
 
 void PickImagesPage::handleImageResponse()

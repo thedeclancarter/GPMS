@@ -64,9 +64,9 @@ private:
     QHBoxLayout* createButtonLayout();
     QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
     void updateSelectedImages(ClickableFrame *clickedFrame);
-
-    void handleImageResponse();
-    void fetchRandomImages();
+    // New methods for fetching and handling random images
+    void fetchRandomImages();  // Fetch images from a remote source
+    void handleImageResponse(void);  // Handle the response from the image fetch
 
 };
 
