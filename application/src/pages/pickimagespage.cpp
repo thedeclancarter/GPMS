@@ -47,7 +47,7 @@ void ClickableFrame::updateStyle()
                         "   background-color: #3E3E3E;"
                         "   border: %1px solid %2;"
                         "}"
-                        ).arg(m_selected ? "4" : "2", m_selected ? "#FFD700" : "#3E3E3E");
+                        ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
 
     qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);

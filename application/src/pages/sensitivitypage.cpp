@@ -219,7 +219,7 @@ QLabel* SensitivityPage::createTitleLabel()
     QLabel *titleLabel = new QLabel("Change The Sensitivity of the Outline", this);
     titleLabel->setStyleSheet(
         "color: white;"
-        "font-size: 24px;"
+        "font-size: 30px;"
         "font-weight: bold;"
         "background-color: #3E3E3E;"
         "border-radius: 20px;"
