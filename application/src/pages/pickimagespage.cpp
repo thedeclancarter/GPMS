@@ -119,7 +119,7 @@ PickImagesPage::PickImagesPage(QWidget *parent)
     ui->setupUi(this);
     initializeUI();
 
-    QCoreApplication::addLibraryPath("C:/Program Files/OpenSSL-Win64");
+    QCoreApplication::addLibraryPath("C:/Program Files/openssl-1.1/x64/bin");
     // Connect network manager's signal first
     connect(m_networkManager, &QNetworkAccessManager::finished, this, &PickImagesPage::handleImageResponse);
 
