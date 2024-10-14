@@ -5,15 +5,17 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QMouseEvent>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QPixmap>
 
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
     updateStyle();
 
-    // Newly added 9/14
     // Add a layout to the frame for displaying an image
     QVBoxLayout *layout = new QVBoxLayout(this);
-    this->setLayout(layout);
+    this->setLayout(layout);  // Ensure layout is applied to frame
 }
 
 void ClickableFrame::setSelected(bool selected)
@@ -53,17 +55,80 @@ void ClickableFrame::updateStyle()
     setStyleSheet(style);
 }
 
+void PickImagesPage::handleImageResponse()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        qDebug() << "No reply received";
+        return;
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
+        qDebug() << "Image received successfully";
+
+        QPixmap pixmap;
+        if (pixmap.loadFromData(reply->readAll())) {
+            qDebug() << "Pixmap loaded from network reply";
+
+            for (int i = 0; i < m_imageFrames.size(); ++i) {
+                ClickableFrame* frame = m_imageFrames.at(i);
+                if (frame->children().isEmpty()) {
+                    QLabel* imageLabel = new QLabel(frame);
+                    imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+                    frame->layout()->addWidget(imageLabel);
+
+                    frame->update();
+                    frame->adjustSize();
+                    break;
+                }
+            }
+        } else {
+            qDebug() << "Failed to load pixmap from data";
+        }
+    } else {
+        qDebug() << "Network reply error: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+
+void PickImagesPage::fetchRandomImages()
+{
+    qDebug() << "Fetching random images...";
+
+    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
+    QNetworkReply *reply1 = m_networkManager->get(request1);
+    qDebug() << "Request 1 sent";
+
+    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
+    QNetworkReply *reply2 = m_networkManager->get(request2);
+    qDebug() << "Request 2 sent";
+
+    // Make sure to connect each reply to the image handler
+    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+}
+
+
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
-    ,m_selectedFrame(nullptr)  // Initialize to nullptr
+    , m_selectedFrame(nullptr)
+    , m_networkManager(new QNetworkAccessManager(this)) // Add network manager
 {
     ui->setupUi(this);
     initializeUI();
 
+    QCoreApplication::addLibraryPath("C:/Program Files/OpenSSL-Win64");
+    // Connect network manager's signal first
+    connect(m_networkManager, &QNetworkAccessManager::finished, this, &PickImagesPage::handleImageResponse);
+
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
+
+    // Fetch random images when initializing the UI
+    fetchRandomImages();
 }
 
 PickImagesPage::~PickImagesPage()
