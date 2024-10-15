@@ -44,3 +44,9 @@ void ImageProjectionWindow::updateImage(const QImage &image)
         qDebug("Received null image in ImageProjectionWindow::updateImage");
     }
 }
+
+// Whiteout the current frame
+void ImageProjectionWindow::clearImage(void)
+{
+    m_imageLabel->clear();
+}
