@@ -8,7 +8,7 @@
 #include "pages/createpage.h"
 #include "pages/takepicture.h"
 
-#include "pages/creation_pages/calibrationpage.h"
+#include "pages/calibration/calibrationPage.h"
 #include "pages/sensitivitypage.h"
 #include "pages/textvisionpage.h"
 #include "pages/pickimagespage.h"
