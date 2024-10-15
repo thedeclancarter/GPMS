@@ -42,6 +42,28 @@ void CreatePage::setupUI()
     setupRightColumn(contentLayout, 0, 1);
 
     setupCreateButton(mainLayout);
+
+    playBackgroundVideo();
+}
+
+void CreatePage::setProjectionWindow(ImageProjectionWindow *projectionWindow)
+{
+    if (projectionWindow){
+        m_projectionWindow = projectionWindow;
+        m_projectionWindow->playInitialVideo();
+        qDebug("Setting projection window in CreatePage");
+    }
+    else{
+        qDebug("Projection window is null");
+    }
+}
+
+void CreatePage::playBackgroundVideo()
+{
+    if (m_projectionWindow) {
+        // Assuming you have a video file named "background.mov" in your resources
+        m_projectionWindow->playVideoFromResource("qrc:/videos/background.mov");
+    }
 }
 
 void CreatePage::setupHeader(QVBoxLayout *layout)

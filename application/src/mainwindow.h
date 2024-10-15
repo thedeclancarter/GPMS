@@ -72,5 +72,7 @@ private slots:
     // for the picture
     void setImageForAcceptPage(const QImage &image);
 
+    void showImageProjectionWindow();
+
 };
 #endif // MAINWINDOW_H

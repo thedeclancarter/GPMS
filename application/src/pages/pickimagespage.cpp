@@ -51,7 +51,6 @@ void ClickableFrame::updateStyle()
                         "}"
                         ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
 
-    qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
 }
 
@@ -114,11 +113,11 @@ void PickImagesPage::fetchRandomImages()
     qDebug() << "Fetching random images...";
 
     QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
-    request1.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QNetworkReply *reply1 = m_networkManager->get(request1);
 
     QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
-    request2.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QNetworkReply *reply2 = m_networkManager->get(request2);
 
     // Make sure to connect each reply to the image handler

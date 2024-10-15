@@ -109,6 +109,9 @@ void SensitivityPage::updateDisplays(const QImage &image)
     if (m_projectionWindow) {
         m_projectionWindow->updateImage(image);
     }
+    else{
+        qDebug("Not dispalying image bc image proj window doesnt exist");
+    }
 }
 
 void SensitivityPage::captureAndProcessFrame()
@@ -151,18 +154,6 @@ void SensitivityPage::setupCamera()
     m_viewfinder->setAspectRatioMode(Qt::KeepAspectRatio);
     m_viewfinder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-
-    // connect(ui->takePictureButton, &QPushButton::clicked, this, &TakePicture::captureImage);
-    // connect(m_imageCapture, &QCameraImageCapture::imageCaptured, this, &TakePicture::handleImageCaptured);
-
-
-    // // Add these new connections for more detailed reporting
-    // connect(m_imageCapture, &QCameraImageCapture::readyForCaptureChanged, this, &TakePicture::handleReadyForCaptureChanged);
-    // connect(m_imageCapture, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
-    //         this, &TakePicture::handleCaptureError);
-    // connect(m_imageCapture, &QCameraImageCapture::imageAvailable, this, &TakePicture::handleImageAvailable);
-    // connect(m_imageCapture, &QCameraImageCapture::imageSaved, this, &TakePicture::handleImageSaved);
-
     // Set capture mode to CaptureToBuffer
     m_imageCapture->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
 
@@ -174,12 +165,12 @@ void SensitivityPage::setProjectionWindow(ImageProjectionWindow *projectionWindo
 {
     if (projectionWindow){
         m_projectionWindow = projectionWindow;
+
         qDebug("Setting projection window");
     }
     else{
         qDebug("Projection window is null");
     }
-
 }
 
 void SensitivityPage::initializeUI()

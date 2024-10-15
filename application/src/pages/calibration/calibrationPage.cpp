@@ -361,7 +361,7 @@ void CalibrationPage::resetPoints()
     qDebug() << "Points reset. Please select 4 new points.";
 
     // Clear the image in the projection window using clearImage
-    m_projectionWindow->clearImage();
+    m_projectionWindow->clearToWhite();
 
     update();
 

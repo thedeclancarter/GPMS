@@ -2,12 +2,37 @@
 #include <QVBoxLayout>
 #include <QScreen>
 #include <QApplication>
+#include <QPainter>
 
 ImageProjectionWindow::ImageProjectionWindow(QWidget *parent)
     : QWidget(parent, Qt::Window) // | Qt::FramelessWindowHint
+    ,m_videoWidget(nullptr)
+    ,m_mediaPlayer(nullptr)
 {
     setupUI();
     setFixedSize(1024, 600);
+}
+
+void ImageProjectionWindow::clearToWhite()
+{
+    // Stop any playing video
+    if (m_mediaPlayer) {
+        m_mediaPlayer->stop();
+    }
+
+    // Hide video widget and image label
+    if (m_videoWidget) {
+        m_videoWidget->hide();
+    }
+    if (m_imageLabel) {
+        m_imageLabel->hide();
+    }
+
+    // Set white background
+    setStyleSheet("background-color: white;");
+
+    // Repaint the window
+    update();
 }
 
 void ImageProjectionWindow::setupUI()
@@ -20,11 +45,44 @@ void ImageProjectionWindow::setupUI()
     layout->addWidget(m_imageLabel);
 
 
-    // QPixmap scaledPixmap = QPixmap::fromImage(image).scaled(1024, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    // imageLabel->setPixmap(scaledPixmap);
-
     setStyleSheet("background-color: white;");
 }
+
+
+void ImageProjectionWindow::setupVideoPlayer()
+{
+    if (!m_videoWidget) {
+        m_videoWidget = new QVideoWidget(this);
+        m_mediaPlayer = new QMediaPlayer(this);
+        m_mediaPlayer->setVideoOutput(m_videoWidget);
+
+        QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(this->layout());
+        if (layout) {
+            layout->addWidget(m_videoWidget);
+        }
+
+        m_videoWidget->hide(); // Hide initially
+    }
+}
+
+
+void ImageProjectionWindow::playVideoFromResource(const QString &filePath)
+{
+    setupVideoPlayer();
+
+    m_imageLabel->hide();
+    m_videoWidget->show();
+
+    m_mediaPlayer->setMedia(QUrl::fromLocalFile(filePath));
+    m_mediaPlayer->play();
+}
+
+
+void ImageProjectionWindow::playInitialVideo()
+{
+    playVideoFromResource("qrc:/videos/background.mov");
+}
+
 
 void ImageProjectionWindow::updateImage(const QImage &image)
 {
@@ -43,10 +101,4 @@ void ImageProjectionWindow::updateImage(const QImage &image)
     {
         qDebug("Received null image in ImageProjectionWindow::updateImage");
     }
-}
-
-// Whiteout the current frame
-void ImageProjectionWindow::clearImage(void)
-{
-    m_imageLabel->clear();
 }

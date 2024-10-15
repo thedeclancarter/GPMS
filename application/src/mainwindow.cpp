@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QGraphicsDropShadowEffect>
+#include <QScreen>
+#include <QApplication>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,11 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "Qt version:" << QT_VERSION_STR;
     ui->setupUi(this);
     setupUI();
-    qDebug("Finished setting up UI");
     setupPages();
-    qDebug("Finished setting up all functions");
     setupConnections();
-    qDebug("Finished making all connections");
 }
 
 
@@ -70,6 +69,10 @@ void MainWindow::setupPages()
     imageProjectionWindow = new ImageProjectionWindow();
     imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
 
+    showImageProjectionWindow();
+    imageProjectionWindow->playInitialVideo();
+    createPage->setProjectionWindow(imageProjectionWindow);
+
     // variable in the .h
     calibrationPage = new CalibrationPage(imageProjectionWindow, this);
 
@@ -88,15 +91,19 @@ void MainWindow::setupPages()
 
     // Start with the create page
     stackedWidget->setCurrentWidget(createPage);
+
 }
 
 void MainWindow::setupConnections()
 {
+    // for project page
+    connect(this, &MainWindow::destroyed, imageProjectionWindow, &QWidget::close);
+
     // logo
     connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
 
     // from create page
-    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
+    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from calibration page
     connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
@@ -115,20 +122,35 @@ void MainWindow::setupConnections()
     connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
 }
 
-void MainWindow::showProjectionWindow()
+
+void MainWindow::showImageProjectionWindow()
 {
     if (imageProjectionWindow) {
+        // Set window flags to keep it behind other windows
+        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
+
+        // Get the list of available screens
+        QList<QScreen*> screens = QGuiApplication::screens();
+
+        // If there's more than one screen, show on the second screen
+        if (screens.size() > 1) {
+            imageProjectionWindow->setGeometry(screens.at(1)->geometry());
+        } else {
+            imageProjectionWindow->setGeometry(100, 100, 800, 600);
+        }
+
         imageProjectionWindow->show();
-        imageProjectionWindow->lower();
-        stackedWidget->setCurrentWidget(calibrationPage);
-    }
-    else{
-        qDebug("In showProjectionWindow imageprojectionwindow is null");
+        imageProjectionWindow->lower(); // Ensure it stays behind other windows
     }
 }
 
 void MainWindow::navigateToCreatePage()
 {
+    if (imageProjectionWindow) {
+        createPage->setProjectionWindow(imageProjectionWindow);
+    } else {
+        qDebug("Error: imageProjectionWindow is null in navigateToCreatePage");
+    }
     stackedWidget->setCurrentWidget(createPage);
 }
 
