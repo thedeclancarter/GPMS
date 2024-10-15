@@ -13,17 +13,30 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="calibrateButton">
+  <widget class="QPushButton" name="completeButton">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>250</y>
+     <x>400</x>
+     <y>370</y>
      <width>100</width>
      <height>32</height>
     </rect>
    </property>
    <property name="text">
-    <string>Calibrate</string>
+    <string>Complete</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="rejectCalibrationButton">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>370</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>LETS TRY AGAIN!</string>
    </property>
   </widget>
  </widget>
