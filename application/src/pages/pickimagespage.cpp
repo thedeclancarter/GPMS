@@ -65,25 +65,42 @@ void PickImagesPage::handleImageResponse()
 
     if (reply->error() == QNetworkReply::NoError) {
         qDebug() << "Image received successfully";
+        QByteArray imageData = reply->readAll();
 
-        QPixmap pixmap;
-        if (pixmap.loadFromData(reply->readAll())) {
-            qDebug() << "Pixmap loaded from network reply";
+        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+        qDebug() << "Content-Type: " << contentType;
 
-            for (int i = 0; i < m_imageFrames.size(); ++i) {
-                ClickableFrame* frame = m_imageFrames.at(i);
-                if (frame->children().isEmpty()) {
-                    QLabel* imageLabel = new QLabel(frame);
-                    imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-                    frame->layout()->addWidget(imageLabel);
+        if (contentType.startsWith("image")) {
+            QPixmap pixmap;
+            if (pixmap.loadFromData(imageData)) {
+                qDebug() << "Pixmap loaded from network reply";
 
-                    frame->update();
-                    frame->adjustSize();
-                    break;
+                // Iterate through the frames and set pixmap for the first available frame
+                for (int i = 0; i < m_imageFrames.size(); ++i) {
+                    ClickableFrame* frame = m_imageFrames.at(i);
+
+                    // Check if the frame has any children (e.g., QLabel for image)
+                    if (frame->layout()->isEmpty()) {
+                        QLabel* imageLabel = new QLabel(frame);
+
+                        // Scale the pixmap to fit the frame
+                        imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+                        // Add the QLabel to the frame's layout
+                        frame->layout()->addWidget(imageLabel);
+
+                        // Ensure layout updates
+                        frame->update();
+                        frame->adjustSize();
+
+                        break;  // Break after filling the first available frame
+                    }
                 }
+            } else {
+                qDebug() << "Failed to load pixmap from data";
             }
         } else {
-            qDebug() << "Failed to load pixmap from data";
+            qDebug() << "Received content is not an image!";
         }
     } else {
         qDebug() << "Network reply error: " << reply->errorString();
@@ -97,12 +114,12 @@ void PickImagesPage::fetchRandomImages()
     qDebug() << "Fetching random images...";
 
     QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
+    request1.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     QNetworkReply *reply1 = m_networkManager->get(request1);
-    qDebug() << "Request 1 sent";
 
     QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
+    request2.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     QNetworkReply *reply2 = m_networkManager->get(request2);
-    qDebug() << "Request 2 sent";
 
     // Make sure to connect each reply to the image handler
     connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
@@ -120,9 +137,6 @@ PickImagesPage::PickImagesPage(QWidget *parent)
     initializeUI();
 
     QCoreApplication::addLibraryPath("C:/Program Files/openssl-1.1/x64/bin");
-    // Connect network manager's signal first
-    connect(m_networkManager, &QNetworkAccessManager::finished, this, &PickImagesPage::handleImageResponse);
-
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
