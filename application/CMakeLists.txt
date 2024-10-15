@@ -64,9 +64,9 @@ set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/pages/imageprojectionwindow.cpp
     ${PROJECT_ROOT}/src/pages/imageprojectionwindow.ui
 
-    src/pages/creation_pages/calibrationpage.h
-    src/pages/creation_pages/calibrationpage.cpp
-    src/pages/creation_pages/calibrationpage.ui
+    src/pages/calibration/calibrationPage.h
+    src/pages/calibration/calibrationPage.cpp
+    src/pages/calibration/calibrationPage.ui
 )
 
 add_executable(gpms_ui ${PROJECT_SOURCES})
