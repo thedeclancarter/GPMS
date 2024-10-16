@@ -46,7 +46,7 @@ void ImageProjectionWindow::updateImage(const QImage &image)
 }
 
 // Whiteout the current frame
-void ImageProjectionWindow::clearImage(void)
+void ImageProjectionWindow::clearWindow(void)
 {
     m_imageLabel->clear();
 }

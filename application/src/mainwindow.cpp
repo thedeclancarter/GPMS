@@ -15,11 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "Qt version:" << QT_VERSION_STR;
     ui->setupUi(this);
     setupUI();
-    qDebug("Finished setting up UI");
     setupPages();
-    qDebug("Finished setting up all functions");
     setupConnections();
-    qDebug("Finished making all connections");
 }
 
 void MainWindow::setupUI()
@@ -134,16 +131,14 @@ void MainWindow::navigateToCreatePage()
 
 void MainWindow::navigateToCalibrationPage()
 {
+    // proj window should show white
+    imageProjectionWindow->clearWindow();
     stackedWidget->setCurrentWidget(calibrationPage);
 }
 
 void MainWindow::navigateToSensitivityPage()
 {
-    // if (imageProjectionWindow) {
-    //     sensitivityPage->setProjectionWindow(imageProjectionWindow);
-    // } else {
-    //     qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
-    // }
+    // only start timer when on this page
     sensitivityPage->startCaptureTimer();
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
