@@ -49,7 +49,6 @@ void ClickableFrame::updateStyle()
                         "}"
                         ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
 
-    qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
 }
 
@@ -78,8 +77,12 @@ void PickImagesPage::handleImageResponse()
                     if (frame->layout()->isEmpty()) {
                         QLabel* imageLabel = new QLabel(frame);
 
+                        imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                        imageLabel->setAlignment(Qt::AlignCenter);
+                        imageLabel->setScaledContents(true);
+
                         // Scale the pixmap to fit the frame
-                        imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+                        imageLabel->setPixmap(pixmap);
 
                         // Add the QLabel to the frame's layout
                         frame->layout()->addWidget(imageLabel);
@@ -190,7 +193,6 @@ QFrame* PickImagesPage::createImagesGrid()
         ClickableFrame *imageFrame = new ClickableFrame(this);
         imageFrame->setMinimumSize(200, 150);
         connect(imageFrame, &ClickableFrame::clicked, this, [this, imageFrame]() {
-            qDebug("Calling update selected images");
             updateSelectedImages(imageFrame);
         });
         gridLayout->addWidget(imageFrame, i / 2, i % 2);
@@ -203,24 +205,17 @@ QFrame* PickImagesPage::createImagesGrid()
 
 void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 {
-    qDebug("In update selected images");
     if (m_selectedFrame && m_selectedFrame != clickedFrame) {
-        qDebug("Deselecting previous frame");
         m_selectedFrame->setSelected(false);  // Deselect the previous frame
     }
 
-    // clickedFrame->setSelected(!clickedFrame->isSelected());
-
     if (clickedFrame->isSelected()) {
-        qDebug("Frame deselected");
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
     } else {
-        qDebug("Frame deselected");
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
     }
 
     // Enable or disable the select button based on whether any frame is selected
-    qDebug("Setting selectImagesButton enabled state to %d", m_selectedFrame != nullptr);
     ui->selectImagesButton->setEnabled(m_selectedFrame != nullptr);
 }
 
