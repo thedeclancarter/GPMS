@@ -26,10 +26,6 @@ class SensitivityPage : public QWidget
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
         void startCaptureTimer();
 
-
-        // void setAcceptedImage(const QImage &image);
-
-
     signals:
         void navigateToTextVisionPage();
         void navigateToCalibrationPage();

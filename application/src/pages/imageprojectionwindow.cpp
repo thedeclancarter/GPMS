@@ -17,6 +17,7 @@ void ImageProjectionWindow::setupUI()
 
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
+    m_imageLabel->setFixedSize(1024, 600);
     layout->addWidget(m_imageLabel);
 
 
@@ -43,6 +44,21 @@ void ImageProjectionWindow::updateImage(const QImage &image)
     {
         qDebug("Received null image in ImageProjectionWindow::updateImage");
     }
+}
+
+void ImageProjectionWindow::showLogo(){
+    // Load the image from the resource
+    QImage logoImage(":icons/projLogo.png");
+
+    if (!logoImage.isNull())
+    {
+        updateImage(logoImage);
+    }
+    else
+    {
+        qDebug("Failed to load logo image from resource");
+    }
+
 }
 
 // Whiteout the current frame

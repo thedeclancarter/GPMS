@@ -61,7 +61,9 @@ void MainWindow::setupPages()
     // window will be passed to all windows that use it
     imageProjectionWindow = new ImageProjectionWindow();
     imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    imageProjectionWindow->showLogo();
     showImageProjectionWindow();
+
 
     // will show GPMS logo
     createPage = new CreatePage(imageProjectionWindow, this);
@@ -126,6 +128,8 @@ void MainWindow::setupConnections()
 
 void MainWindow::navigateToCreatePage()
 {
+    // proj window should show video, currently will be still image
+    imageProjectionWindow->showLogo();
     stackedWidget->setCurrentWidget(createPage);
 }
 
