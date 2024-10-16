@@ -10,10 +10,10 @@
 #include <QCameraInfo>
 
 
-SensitivityPage::SensitivityPage(QWidget *parent)
+SensitivityPage::SensitivityPage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::SensitivityPage)
-    , m_projectionWindow(nullptr)
+    , m_projectionWindow(projectionWindow)
     , m_imageLabel(nullptr)
     , lowerSlider(nullptr)
     , upperSlider(nullptr)
@@ -25,10 +25,9 @@ SensitivityPage::SensitivityPage(QWidget *parent)
 {
     ui->setupUi(this);
     init();
+}
 
-    connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
-    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
-
+void SensitivityPage::startCaptureTimer(){
     // Set up timer for continuous frame capture
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &SensitivityPage::captureAndProcessFrame);
@@ -122,6 +121,7 @@ void SensitivityPage::init()
 {
     if (checkCameraAvailability()) {
         qDebug() << "Cameras found!";
+
         initializeUI();
     } else {
         qDebug() << "No camera available";
@@ -212,6 +212,9 @@ void SensitivityPage::initializeUI()
     mainLayout->addLayout(createButtonLayout());
 
     setLayout(mainLayout);
+
+    connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
+    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
 }
 
 QLabel* SensitivityPage::createTitleLabel()
