@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QGraphicsDropShadowEffect>
+#include <QScreen>
+#include <QApplication>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -18,12 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug("Finished setting up all functions");
     setupConnections();
     qDebug("Finished making all connections");
-}
-
-
-MainWindow::~MainWindow()
-{
-    delete ui;
 }
 
 void MainWindow::setupUI()
@@ -65,17 +61,21 @@ void MainWindow::setupUI()
 
 void MainWindow::setupPages()
 {
-    createPage = new CreatePage(this);
-
+    // window will be passed to all windows that use it
     imageProjectionWindow = new ImageProjectionWindow();
     imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    showImageProjectionWindow();
 
-    // variable in the .h
+    // will show GPMS logo
+    createPage = new CreatePage(imageProjectionWindow, this);
+    // will show white
     calibrationPage = new CalibrationPage(imageProjectionWindow, this);
-
+    // will show edge detection
     sensitivityPage = new SensitivityPage(this);
+    // what will these show
     textVisionPage = new TextVisionPage(this);
     pickImagesPage = new PickImagesPage(this);
+    // will show projected image
     projectPage = new ProjectPage(this);
 
     stackedWidget->addWidget(createPage);
@@ -90,13 +90,25 @@ void MainWindow::setupPages()
     stackedWidget->setCurrentWidget(createPage);
 }
 
+
+void MainWindow::showImageProjectionWindow()
+{
+    if (imageProjectionWindow) {
+        // Set window flags to keep it behind other windows
+        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
+
+        imageProjectionWindow->show();
+        imageProjectionWindow->lower(); // Ensure it stays behind other windows
+    }
+}
+
 void MainWindow::setupConnections()
 {
     // logo
     connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
 
     // from create page
-    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
+    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from calibration page
     connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
@@ -113,18 +125,6 @@ void MainWindow::setupConnections()
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
     connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
-}
-
-void MainWindow::showProjectionWindow()
-{
-    if (imageProjectionWindow) {
-        imageProjectionWindow->show();
-        imageProjectionWindow->lower();
-        stackedWidget->setCurrentWidget(calibrationPage);
-    }
-    else{
-        qDebug("In showProjectionWindow imageprojectionwindow is null");
-    }
 }
 
 void MainWindow::navigateToCreatePage()
@@ -162,10 +162,7 @@ void MainWindow::navigateToProjectPage()
     stackedWidget->setCurrentWidget(projectPage);
 }
 
-// pictures
-
-void MainWindow::setImageForAcceptPage(const QImage &image)
+MainWindow::~MainWindow()
 {
-    // Assuming you have an AcceptPicturePage class
-    // acceptPicturePage->setImage(image);
+    delete ui;
 }
