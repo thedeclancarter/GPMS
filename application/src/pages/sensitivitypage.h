@@ -21,12 +21,13 @@ class SensitivityPage : public QWidget
     Q_OBJECT
 
     public:
-        explicit SensitivityPage(QWidget *parent = nullptr);
+        explicit SensitivityPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~SensitivityPage();
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
+        void startCaptureTimer();
 
         // void setAcceptedImage(const QImage &image);
-        ImageProjectionWindow *m_projectionWindow;
+
 
     signals:
         void navigateToTextVisionPage();
@@ -39,6 +40,7 @@ class SensitivityPage : public QWidget
 
     private:
         Ui::SensitivityPage *ui;
+        ImageProjectionWindow *m_projectionWindow;
 
         QLabel *m_imageLabel;
         QSlider *lowerSlider;

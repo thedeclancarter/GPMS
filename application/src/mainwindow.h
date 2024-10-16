@@ -70,8 +70,5 @@ private slots:
     void navigateToPickImagesPage();
     void navigateToProjectPage();
 
-    // for the picture
-    void setImageForAcceptPage(const QImage &image);
-
 };
 #endif // MAINWINDOW_H

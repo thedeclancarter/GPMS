@@ -71,7 +71,7 @@ void MainWindow::setupPages()
     // will show white
     calibrationPage = new CalibrationPage(imageProjectionWindow, this);
     // will show edge detection
-    sensitivityPage = new SensitivityPage(this);
+    sensitivityPage = new SensitivityPage(imageProjectionWindow, this);
     // what will these show
     textVisionPage = new TextVisionPage(this);
     pickImagesPage = new PickImagesPage(this);
@@ -139,11 +139,12 @@ void MainWindow::navigateToCalibrationPage()
 
 void MainWindow::navigateToSensitivityPage()
 {
-    if (imageProjectionWindow) {
-        sensitivityPage->setProjectionWindow(imageProjectionWindow);
-    } else {
-        qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
-    }
+    // if (imageProjectionWindow) {
+    //     sensitivityPage->setProjectionWindow(imageProjectionWindow);
+    // } else {
+    //     qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
+    // }
+    sensitivityPage->startCaptureTimer();
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
 
