@@ -53,10 +53,11 @@ private:
     void setupPages();
     void setupConnections();
 
-    void showProjectionWindow();
+    void showImageProjectionWindow();
 
     QWidget* createSidebar();
     QPushButton* createSidebarButton(const QIcon& icon);
+
 
 private slots:
     // main page
