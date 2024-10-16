@@ -31,7 +31,6 @@ public:
     // image projection page
     ImageProjectionWindow *imageProjectionWindow;
 
-
 private:
 
     Ui::MainWindow *ui;

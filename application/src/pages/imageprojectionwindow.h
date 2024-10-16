@@ -13,6 +13,7 @@ public:
     explicit ImageProjectionWindow(QWidget *parent = nullptr);
     void updateImage(const QImage &image);
     void clearWindow(void);
+    void showLogo();
 
 private:
     QLabel *m_imageLabel;

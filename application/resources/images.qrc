@@ -13,5 +13,6 @@
         <file>text.png</file>
         <file>choose.png</file>
         <file>GPMS_logo2.webp</file>
+        <file>projLogo.png</file>
     </qresource>
 </RCC>
