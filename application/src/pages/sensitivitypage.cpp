@@ -37,6 +37,11 @@ void SensitivityPage::startCaptureTimer(){
     connect(m_imageCapture, &QCameraImageCapture::imageAvailable,
             this, &SensitivityPage::processFrame);
 }
+void SensitivityPage::endCaptureTimer(){
+    if (timer) {
+        timer->stop();
+    }
+}
 
 void SensitivityPage::processFrame(int id, const QVideoFrame &frame)
 {
@@ -333,23 +338,13 @@ SensitivityPage::~SensitivityPage()
 
 void SensitivityPage::onRejectButtonClicked()
 {
-    // if (!currentImage.isNull()) {
-    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
-    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
-    //     projectionWindow->show();
-    // }
-
+    endCaptureTimer();
     emit navigateToCalibrationPage();
 }
 
 void SensitivityPage::onAcceptButtonClicked()
 {
-    // if (!currentImage.isNull()) {
-    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
-    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
-    //     projectionWindow->show();
-    // }
-
+    endCaptureTimer();
     emit navigateToTextVisionPage();
 }
 

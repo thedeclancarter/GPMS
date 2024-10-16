@@ -26,6 +26,7 @@ class SensitivityPage : public QWidget
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
         void startCaptureTimer();
 
+
         // void setAcceptedImage(const QImage &image);
 
 
@@ -51,12 +52,10 @@ class SensitivityPage : public QWidget
         QCameraImageCapture *m_imageCapture;
         QVideoFrame *m_lastFrame;
 
-        // cv::Mat m_lastFrame;
-        // QMutex m_frameMutex;
-
         void init();
         void initializeUI();
         bool checkCameraAvailability();
+        void endCaptureTimer();
 
         QLabel* createTitleLabel();
         QFrame* createImageFrame();
