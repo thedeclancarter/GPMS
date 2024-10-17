@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 namespace Ui {
 class PickImagesPage;
@@ -54,6 +56,7 @@ private:
     Ui::PickImagesPage *ui;
     QList<ClickableFrame*> m_imageFrames;
     ClickableFrame* m_selectedFrame;  // Member variable to store the selected frame
+    QNetworkAccessManager *m_networkManager;  // Add this for managing network requests
 
     void initializeUI();
     QLabel* createTitleLabel();
@@ -62,6 +65,12 @@ private:
     QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
     void updateSelectedImages(ClickableFrame *clickedFrame);
 
+    // Methods for fetching and handling random images
+    void fetchRandomImages();  // Fetch images from a remote source
+    void handleImageResponse(void);  // Handle the response from the image fetch
+
+    // New method for clearing the images before fetching new ones
+    void clearImages();  // Clears the current images in the frames
 };
 
 #endif // PICKIMAGESPAGE_H

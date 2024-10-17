@@ -5,15 +5,19 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QMouseEvent>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QPixmap>
+#include <QGraphicsDropShadowEffect>
+#include <QPropertyAnimation>
 
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
     updateStyle();
 
-    // Newly added 9/14
     // Add a layout to the frame for displaying an image
     QVBoxLayout *layout = new QVBoxLayout(this);
-    this->setLayout(layout);
+    this->setLayout(layout);  // Ensure layout is applied to frame
 }
 
 void ClickableFrame::setSelected(bool selected)
@@ -41,29 +45,134 @@ void ClickableFrame::mousePressEvent(QMouseEvent *event)
 
 void ClickableFrame::updateStyle()
 {
-    QString style = QString(
-                        "ClickableFrame {"
-                        "   border-radius: 20px;"
-                        "   background-color: #3E3E3E;"
-                        "   border: %1px solid %2;"
-                        "}"
-                        ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
+    // Define different styles for selected and unselected states
+    QString baseStyle = R"(
+        ClickableFrame {
+            border-radius: 20px;
+            background-color: #3E3E3E;
+            border: %1px solid %2;
+        })";
 
-    qDebug("Applying stylesheet: %s", qPrintable(style));
+    QString selectedBorderColor = "#FFD700";  // Gold color for the selected frame
+    QString unselectedBorderColor = "#3E3E3E";  // Default background color for unselected frames
+
+    // Update border thickness and color based on selection state
+    QString style = baseStyle.arg(m_selected ? "5" : "1", m_selected ? selectedBorderColor : unselectedBorderColor);
     setStyleSheet(style);
+
+    // Add a shadow effect when selected
+    if (m_selected) {
+        QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
+        shadowEffect->setBlurRadius(20);  // Shadow blur intensity
+        shadowEffect->setColor(QColor(255, 215, 0, 160));  // Semi-transparent gold shadow
+        shadowEffect->setOffset(0, 0);  // Position shadow directly under the frame
+        setGraphicsEffect(shadowEffect);
+
+        // Create a property animation to scale the frame when clicked (fun effect)
+        QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
+        animation->setDuration(300);
+        QRect startGeometry = geometry();
+        QRect endGeometry = QRect(startGeometry.x() - 10, startGeometry.y() - 10,
+                                  startGeometry.width() + 20, startGeometry.height() + 20);
+        animation->setStartValue(startGeometry);
+        animation->setEndValue(endGeometry);
+        animation->setEasingCurve(QEasingCurve::OutBounce);  // Fun bouncing effect
+        animation->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        // Remove shadow if the frame is unselected
+        setGraphicsEffect(nullptr);
+    }
 }
+
+
+void PickImagesPage::handleImageResponse()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        qDebug() << "No reply received";
+        return;
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
+        qDebug() << "Image received successfully";
+        QByteArray imageData = reply->readAll();
+
+        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+        qDebug() << "Content-Type: " << contentType;
+
+        if (contentType.startsWith("image")) {
+            QPixmap pixmap;
+            if (pixmap.loadFromData(imageData)) {
+                qDebug() << "Pixmap loaded from network reply";
+
+                // Iterate through the frames and set pixmap for the first available frame
+                for (int i = 0; i < m_imageFrames.size(); ++i) {
+                    ClickableFrame* frame = m_imageFrames.at(i);
+
+                    // Check if the frame has any children (e.g., QLabel for image)
+                    if (frame->layout()->isEmpty()) {
+                        QLabel* imageLabel = new QLabel(frame);
+
+                        // Scale the pixmap to fit the frame
+                        imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+                        // Add the QLabel to the frame's layout
+                        frame->layout()->addWidget(imageLabel);
+
+                        // Ensure layout updates
+                        frame->update();
+                        frame->adjustSize();
+
+                        break;  // Break after filling the first available frame
+                    }
+                }
+            } else {
+                qDebug() << "Failed to load pixmap from data";
+            }
+        } else {
+            qDebug() << "Received content is not an image!";
+        }
+    } else {
+        qDebug() << "Network reply error: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+
+void PickImagesPage::fetchRandomImages()
+{
+    qDebug() << "Fetching random images...";
+
+    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
+    request1.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    QNetworkReply *reply1 = m_networkManager->get(request1);
+
+    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
+    request2.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    QNetworkReply *reply2 = m_networkManager->get(request2);
+
+    // Make sure to connect each reply to the image handler
+    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+}
+
 
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
-    ,m_selectedFrame(nullptr)  // Initialize to nullptr
+    , m_selectedFrame(nullptr)
+    , m_networkManager(new QNetworkAccessManager(this)) // Add network manager
 {
     ui->setupUi(this);
     initializeUI();
 
+    QCoreApplication::addLibraryPath("C:/Program Files/openssl-1.1/x64/bin");
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
+
+    // Fetch random images when initializing the UI
+    fetchRandomImages();
 }
 
 PickImagesPage::~PickImagesPage()
@@ -202,12 +311,27 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
 
 void PickImagesPage::onRejectButtonClicked()
 {
+    clearImages();  // Clear the current images
+    fetchRandomImages();  // Fetch new images
     emit navigateToTextVisionPage();
 }
 
 void PickImagesPage::onRetakePhotoButtonClicked()
 {
+    clearImages();  // Clear the current images
+    fetchRandomImages();  // Fetch new images
     emit navigateToSensitivityPage();
+}
+
+void PickImagesPage::clearImages()
+{
+    // Iterate through the frames and remove all child widgets (i.e., the QLabel holding the images)
+    for (int i = 0; i < m_imageFrames.size(); ++i) {
+        QLayout* layout = m_imageFrames[i]->layout();
+        while (QLayoutItem* item = layout->takeAt(0)) {
+            delete item->widget();  // Delete the QLabel
+        }
+    }
 }
 
 void PickImagesPage::onAcceptButtonClicked()
