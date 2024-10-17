@@ -10,6 +10,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPixmap>
+#include <QGraphicsDropShadowEffect>
+#include <QPropertyAnimation>
 
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
@@ -81,6 +83,7 @@ void ClickableFrame::updateStyle()
         setGraphicsEffect(nullptr);
     }
 }
+
 
 void PickImagesPage::handleImageResponse()
 {
@@ -301,12 +304,27 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
 
 void PickImagesPage::onRejectButtonClicked()
 {
+    clearImages();  // Clear the current images
+    fetchRandomImages();  // Fetch new images
     emit navigateToTextVisionPage();
 }
 
 void PickImagesPage::onRetakePhotoButtonClicked()
 {
+    clearImages();  // Clear the current images
+    fetchRandomImages();  // Fetch new images
     emit navigateToSensitivityPage();
+}
+
+void PickImagesPage::clearImages()
+{
+    // Iterate through the frames and remove all child widgets (i.e., the QLabel holding the images)
+    for (int i = 0; i < m_imageFrames.size(); ++i) {
+        QLayout* layout = m_imageFrames[i]->layout();
+        while (QLayoutItem* item = layout->takeAt(0)) {
+            delete item->widget();  // Delete the QLabel
+        }
+    }
 }
 
 void PickImagesPage::onAcceptButtonClicked()
