@@ -47,6 +47,7 @@ CalibrationPage::CalibrationPage(ImageProjectionWindow *projectionWindow, QWidge
     // **Connect the rejectCalibrationButton to resetPoints()**
     connect(ui->rejectCalibrationButton, &QPushButton::clicked, this, &CalibrationPage::resetPoints);
 
+
     // Start the camera
     startCamera();
 }

@@ -19,7 +19,7 @@ ImageProjectionWindow::ImageProjectionWindow(QWidget *parent)
     , m_frameCount(0)
 {
     setupUI();
-    setFixedSize(1280, 720);
+    setFixedSize(WIDTH, HEIGHT);
     setProjectionState(projectionState::LOGO); // Initialize with LOGO state
 
     connect(m_rainbowTimer, &QTimer::timeout, this, &ImageProjectionWindow::updateRainbowEdges);
@@ -33,7 +33,7 @@ void ImageProjectionWindow::setupUI()
 
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
-    m_imageLabel->setFixedSize(1280, 720);
+    m_imageLabel->setFixedSize(WIDTH, HEIGHT);
     layout->addWidget(m_imageLabel);
 
     setStyleSheet("background-color: white;");
@@ -111,7 +111,10 @@ void ImageProjectionWindow::setProjectionState(projectionState state)
     }
 }
 
-
+// Getters
+bool ImageProjectionWindow::getIsCalibrated() const {
+    return m_isCalibrated;
+}
 
 // State Transitions
 
@@ -133,6 +136,7 @@ void ImageProjectionWindow::activateLogo(){
 // Activate SCANNING state (whiteout the current frame)
 void ImageProjectionWindow::activateScanning()
 {
+    m_isCalibrated = false;
     m_imageLabel->clear();
     setStyleSheet("background-color: white;");
 }
@@ -144,6 +148,8 @@ void ImageProjectionWindow::activateEdgeDetection()
         qDebug() << "No still frame set for edge detection.";
         return;
     }
+
+    m_isCalibrated = true;
 
     // Convert to grayscale
     cv::Mat grayMat;
@@ -283,30 +289,20 @@ cv::Mat ImageProjectionWindow::applyPerspectiveTransform(const cv::Mat& mat)
     }
 
     // Define source points (corners of the original image)
-    std::array<cv::Point2f, 4> srcCorners = {
-        cv::Point2f(0.0f, 0.0f),
-        cv::Point2f(static_cast<float>(mat.cols - 1), 0.0f),
-        cv::Point2f(static_cast<float>(mat.cols - 1), static_cast<float>(mat.rows - 1)),
-        cv::Point2f(0.0f, static_cast<float>(mat.rows - 1))
+    const std::vector<cv::Point2f> srcCorners = {
+        {0.0f, 0.0f},
+        {static_cast<float>(WIDTH), 0.0f},
+        {static_cast<float>(WIDTH), static_cast<float>(HEIGHT)},
+        {0.0f, static_cast<float>(HEIGHT)}
     };
 
     // Destination points (transform corners)
-    std::array<cv::Point2f, 4> dstCorners = m_transformCorners;
+    const std::array<cv::Point2f, 4> dstCorners = m_transformCorners;
 
     // Calculate the perspective transform matrix
-    cv::Mat perspectiveMatrix = cv::getPerspectiveTransform(srcCorners.data(), dstCorners.data());
+    const cv::Mat perspectiveMatrix = cv::getPerspectiveTransform(dstCorners.data(), srcCorners.data());
 
-    // Get the current size of the QLabel
-    int labelWidth = m_imageLabel->width();
-    int labelHeight = m_imageLabel->height();
-
-    // Handle case when label size is zero
-    if (labelWidth == 0 || labelHeight == 0) {
-        qDebug() << "QLabel size is zero in applyPerspectiveTransform.";
-        return cv::Mat();
-    }
-
-    cv::Size outputSize(labelWidth, labelHeight);
+    const cv::Size outputSize(WIDTH, HEIGHT);
 
     // Apply the perspective transformation
     cv::Mat warped;
