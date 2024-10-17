@@ -64,10 +64,13 @@ private:
     QHBoxLayout* createButtonLayout();
     QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
     void updateSelectedImages(ClickableFrame *clickedFrame);
-    // New methods for fetching and handling random images
+
+    // Methods for fetching and handling random images
     void fetchRandomImages();  // Fetch images from a remote source
     void handleImageResponse(void);  // Handle the response from the image fetch
 
+    // New method for clearing the images before fetching new ones
+    void clearImages();  // Clears the current images in the frames
 };
 
 #endif // PICKIMAGESPAGE_H
