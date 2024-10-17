@@ -39,29 +39,6 @@
     <string>LETS TRY AGAIN!</string>
    </property>
   </widget>
-  <widget class="QGraphicsView" name="graphicsView">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>60</y>
-     <width>481</width>
-     <height>221</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="rejectSensitivityButton_2">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>320</y>
-     <width>141</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>LETS TRY AGAIN!</string>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections/>
