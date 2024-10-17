@@ -5,15 +5,17 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QMouseEvent>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QPixmap>
 
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
 {
     updateStyle();
 
-    // Newly added 9/14
     // Add a layout to the frame for displaying an image
     QVBoxLayout *layout = new QVBoxLayout(this);
-    this->setLayout(layout);
+    this->setLayout(layout);  // Ensure layout is applied to frame
 }
 
 void ClickableFrame::setSelected(bool selected)
@@ -31,10 +33,8 @@ bool ClickableFrame::isSelected() const
 void ClickableFrame::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        qDebug("Frame clicked, previous selection state: %d", m_selected);
         setSelected(!m_selected);
         emit clicked();
-        qDebug("Clicked signal emitted, new selection state: %d", m_selected);
     }
     QFrame::mousePressEvent(event);
 }
@@ -49,21 +49,98 @@ void ClickableFrame::updateStyle()
                         "}"
                         ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
 
-    qDebug("Applying stylesheet: %s", qPrintable(style));
     setStyleSheet(style);
 }
+
+void PickImagesPage::handleImageResponse()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        qDebug() << "No reply received";
+        return;
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray imageData = reply->readAll();
+
+        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+
+        if (contentType.startsWith("image")) {
+            QPixmap pixmap;
+            if (pixmap.loadFromData(imageData)) {
+
+                // Iterate through the frames and set pixmap for the first available frame
+                for (int i = 0; i < m_imageFrames.size(); ++i) {
+                    ClickableFrame* frame = m_imageFrames.at(i);
+
+                    // Check if the frame has any children (e.g., QLabel for image)
+                    if (frame->layout()->isEmpty()) {
+                        QLabel* imageLabel = new QLabel(frame);
+
+                        imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                        imageLabel->setAlignment(Qt::AlignCenter);
+                        imageLabel->setScaledContents(true);
+
+                        // Scale the pixmap to fit the frame
+                        imageLabel->setPixmap(pixmap);
+
+                        // Add the QLabel to the frame's layout
+                        frame->layout()->addWidget(imageLabel);
+
+                        // Ensure layout updates
+                        frame->update();
+                        frame->adjustSize();
+
+                        break;  // Break after filling the first available frame
+                    }
+                }
+            } else {
+                qDebug() << "Failed to load pixmap from data";
+            }
+        } else {
+            qDebug() << "Received content is not an image!";
+        }
+    } else {
+        qDebug() << "Network reply error: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+
+void PickImagesPage::fetchRandomImages()
+{
+    qDebug() << "Fetching random images...";
+
+    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
+    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+    QNetworkReply *reply1 = m_networkManager->get(request1);
+
+    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
+    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+    QNetworkReply *reply2 = m_networkManager->get(request2);
+
+    // Make sure to connect each reply to the image handler
+    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+}
+
 
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
-    ,m_selectedFrame(nullptr)  // Initialize to nullptr
+    , m_selectedFrame(nullptr)
+    , m_networkManager(new QNetworkAccessManager(this)) // Add network manager
 {
     ui->setupUi(this);
     initializeUI();
 
+    QCoreApplication::addLibraryPath("C:/Program Files/openssl-1.1/x64/bin");
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
+
+    // Fetch random images when initializing the UI
+    fetchRandomImages();
 }
 
 PickImagesPage::~PickImagesPage()
@@ -116,7 +193,6 @@ QFrame* PickImagesPage::createImagesGrid()
         ClickableFrame *imageFrame = new ClickableFrame(this);
         imageFrame->setMinimumSize(200, 150);
         connect(imageFrame, &ClickableFrame::clicked, this, [this, imageFrame]() {
-            qDebug("Calling update selected images");
             updateSelectedImages(imageFrame);
         });
         gridLayout->addWidget(imageFrame, i / 2, i % 2);
@@ -129,24 +205,17 @@ QFrame* PickImagesPage::createImagesGrid()
 
 void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 {
-    qDebug("In update selected images");
     if (m_selectedFrame && m_selectedFrame != clickedFrame) {
-        qDebug("Deselecting previous frame");
         m_selectedFrame->setSelected(false);  // Deselect the previous frame
     }
 
-    // clickedFrame->setSelected(!clickedFrame->isSelected());
-
     if (clickedFrame->isSelected()) {
-        qDebug("Frame deselected");
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
     } else {
-        qDebug("Frame deselected");
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
     }
 
     // Enable or disable the select button based on whether any frame is selected
-    qDebug("Setting selectImagesButton enabled state to %d", m_selectedFrame != nullptr);
     ui->selectImagesButton->setEnabled(m_selectedFrame != nullptr);
 }
 
