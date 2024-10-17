@@ -34,6 +34,7 @@ class SensitivityPage : public QWidget
         void onAcceptButtonClicked();
         void captureAndProcessFrame();
         void onRejectButtonClicked();
+        void updateSensitivity();
 
     private:
         Ui::SensitivityPage *ui;

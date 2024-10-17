@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QImage>
 #include <opencv2/opencv.hpp>
-#include <vector>
+#include <array>
 
 namespace Ui {
 class CalibrationPage;
@@ -49,7 +49,8 @@ private:
     QImage qimg;
 
     // Point selection variables
-    std::vector<cv::Point2f> selectedPoints;
+    std::array<cv::Point2f, 4> selectedPoints;
+    int numSelectedPoints = 0;
     bool resetMode;
     bool pointsSelected;
     bool dragging;
@@ -66,10 +67,10 @@ private:
     void processFrame();
     void updateProjectionWindow(); // Method to update the projection window
     void drawMagnifyingGlass(const cv::Mat& sourceFrame, cv::Mat& drawFrame, int x, int y, int zoomFactor = 2, int radius = 50);
-    void drawROI(cv::Mat& frame, std::vector<cv::Point2f>& selectedPoints);
-    void sortPointsClockwise(std::vector<cv::Point2f>& points);
+    void drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& selectedPoints);
+    void sortPointsClockwise(std::array<cv::Point2f, 4>& points);
     int findClosestCorner(int x, int y);
-    bool isValidPoint(const cv::Point2f& newPoint, const std::vector<cv::Point2f>& points, double minDistance);
+    bool isValidPoint(const cv::Point2f& newPoint, double minDistance);
     void updateDisplayWithStillFrame();
 };
 
