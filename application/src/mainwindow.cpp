@@ -61,7 +61,7 @@ void MainWindow::setupPages()
     // window will be passed to all windows that use it
     imageProjectionWindow = new ImageProjectionWindow();
     imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
-    imageProjectionWindow->showLogo();
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     showImageProjectionWindow();
 
 
@@ -129,14 +129,14 @@ void MainWindow::setupConnections()
 void MainWindow::navigateToCreatePage()
 {
     // proj window should show video, currently will be still image
-    imageProjectionWindow->showLogo();
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
 }
 
 void MainWindow::navigateToCalibrationPage()
 {
     // proj window should show white
-    imageProjectionWindow->clearWindow();
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
     stackedWidget->setCurrentWidget(calibrationPage);
 }
 
@@ -149,6 +149,7 @@ void MainWindow::navigateToSensitivityPage()
 
 void MainWindow::navigateToTextVisionPage()
 {
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
     stackedWidget->setCurrentWidget(textVisionPage);
 }
 

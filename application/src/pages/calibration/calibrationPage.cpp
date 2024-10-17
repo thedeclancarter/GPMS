@@ -106,12 +106,12 @@ void CalibrationPage::processFrame()
         cv::Mat displayFrame = frame.clone();
 
         // Draw selected points
-        for (const auto& pt : selectedPoints) {
-            cv::circle(displayFrame, pt, 5, cv::Scalar(0, 255, 0), -1);
+        for (int i = 0; i < numSelectedPoints; ++i) {
+            cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
         }
 
         // Draw ROI if 4 points are selected
-        if (selectedPoints.size() == 4) {
+        if (numSelectedPoints == 4) {
             drawROI(displayFrame, selectedPoints);
         }
 
@@ -130,7 +130,7 @@ void CalibrationPage::processFrame()
         qimg = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888).copy();
 
         // If four points are selected and a still frame hasn't been captured yet, capture it
-        if (selectedPoints.size() == 4 && !stillFrameCaptured) {
+        if (numSelectedPoints == 4 && !stillFrameCaptured) {
             stillFrame = frame.clone();
             stillFrameCaptured = true;
             timer->stop(); // Stop capturing frames
@@ -150,42 +150,19 @@ void CalibrationPage::processFrame()
 // Update the projection window based on the selected points
 void CalibrationPage::updateProjectionWindow()
 {
-    if (stillFrame.empty() || selectedPoints.size() != 4) {
+    if (stillFrame.empty() || numSelectedPoints != 4) {
         qDebug() << "Cannot update projection window: Still frame is empty or points are not fully selected.";
         return;
     }
 
-    // Sort the points in clockwise order
-    std::vector<cv::Point2f> sortedPoints = selectedPoints;
+    // Create a temporary array to sort points
+    std::array<cv::Point2f, 4> sortedPoints = selectedPoints;
     sortPointsClockwise(sortedPoints);
-
-    // Define destination points for perspective transform (corners of the frame)
-    std::vector<cv::Point2f> defaultPts = {
-        {0.0f, 0.0f},
-        {static_cast<float>(WIDTH), 0.0f},
-        {static_cast<float>(WIDTH), static_cast<float>(HEIGHT)},
-        {0.0f, static_cast<float>(HEIGHT)}
-    };
-
-    // Compute the perspective transformation matrix
-    matrix = cv::getPerspectiveTransform(sortedPoints, defaultPts);
-
-    // Apply the perspective transformation to the still frame
-    cv::Mat transformed;
-    cv::warpPerspective(stillFrame, transformed, matrix, cv::Size(WIDTH, HEIGHT));
-
-    // Convert to grayscale
-    cv::Mat edges;
-    cv::cvtColor(transformed, edges, cv::COLOR_BGR2GRAY);
-
-    // Apply Canny edge detection
-    cv::Canny(edges, edges, 50, 150);
-
-    // Convert edges to QImage
-    QImage edgeImage = QImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8).copy();
+    m_projectionWindow->setStillFrame(stillFrame);
+    m_projectionWindow->setTransformCorners(sortedPoints);
 
     // Set the image in the projection window using updateImage
-    m_projectionWindow->updateImage(edgeImage);
+    m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::EDGE_DETECTION);
 }
 
 // Update the display using the still frame
@@ -198,12 +175,12 @@ void CalibrationPage::updateDisplayWithStillFrame()
     cv::Mat displayFrame = stillFrame.clone();
 
     // Draw selected points
-    for (const auto& pt : selectedPoints) {
-        cv::circle(displayFrame, pt, 5, cv::Scalar(0, 255, 0), -1);
+    for (int i = 0; i < numSelectedPoints; ++i) {
+        cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
     }
 
     // Draw ROI
-    if (selectedPoints.size() == 4) {
+    if (numSelectedPoints == 4) {
         drawROI(displayFrame, selectedPoints);
     }
 
@@ -264,14 +241,15 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
         mouseX = imgX * scaleX;
         mouseY = imgY * scaleY;
 
-        if (event->button() == Qt::LeftButton && selectedPoints.size() < 4) {
-            if (isValidPoint(cv::Point2f(mouseX, mouseY), selectedPoints, 20.0)) {
-                selectedPoints.push_back(cv::Point2f(mouseX, mouseY));
+        if (event->button() == Qt::LeftButton && numSelectedPoints < 4) {
+            if (isValidPoint(cv::Point2f(mouseX, mouseY), 20.0)) {
+                selectedPoints[numSelectedPoints] = cv::Point2f(mouseX, mouseY);
+                ++numSelectedPoints;
                 qDebug() << "Point selected:" << mouseX << "," << mouseY;
                 pointsChanged = true; // Points have changed
 
                 // If 4 points are selected, capture the still frame
-                if (selectedPoints.size() == 4) {
+                if (numSelectedPoints == 4) {
                     stillFrame = frame.clone();
                     stillFrameCaptured = true;
                     timer->stop();
@@ -281,7 +259,7 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
             } else {
                 qDebug() << "Point is too close to an existing point.";
             }
-        } else if (event->button() == Qt::LeftButton) {
+        } else if (event->button() == Qt::LeftButton && numSelectedPoints == 4) {
             selectedCorner = findClosestCorner(mouseX, mouseY);
             if (selectedCorner != -1) {
                 dragging = true;
@@ -346,7 +324,7 @@ void CalibrationPage::mouseReleaseEvent(QMouseEvent* event)
 // Reset all selected points and related states
 void CalibrationPage::resetPoints()
 {
-    selectedPoints.clear();
+    numSelectedPoints = 0;
     resetMode = true;
     pointsSelected = false;
     dragging = false;
@@ -361,7 +339,7 @@ void CalibrationPage::resetPoints()
     qDebug() << "Points reset. Please select 4 new points.";
 
     // Clear the image in the projection window using clearImage
-    m_projectionWindow->clearWindow();
+    m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
 
     update();
 
@@ -372,7 +350,7 @@ void CalibrationPage::resetPoints()
 // Finalize the selection (if needed)
 void CalibrationPage::finalizeSelection()
 {
-    if (selectedPoints.size() >= 4) {
+    if (numSelectedPoints >= 4) {
         pointsSelected = true;
         updateProjectionWindow();
     }
@@ -430,36 +408,37 @@ void CalibrationPage::drawMagnifyingGlass(const cv::Mat& sourceFrame, cv::Mat& d
 }
 
 // Draw the Region of Interest (ROI) with grid lines
-void CalibrationPage::drawROI(cv::Mat& frame, std::vector<cv::Point2f>& selectedPoints)
+void CalibrationPage::drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& selectedPoints)
 {
     // Ensure points are sorted in clockwise order
-    sortPointsClockwise(selectedPoints);
+    std::array<cv::Point2f, 4> sortedPoints = selectedPoints;
+    sortPointsClockwise(sortedPoints);
 
     // Draw the rectangle (ROI)
     for (int i = 0; i < 4; i++) {
-        cv::line(frame, selectedPoints[i], selectedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
+        cv::line(frame, sortedPoints[i], sortedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
     }
 
     const float oneThird = 1.0f / 3.0f;
     const float twoThirds = 2.0f / 3.0f;
 
     // Precompute directional vectors for each pair of points
-    cv::Point2f vec1 = selectedPoints[1] - selectedPoints[0];
-    cv::Point2f vec2 = selectedPoints[2] - selectedPoints[3];
-    cv::Point2f vec3 = selectedPoints[3] - selectedPoints[0];
-    cv::Point2f vec4 = selectedPoints[2] - selectedPoints[1];
+    cv::Point2f vec1 = sortedPoints[1] - sortedPoints[0];
+    cv::Point2f vec2 = sortedPoints[2] - sortedPoints[3];
+    cv::Point2f vec3 = sortedPoints[3] - sortedPoints[0];
+    cv::Point2f vec4 = sortedPoints[2] - sortedPoints[1];
 
     // Draw vertical grid lines
-    cv::line(frame, selectedPoints[0] + vec1 * oneThird, selectedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, selectedPoints[0] + vec1 * twoThirds, selectedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec1 * oneThird, sortedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec1 * twoThirds, sortedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 1);
 
     // Draw horizontal grid lines
-    cv::line(frame, selectedPoints[0] + vec3 * oneThird, selectedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, selectedPoints[0] + vec3 * twoThirds, selectedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec3 * oneThird, sortedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec3 * twoThirds, sortedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 1);
 }
 
 // Sort points in clockwise order based on their angles from the center
-void CalibrationPage::sortPointsClockwise(std::vector<cv::Point2f>& points)
+void CalibrationPage::sortPointsClockwise(std::array<cv::Point2f, 4>& points)
 {
     cv::Point2f center(0, 0);
     for (const auto& point : points) {
@@ -478,7 +457,7 @@ void CalibrationPage::sortPointsClockwise(std::vector<cv::Point2f>& points)
 int CalibrationPage::findClosestCorner(int x, int y)
 {
     const float cornerRadius = 20.0f;
-    for (int i = 0; i < selectedPoints.size(); ++i) {
+    for (int i = 0; i < numSelectedPoints; ++i) {
         if (cv::norm(selectedPoints[i] - cv::Point2f(x, y)) < cornerRadius) {
             return i;
         }
@@ -487,10 +466,10 @@ int CalibrationPage::findClosestCorner(int x, int y)
 }
 
 // Validate if the new point is sufficiently distant from existing points
-bool CalibrationPage::isValidPoint(const cv::Point2f& newPoint, const std::vector<cv::Point2f>& points, double minDistance)
+bool CalibrationPage::isValidPoint(const cv::Point2f& newPoint, double minDistance)
 {
-    for (const auto& point : points) {
-        double dist = cv::norm(point - newPoint);
+    for (int i = 0; i < numSelectedPoints; ++i) {
+        double dist = cv::norm(selectedPoints[i] - newPoint);
         if (dist < minDistance) {
             return false;
         }

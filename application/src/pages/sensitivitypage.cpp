@@ -25,6 +25,9 @@ SensitivityPage::SensitivityPage(ImageProjectionWindow *projectionWindow, QWidge
 {
     ui->setupUi(this);
     init();
+
+    connect(lowerSlider, &QSlider::valueChanged, this, &SensitivityPage::updateSensitivity);
+    connect(upperSlider, &QSlider::valueChanged, this, &SensitivityPage::updateSensitivity);
 }
 
 void SensitivityPage::startCaptureTimer(){
@@ -109,10 +112,10 @@ void SensitivityPage::updateDisplays(const QImage &image)
     // Update local display
     m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    // Update ImageProjectionWindow if it exists
-    if (m_projectionWindow) {
-        m_projectionWindow->updateImage(image);
-    }
+//     // Update ImageProjectionWindow if it exists
+//     if (m_projectionWindow) {
+//         m_projectionWindow->updateImage(image);
+//     }
 }
 
 void SensitivityPage::captureAndProcessFrame()
@@ -353,3 +356,14 @@ bool SensitivityPage::checkCameraAvailability()
     return !QCameraInfo::availableCameras().isEmpty();
 }
 
+void SensitivityPage::updateSensitivity()
+{
+    int lowerValue = lowerSlider->value();
+    int upperValue = upperSlider->value();
+
+    if (m_projectionWindow) {
+        m_projectionWindow->setSensitivity(lowerValue, upperValue);
+    }
+
+    qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;
+}
