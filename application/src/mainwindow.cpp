@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QGraphicsDropShadowEffect>
+#include <QScreen>
+#include <QApplication>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,17 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "Qt version:" << QT_VERSION_STR;
     ui->setupUi(this);
     setupUI();
-    qDebug("Finished setting up UI");
     setupPages();
-    qDebug("Finished setting up all functions");
     setupConnections();
-    qDebug("Finished making all connections");
-}
-
-
-MainWindow::~MainWindow()
-{
-    delete ui;
 }
 
 void MainWindow::setupUI()
@@ -65,17 +58,23 @@ void MainWindow::setupUI()
 
 void MainWindow::setupPages()
 {
-    createPage = new CreatePage(this);
-
+    // window will be passed to all windows that use it
     imageProjectionWindow = new ImageProjectionWindow();
     imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
+    showImageProjectionWindow();
 
-    // variable in the .h
+
+    // will show GPMS logo
+    createPage = new CreatePage(imageProjectionWindow, this);
+    // will show white
     calibrationPage = new CalibrationPage(imageProjectionWindow, this);
-
-    sensitivityPage = new SensitivityPage(this);
+    // will show edge detection
+    sensitivityPage = new SensitivityPage(imageProjectionWindow, this);
+    // what will these show
     textVisionPage = new TextVisionPage(this);
     pickImagesPage = new PickImagesPage(this);
+    // will show projected image
     projectPage = new ProjectPage(this);
 
     stackedWidget->addWidget(createPage);
@@ -90,13 +89,25 @@ void MainWindow::setupPages()
     stackedWidget->setCurrentWidget(createPage);
 }
 
+
+void MainWindow::showImageProjectionWindow()
+{
+    if (imageProjectionWindow) {
+        // Set window flags to keep it behind other windows
+        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
+
+        imageProjectionWindow->show();
+        imageProjectionWindow->lower(); // Ensure it stays behind other windows
+    }
+}
+
 void MainWindow::setupConnections()
 {
     // logo
     connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
 
     // from create page
-    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::showProjectionWindow);
+    connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from calibration page
     connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
@@ -115,40 +126,37 @@ void MainWindow::setupConnections()
     connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
 }
 
-void MainWindow::showProjectionWindow()
-{
-    if (imageProjectionWindow) {
-        imageProjectionWindow->show();
-        imageProjectionWindow->lower();
-        stackedWidget->setCurrentWidget(calibrationPage);
-    }
-    else{
-        qDebug("In showProjectionWindow imageprojectionwindow is null");
-    }
-}
-
 void MainWindow::navigateToCreatePage()
 {
+    // proj window should show video, currently will be still image
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
 }
 
 void MainWindow::navigateToCalibrationPage()
 {
+    // proj window should show white
+    if (imageProjectionWindow->getIsCalibrated())
+    {
+        imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::EDGE_DETECTION);
+    }
+    else
+    {
+        imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
+    }
     stackedWidget->setCurrentWidget(calibrationPage);
 }
 
 void MainWindow::navigateToSensitivityPage()
 {
-    if (imageProjectionWindow) {
-        sensitivityPage->setProjectionWindow(imageProjectionWindow);
-    } else {
-        qDebug("Error: imageProjectionWindow is null in navigateToSensitivityPage");
-    }
+    // only start timer when on this page
+    sensitivityPage->startCaptureTimer();
     stackedWidget->setCurrentWidget(sensitivityPage);
 }
 
 void MainWindow::navigateToTextVisionPage()
 {
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
     stackedWidget->setCurrentWidget(textVisionPage);
 }
 
@@ -162,10 +170,7 @@ void MainWindow::navigateToProjectPage()
     stackedWidget->setCurrentWidget(projectPage);
 }
 
-// pictures
-
-void MainWindow::setImageForAcceptPage(const QImage &image)
+MainWindow::~MainWindow()
 {
-    // Assuming you have an AcceptPicturePage class
-    // acceptPicturePage->setImage(image);
+    delete ui;
 }

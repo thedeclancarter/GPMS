@@ -10,10 +10,10 @@
 #include <QCameraInfo>
 
 
-SensitivityPage::SensitivityPage(QWidget *parent)
+SensitivityPage::SensitivityPage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::SensitivityPage)
-    , m_projectionWindow(nullptr)
+    , m_projectionWindow(projectionWindow)
     , m_imageLabel(nullptr)
     , lowerSlider(nullptr)
     , upperSlider(nullptr)
@@ -26,9 +26,11 @@ SensitivityPage::SensitivityPage(QWidget *parent)
     ui->setupUi(this);
     init();
 
-    connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
-    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
+    connect(lowerSlider, &QSlider::valueChanged, this, &SensitivityPage::updateSensitivity);
+    connect(upperSlider, &QSlider::valueChanged, this, &SensitivityPage::updateSensitivity);
+}
 
+void SensitivityPage::startCaptureTimer(){
     // Set up timer for continuous frame capture
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &SensitivityPage::captureAndProcessFrame);
@@ -37,6 +39,11 @@ SensitivityPage::SensitivityPage(QWidget *parent)
     // Connect camera frame signals
     connect(m_imageCapture, &QCameraImageCapture::imageAvailable,
             this, &SensitivityPage::processFrame);
+}
+void SensitivityPage::endCaptureTimer(){
+    if (timer) {
+        timer->stop();
+    }
 }
 
 void SensitivityPage::processFrame(int id, const QVideoFrame &frame)
@@ -105,10 +112,10 @@ void SensitivityPage::updateDisplays(const QImage &image)
     // Update local display
     m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    // Update ImageProjectionWindow if it exists
-    if (m_projectionWindow) {
-        m_projectionWindow->updateImage(image);
-    }
+//     // Update ImageProjectionWindow if it exists
+//     if (m_projectionWindow) {
+//         m_projectionWindow->updateImage(image);
+//     }
 }
 
 void SensitivityPage::captureAndProcessFrame()
@@ -122,6 +129,7 @@ void SensitivityPage::init()
 {
     if (checkCameraAvailability()) {
         qDebug() << "Cameras found!";
+
         initializeUI();
     } else {
         qDebug() << "No camera available";
@@ -212,6 +220,9 @@ void SensitivityPage::initializeUI()
     mainLayout->addLayout(createButtonLayout());
 
     setLayout(mainLayout);
+
+    connect(ui->acceptSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onAcceptButtonClicked);
+    connect(ui->rejectSensitivityButton, &QPushButton::clicked, this, &SensitivityPage::onRejectButtonClicked);
 }
 
 QLabel* SensitivityPage::createTitleLabel()
@@ -330,23 +341,13 @@ SensitivityPage::~SensitivityPage()
 
 void SensitivityPage::onRejectButtonClicked()
 {
-    // if (!currentImage.isNull()) {
-    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
-    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
-    //     projectionWindow->show();
-    // }
-
+    endCaptureTimer();
     emit navigateToCalibrationPage();
 }
 
 void SensitivityPage::onAcceptButtonClicked()
 {
-    // if (!currentImage.isNull()) {
-    //     ImageProjectionWindow *projectionWindow = new ImageProjectionWindow(currentImage);
-    //     projectionWindow->setAttribute(Qt::WA_DeleteOnClose); // Ensure the window is deleted when closed
-    //     projectionWindow->show();
-    // }
-
+    endCaptureTimer();
     emit navigateToTextVisionPage();
 }
 
@@ -355,3 +356,14 @@ bool SensitivityPage::checkCameraAvailability()
     return !QCameraInfo::availableCameras().isEmpty();
 }
 
+void SensitivityPage::updateSensitivity()
+{
+    int lowerValue = lowerSlider->value();
+    int upperValue = upperSlider->value();
+
+    if (m_projectionWindow) {
+        m_projectionWindow->setSensitivity(lowerValue, upperValue);
+    }
+
+    // qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;
+}

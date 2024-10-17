@@ -1,5 +1,6 @@
 #ifndef CREATEPAGE_H
 #define CREATEPAGE_H
+#include "imageprojectionwindow.h"
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -14,7 +15,7 @@ class CreatePage : public QWidget
     Q_OBJECT
 
     public:
-        explicit CreatePage(QWidget *parent = nullptr);
+        explicit CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~CreatePage();
 
     signals:
@@ -28,6 +29,7 @@ class CreatePage : public QWidget
         Ui::CreatePage *ui;
         QPushButton *createButton;
         QPushButton *backButton;
+        ImageProjectionWindow *m_projectionWindow;
 
         void setupUI();
         void setupHeader(QVBoxLayout *layout);

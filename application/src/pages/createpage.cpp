@@ -8,19 +8,15 @@
 #include <QPushButton>
 #include <QGraphicsDropShadowEffect>
 
-CreatePage::CreatePage(QWidget *parent)
+CreatePage::CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::CreatePage)
+    , m_projectionWindow(projectionWindow)
     , createButton(nullptr)
 {
-    ui->setupUi(this);
+    // ui->setupUi(this);
     setupUI();
     setupConnections();
-}
-
-CreatePage::~CreatePage()
-{
-    delete ui;
 }
 
 void CreatePage::setupUI()
@@ -185,4 +181,9 @@ void CreatePage::setupConnections()
 void CreatePage::onCreateButtonClicked()
 {
     emit navigateToCalibrationPage();
+}
+
+CreatePage::~CreatePage()
+{
+    delete ui;
 }

@@ -31,7 +31,6 @@ public:
     // image projection page
     ImageProjectionWindow *imageProjectionWindow;
 
-
 private:
 
     Ui::MainWindow *ui;
@@ -53,10 +52,11 @@ private:
     void setupPages();
     void setupConnections();
 
-    void showProjectionWindow();
+    void showImageProjectionWindow();
 
     QWidget* createSidebar();
     QPushButton* createSidebarButton(const QIcon& icon);
+
 
 private slots:
     // main page
@@ -68,9 +68,6 @@ private slots:
     void navigateToTextVisionPage();
     void navigateToPickImagesPage();
     void navigateToProjectPage();
-
-    // for the picture
-    void setImageForAcceptPage(const QImage &image);
 
 };
 #endif // MAINWINDOW_H
