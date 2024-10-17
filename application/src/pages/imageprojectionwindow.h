@@ -28,11 +28,17 @@ public:
     void setTransformCorners(const std::array<cv::Point2f, 4>& transformCorners);
     void setProjectionState(projectionState state);
 
+    // Getters
+    bool getIsCalibrated(void) const;
+
 private:
+    static constexpr int WIDTH = 1280, HEIGHT = 720;
+
     cv::Mat m_stillFrame;
     int m_loSensitivity, m_hiSensitivity;
     std::array<cv::Point2f, 4> m_transformCorners;
     projectionState m_state;
+    bool m_isCalibrated = false;
 
     QLabel *m_imageLabel;
 

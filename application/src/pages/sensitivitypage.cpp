@@ -365,5 +365,5 @@ void SensitivityPage::updateSensitivity()
         m_projectionWindow->setSensitivity(lowerValue, upperValue);
     }
 
-    qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;
+    // qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;
 }

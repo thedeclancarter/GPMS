@@ -136,7 +136,14 @@ void MainWindow::navigateToCreatePage()
 void MainWindow::navigateToCalibrationPage()
 {
     // proj window should show white
-    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
+    if (imageProjectionWindow->getIsCalibrated())
+    {
+        imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::EDGE_DETECTION);
+    }
+    else
+    {
+        imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
+    }
     stackedWidget->setCurrentWidget(calibrationPage);
 }
 
