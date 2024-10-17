@@ -25,6 +25,7 @@ class SensitivityPage : public QWidget
         ~SensitivityPage();
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
         void startCaptureTimer();
+        void endCaptureTimer();
 
     signals:
         void navigateToTextVisionPage();
@@ -52,7 +53,7 @@ class SensitivityPage : public QWidget
         void init();
         void initializeUI();
         bool checkCameraAvailability();
-        void endCaptureTimer();
+
 
         QLabel* createTitleLabel();
         QFrame* createImageFrame();
