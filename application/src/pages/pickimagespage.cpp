@@ -157,7 +157,6 @@ void PickImagesPage::fetchRandomImages()
     connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
 }
 
-
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
