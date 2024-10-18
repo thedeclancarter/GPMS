@@ -53,6 +53,7 @@ private slots:
     void onRetakePhotoButtonClicked();
 
 private:
+    bool m_selected;
     Ui::PickImagesPage *ui;
     QList<ClickableFrame*> m_imageFrames;
     ClickableFrame* m_selectedFrame;  // Member variable to store the selected frame
