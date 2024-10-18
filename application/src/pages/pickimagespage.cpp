@@ -144,18 +144,17 @@ void PickImagesPage::fetchRandomImages()
     qDebug() << "Fetching random images...";
 
     QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
-    request1.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     QNetworkReply *reply1 = m_networkManager->get(request1);
 
     QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
-    request2.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     QNetworkReply *reply2 = m_networkManager->get(request2);
 
     // Make sure to connect each reply to the image handler
     connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
     connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
 }
-
 
 PickImagesPage::PickImagesPage(QWidget *parent)
     : QWidget(parent)
