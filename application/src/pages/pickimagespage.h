@@ -55,8 +55,8 @@ private slots:
 private:
     Ui::PickImagesPage *ui;
     QList<ClickableFrame*> m_imageFrames;
-    ClickableFrame* m_selectedFrame;
-    QNetworkAccessManager *m_networkManager;
+    ClickableFrame* m_selectedFrame;  // Member variable to store the selected frame
+    QNetworkAccessManager *m_networkManager;  // Add this for managing network requests
 
     void initializeUI();
     QLabel* createTitleLabel();

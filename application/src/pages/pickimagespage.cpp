@@ -94,6 +94,101 @@ void PickImagesPage::handleImageResponse()
     }
 
     if (reply->error() == QNetworkReply::NoError) {
+        qDebug() << "Image received successfully";
+        QByteArray imageData = reply->readAll();
+
+        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+        qDebug() << "Content-Type: " << contentType;
+
+        if (contentType.startsWith("image")) {
+            QPixmap pixmap;
+            if (pixmap.loadFromData(imageData)) {
+                qDebug() << "Pixmap loaded from network reply";
+
+                // Iterate through the frames and set pixmap for the first available frame
+                for (int i = 0; i < m_imageFrames.size(); ++i) {
+                    ClickableFrame* frame = m_imageFrames.at(i);
+
+                    // Check if the frame has any children (e.g., QLabel for image)
+                    if (frame->layout()->isEmpty()) {
+                        QLabel* imageLabel = new QLabel(frame);
+
+                        // Scale the pixmap to fit the frame
+                        imageLabel->setPixmap(pixmap.scaled(frame->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+                        // Add the QLabel to the frame's layout
+                        frame->layout()->addWidget(imageLabel);
+
+                        // Ensure layout updates
+                        frame->update();
+                        frame->adjustSize();
+
+                        break;  // Break after filling the first available frame
+                    }
+                }
+            } else {
+                qDebug() << "Failed to load pixmap from data";
+            }
+        } else {
+            qDebug() << "Received content is not an image!";
+        }
+    } else {
+        qDebug() << "Network reply error: " << reply->errorString();
+    }
+
+    reply->deleteLater();
+}
+
+void PickImagesPage::fetchRandomImages()
+{
+    qDebug() << "Fetching random images...";
+
+    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
+    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    QNetworkReply *reply1 = m_networkManager->get(request1);
+
+    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
+    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    QNetworkReply *reply2 = m_networkManager->get(request2);
+
+    // Make sure to connect each reply to the image handler
+    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
+
+    // Add a shadow effect when selected
+    if (m_selected) {
+        QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
+        shadowEffect->setBlurRadius(20);  // Shadow blur intensity
+        shadowEffect->setColor(QColor(255, 215, 0, 160));  // Semi-transparent gold shadow
+        shadowEffect->setOffset(0, 0);  // Position shadow directly under the frame
+        setGraphicsEffect(shadowEffect);
+
+        // Create a property animation to scale the frame when clicked (fun effect)
+        QPropertyAnimation *animation = new QPropertyAnimation(this, "geometry");
+        animation->setDuration(300);
+        QRect startGeometry = geometry();
+        QRect endGeometry = QRect(startGeometry.x() - 10, startGeometry.y() - 10,
+                                  startGeometry.width() + 20, startGeometry.height() + 20);
+        animation->setStartValue(startGeometry);
+        animation->setEndValue(endGeometry);
+        animation->setEasingCurve(QEasingCurve::OutBounce);  // Fun bouncing effect
+        animation->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        // Remove shadow if the frame is unselected
+        setGraphicsEffect(nullptr);
+    }
+}
+
+
+void PickImagesPage::handleImageResponse()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        qDebug() << "No reply received";
+        return;
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
         QByteArray imageData = reply->readAll();
 
         QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
