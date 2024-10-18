@@ -7,6 +7,8 @@
 #include <QImage>
 #include <opencv2/opencv.hpp>
 #include <array>
+#include <QHBoxLayout>
+#include <QPushButton>
 
 namespace Ui {
 class CalibrationPage;
@@ -47,6 +49,7 @@ private:
     cv::VideoCapture cap;
     cv::Mat frame;
     QImage qimg;
+    QLabel* m_imageLabel; // for image on monitor
 
     // Point selection variables
     std::array<cv::Point2f, 4> selectedPoints;
@@ -72,6 +75,15 @@ private:
     int findClosestCorner(int x, int y);
     bool isValidPoint(const cv::Point2f& newPoint, double minDistance);
     void updateDisplayWithStillFrame();
+
+    // UI Functions
+    void initializeUI();
+    QLabel* createTitleLabel();
+    QFrame* createImageFrame();
+    QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+    QHBoxLayout* createButtonLayout();
+    void updateImage(const QImage& image); // to update image on monitor
 };
+
 
 #endif // CALIBRATIONPAGE_H

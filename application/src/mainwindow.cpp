@@ -25,6 +25,7 @@ void MainWindow::setupUI()
 
     // Create main layout
     QHBoxLayout *mainLayout = new QHBoxLayout();
+    mainLayout->setContentsMargins(0,0,0,0);
 
     // Create a QStackedWidget
     stackedWidget = new QStackedWidget(this);
