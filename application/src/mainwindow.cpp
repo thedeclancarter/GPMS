@@ -39,7 +39,7 @@ void MainWindow::setupUI()
 
     // Create and set up the logo
     logoButton = new QPushButton(this);
-    QPixmap logo(":/icons/GPMS_logo2.webp");
+    QPixmap logo(":/icons/GPMS_logo2.png");
     logoButton->setIcon(QIcon(logo));
     logoButton->setIconSize(QSize(60, 60));  // Set the size of the icon
     logoButton->setFixedSize(60, 60);  // Set the size of the button
@@ -123,7 +123,7 @@ void MainWindow::setupConnections()
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
-    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
+    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 }
 
 void MainWindow::navigateToCreatePage()
