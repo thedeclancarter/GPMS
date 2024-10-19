@@ -116,6 +116,18 @@ bool ImageProjectionWindow::getIsCalibrated() const {
     return m_isCalibrated;
 }
 
+QImage ImageProjectionWindow::getCurrentImage() const
+{
+    if (m_imageLabel) {
+        const QPixmap* pix = m_imageLabel->pixmap(); // Use the value-returning overload
+        if (!pix->isNull()) {
+            return pix->toImage();
+        }
+    }
+    return QImage(); // Return an empty QImage if there's no pixmap
+}
+
+
 // State Transitions
 
 // Activate LOGO state
