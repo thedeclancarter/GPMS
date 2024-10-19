@@ -123,7 +123,7 @@ void MainWindow::setupConnections()
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
-    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
+    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 }
 
 void MainWindow::navigateToCreatePage()
@@ -149,9 +149,8 @@ void MainWindow::navigateToCalibrationPage()
 
 void MainWindow::navigateToSensitivityPage()
 {
-    // only start timer when on this page
-    sensitivityPage->startCaptureTimer();
     stackedWidget->setCurrentWidget(sensitivityPage);
+    sensitivityPage->updateSensitivity();
 }
 
 void MainWindow::navigateToTextVisionPage()
