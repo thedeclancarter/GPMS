@@ -30,153 +30,10 @@ SensitivityPage::SensitivityPage(ImageProjectionWindow *projectionWindow, QWidge
     connect(upperSlider, &QSlider::valueChanged, this, &SensitivityPage::updateSensitivity);
 }
 
-void SensitivityPage::startCaptureTimer(){
-    // Set up timer for continuous frame capture
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &SensitivityPage::captureAndProcessFrame);
-    timer->start(1000);
-
-    // Connect camera frame signals
-    connect(m_imageCapture, &QCameraImageCapture::imageAvailable,
-            this, &SensitivityPage::processFrame);
-}
-void SensitivityPage::endCaptureTimer(){
-    if (timer) {
-        timer->stop();
-    }
-}
-
-void SensitivityPage::processFrame(int id, const QVideoFrame &frame)
-{
-    Q_UNUSED(id);
-
-    if (frame.isValid()) {
-        QVideoFrame cloneFrame(frame);
-        cloneFrame.map(QAbstractVideoBuffer::ReadOnly);
-
-        // Get the frame format
-        QVideoFrame::PixelFormat pixelFormat = cloneFrame.pixelFormat();
-
-        // Convert to OpenCV Mat
-        cv::Mat mat;
-        if (pixelFormat == QVideoFrame::Format_Jpeg) {
-            // Handle JPEG-encoded frame
-            std::vector<uchar> buffer(cloneFrame.bits(), cloneFrame.bits() + cloneFrame.mappedBytes());
-            mat = cv::imdecode(buffer, cv::IMREAD_COLOR);
-            if (mat.empty()) {
-                qDebug() << "Failed to decode JPEG frame";
-                cloneFrame.unmap();
-                return;
-            }
-        } else {
-            switch (pixelFormat) {
-            case QVideoFrame::Format_RGB32:
-            case QVideoFrame::Format_ARGB32:
-                mat = cv::Mat(cloneFrame.height(), cloneFrame.width(), CV_8UC4, cloneFrame.bits(), cloneFrame.bytesPerLine());
-                cv::cvtColor(mat, mat, cv::COLOR_RGBA2BGR);
-                break;
-            case QVideoFrame::Format_RGB24:
-                mat = cv::Mat(cloneFrame.height(), cloneFrame.width(), CV_8UC3, cloneFrame.bits(), cloneFrame.bytesPerLine());
-                cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
-                break;
-            default:
-                qDebug() << "Unsupported pixel format:" << pixelFormat;
-                cloneFrame.unmap();
-                return;
-            }
-        }
-        mat = mat.clone();
-
-        // Convert to grayscale
-        cv::Mat grayMat;
-        cv::cvtColor(mat, grayMat, cv::COLOR_BGR2GRAY);
-
-        // Apply Canny edge detection
-        cv::Mat edges;
-        cv::Canny(grayMat, edges, lowerSlider->value(), upperSlider->value());
-
-        // Convert back to QImage
-        QImage edgeImage(edges.data, edges.cols, edges.rows, edges.step, QImage::Format_Grayscale8);
-        edgeImage = edgeImage.copy(); // Create a deep copy of the image data
-
-        updateDisplays(edgeImage);
-
-        cloneFrame.unmap();
-    } else {
-        qDebug() << "Received invalid frame";
-    }
-}
-
-void SensitivityPage::updateDisplays(const QImage &image)
-{
-    // Update local display
-    m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-//     // Update ImageProjectionWindow if it exists
-//     if (m_projectionWindow) {
-//         m_projectionWindow->updateImage(image);
-//     }
-}
-
-void SensitivityPage::captureAndProcessFrame()
-{
-    if (m_imageCapture->isReadyForCapture()) {
-        m_imageCapture->capture();
-    }
-}
-
 void SensitivityPage::init()
 {
-    if (checkCameraAvailability()) {
-        qDebug() << "Cameras found!";
-
-        initializeUI();
-    } else {
-        qDebug() << "No camera available";
-        // You might want to show an error message in the UI here
-    }
+    initializeUI();
 }
-
-void SensitivityPage::captureImage()
-{
-    if (m_imageCapture->isReadyForCapture()) {
-        qDebug() << "Image about to be taken";
-        int id = m_imageCapture->capture();
-        qDebug() << "Capture initiated with id:" << id;
-    } else {
-        qDebug() << "Image capture is not ready";
-    }
-}
-
-void SensitivityPage::setupCamera()
-{
-    m_camera = new QCamera(this);
-    m_viewfinder = new QCameraViewfinder(this);
-    m_imageCapture = new QCameraImageCapture(m_camera);
-
-    m_camera->setViewfinder(m_viewfinder);
-
-    m_viewfinder->setAspectRatioMode(Qt::KeepAspectRatio);
-    m_viewfinder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-
-    // connect(ui->takePictureButton, &QPushButton::clicked, this, &TakePicture::captureImage);
-    // connect(m_imageCapture, &QCameraImageCapture::imageCaptured, this, &TakePicture::handleImageCaptured);
-
-
-    // // Add these new connections for more detailed reporting
-    // connect(m_imageCapture, &QCameraImageCapture::readyForCaptureChanged, this, &TakePicture::handleReadyForCaptureChanged);
-    // connect(m_imageCapture, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
-    //         this, &TakePicture::handleCaptureError);
-    // connect(m_imageCapture, &QCameraImageCapture::imageAvailable, this, &TakePicture::handleImageAvailable);
-    // connect(m_imageCapture, &QCameraImageCapture::imageSaved, this, &TakePicture::handleImageSaved);
-
-    // Set capture mode to CaptureToBuffer
-    m_imageCapture->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
-
-    m_camera->start();
-}
-
 
 void SensitivityPage::setProjectionWindow(ImageProjectionWindow *projectionWindow)
 {
@@ -244,7 +101,7 @@ QLabel* SensitivityPage::createTitleLabel()
 
 QFrame* SensitivityPage::createImageFrame()
 {
-    setupCamera();
+    // setupCamera();
     QFrame *cameraFrame = new QFrame(this);
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
@@ -341,13 +198,13 @@ SensitivityPage::~SensitivityPage()
 
 void SensitivityPage::onRejectButtonClicked()
 {
-    endCaptureTimer();
+    // endCaptureTimer();
     emit navigateToCalibrationPage();
 }
 
 void SensitivityPage::onAcceptButtonClicked()
 {
-    endCaptureTimer();
+    // endCaptureTimer();
     emit navigateToTextVisionPage();
 }
 
@@ -363,6 +220,22 @@ void SensitivityPage::updateSensitivity()
 
     if (m_projectionWindow) {
         m_projectionWindow->setSensitivity(lowerValue, upperValue);
+
+        // Retrieve the current image from the projection window
+        QImage image = m_projectionWindow->getCurrentImage();
+
+        if (!image.isNull()) {
+            // Update m_imageLabel with the new image
+            m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(
+                m_imageLabel->size(),
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation
+                ));
+        } else {
+            qDebug() << "Projection window returned a null image.";
+        }
+    } else {
+        qDebug() << "Projection window is not set.";
     }
 
     // qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;

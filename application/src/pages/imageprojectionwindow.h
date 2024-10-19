@@ -30,6 +30,7 @@ public:
 
     // Getters
     bool getIsCalibrated(void) const;
+    QImage getCurrentImage() const;
 
 private:
     static constexpr int WIDTH = 1280, HEIGHT = 720;
