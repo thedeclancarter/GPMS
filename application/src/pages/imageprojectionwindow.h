@@ -43,6 +43,12 @@ private:
     projectionState m_state;
     bool m_isCalibrated = false;
 
+    // Cached Values
+    bool m_updatePerspectiveMatrix = true;
+    bool m_updateEdgeDetectionFrame = true;
+    cv::Mat m_perspectiveMatrix;
+    cv::Mat m_edgeDetectionFrame;
+
     QLabel *m_imageLabel;
 
     QTimer *m_rainbowTimer;
