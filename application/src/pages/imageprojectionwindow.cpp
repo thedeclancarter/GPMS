@@ -47,10 +47,7 @@ void ImageProjectionWindow::setStillFrame(const cv::Mat &mat)
         return;
     }
 
-    m_stillFrame = mat.clone(); // Clone to ensure data integrity
-
-    // Optionally update the current state image if needed
-    setProjectionState(m_state);
+    m_stillFrame = mat.clone();
 }
 
 void ImageProjectionWindow::setFinalFrame(const cv::Mat &mat)
@@ -60,7 +57,7 @@ void ImageProjectionWindow::setFinalFrame(const cv::Mat &mat)
         return;
     }
 
-    m_finalFrame = mat.clone(); // Clone to ensure data integrity
+    m_finalFrame = mat.clone();
     setProjectionState(m_state);
 }
 
@@ -69,13 +66,16 @@ void ImageProjectionWindow::setSensitivity(int lo, int hi)
     m_loSensitivity = lo;
     m_hiSensitivity = hi;
 
+    m_updateEdgeDetectionFrame = true;
+
     setProjectionState(projectionState::EDGE_DETECTION);
 }
 
 void ImageProjectionWindow::setTransformCorners(const std::array<cv::Point2f, 4>& transformCorners)
 {
     m_transformCorners = transformCorners;
-    setProjectionState(m_state);
+    m_updatePerspectiveMatrix = true;
+    setProjectionState(projectionState::EDGE_DETECTION);
 }
 
 void ImageProjectionWindow::setProjectionState(projectionState state)
@@ -125,9 +125,9 @@ bool ImageProjectionWindow::getIsCalibrated() const {
 QImage ImageProjectionWindow::getCurrentImage() const
 {
     if (m_imageLabel) {
-        const QPixmap* pix = m_imageLabel->pixmap(); // Use the value-returning overload
-        if (!pix->isNull()) {
-            return pix->toImage();
+        QPixmap pix = m_imageLabel->pixmap(Qt::ReturnByValue);
+        if (!pix.isNull()) {
+            return pix.toImage();
         }
     }
     else{
@@ -172,20 +172,28 @@ void ImageProjectionWindow::activateEdgeDetection()
 
     m_isCalibrated = true;
 
-    // Convert to grayscale
-    cv::Mat grayMat;
-    cv::cvtColor(m_stillFrame, grayMat, cv::COLOR_BGR2GRAY);
+    // Handle Edge Detection Caching
+    if (m_updateEdgeDetectionFrame)
+    {
+        // Convert to grayscale
+        cv::Mat grayMat;
+        cv::cvtColor(m_stillFrame, grayMat, cv::COLOR_BGR2GRAY);
 
-    // Apply Canny edge detection
-    cv::Mat edges;
-    cv::Canny(grayMat, edges, m_loSensitivity, m_hiSensitivity);
+        // Apply Canny edge detection
+        cv::Mat edges;
+        cv::Canny(grayMat, edges, m_loSensitivity, m_hiSensitivity);
 
-    // Convert edges to BGR for consistent display format
-    cv::Mat edgesBGR;
-    cv::cvtColor(edges, edgesBGR, cv::COLOR_GRAY2BGR);
+        // Convert edges to BGR for consistent display format
+        cv::cvtColor(edges, m_edgeDetectionFrame, cv::COLOR_GRAY2BGR);
+        m_updateEdgeDetectionFrame = false;
+    }
+    // else // XXXX
+    // {
+    //     qDebug() << "This helped Edge!";
+    // }
 
     // Apply the edge warping
-    cv::Mat warpedMat = applyPerspectiveTransform(edgesBGR);
+    cv::Mat warpedMat = applyPerspectiveTransform(m_edgeDetectionFrame);
 
     // Update the QLabel with the edge-detected image
     updateImage(warpedMat);
@@ -236,24 +244,28 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
     }
 
     QImage image;
+    const uchar* matData = mat.data;
+
     if (mat.channels() == 3)
     {
-        // Convert BGR to RGB
+        // Convert BGR to RGB directly into QImage without extra cv::Mat
         cv::Mat rgbMat;
         cv::cvtColor(mat, rgbMat, cv::COLOR_BGR2RGB);
-        image = QImage(rgbMat.data, rgbMat.cols, rgbMat.rows, static_cast<int>(rgbMat.step), QImage::Format_RGB888).copy();
+        matData = rgbMat.data;
+        image = QImage(matData, rgbMat.cols, rgbMat.rows, static_cast<int>(rgbMat.step), QImage::Format_RGB888);
     }
     else if (mat.channels() == 4)
     {
-        // Convert BGRA to RGBA
+        // Convert BGRA to RGBA directly
         cv::Mat rgbaMat;
         cv::cvtColor(mat, rgbaMat, cv::COLOR_BGRA2RGBA);
-        image = QImage(rgbaMat.data, rgbaMat.cols, rgbaMat.rows, static_cast<int>(rgbaMat.step), QImage::Format_RGBA8888).copy();
+        matData = rgbaMat.data;
+        image = QImage(matData, rgbaMat.cols, rgbaMat.rows, static_cast<int>(rgbaMat.step), QImage::Format_RGBA8888);
     }
     else if (mat.channels() == 1)
     {
         // Grayscale image
-        image = QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8).copy();
+        image = QImage(matData, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
     }
     else
     {
@@ -263,6 +275,9 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
 
     if (!image.isNull())
     {
+        // Since matData might go out of scope, we need to make a deep copy now
+        image = image.copy();
+
         // Scale the image to fit the label while maintaining aspect ratio
         QPixmap pixmap = QPixmap::fromImage(image).scaled(
             m_imageLabel->size(),
@@ -271,13 +286,6 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
             );
 
         m_imageLabel->setPixmap(pixmap);
-
-        // qDebug() << "QImage created successfully. Size:" << image.size();
-        // qDebug() << "Scaled pixmap size:" << pixmap.size();
-        // qDebug() << "Label size:" << m_imageLabel->size();
-        // qDebug() << "Label geometry:" << m_imageLabel->geometry();
-        // qDebug() << "Label is visible:" << m_imageLabel->isVisible();
-
     }
     else
     {
@@ -293,15 +301,26 @@ void ImageProjectionWindow::updateImage(const QImage &image)
         return;
     }
 
-    // Scale the image to fit the label while maintaining aspect ratio
-    QPixmap pixmap = QPixmap::fromImage(image).scaled(
-        m_imageLabel->size(),
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
-        );
+    QPixmap pixmap;
+
+    // Check if scaling is necessary
+    if (image.size() != m_imageLabel->size())
+    {
+        // Scale the image to fit the label while maintaining aspect ratio
+        pixmap = QPixmap::fromImage(image).scaled(
+            m_imageLabel->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+            );
+    }
+    else
+    {
+        pixmap = QPixmap::fromImage(image);
+    }
 
     m_imageLabel->setPixmap(pixmap);
 }
+
 
 // Helper function to apply perspective transform to a cv::Mat and return a QImage
 cv::Mat ImageProjectionWindow::applyPerspectiveTransform(const cv::Mat& mat)
@@ -316,25 +335,32 @@ cv::Mat ImageProjectionWindow::applyPerspectiveTransform(const cv::Mat& mat)
         return cv::Mat();
     }
 
-    // Define source points (corners of the original image)
-    const std::vector<cv::Point2f> srcCorners = {
-        {0.0f, 0.0f},
-        {static_cast<float>(WIDTH), 0.0f},
-        {static_cast<float>(WIDTH), static_cast<float>(HEIGHT)},
-        {0.0f, static_cast<float>(HEIGHT)}
-    };
+    if (m_updatePerspectiveMatrix) {
+        // Define source points (corners of the original image)
+        const std::vector<cv::Point2f> srcCorners = {
+            {0.0f, 0.0f},
+            {static_cast<float>(WIDTH), 0.0f},
+            {static_cast<float>(WIDTH), static_cast<float>(HEIGHT)},
+            {0.0f, static_cast<float>(HEIGHT)}
+        };
 
-    // Destination points (transform corners)
-    const std::array<cv::Point2f, 4> dstCorners = m_transformCorners;
+        // Destination points (transform corners)
+        const std::array<cv::Point2f, 4> dstCorners = m_transformCorners;
 
-    // Calculate the perspective transform matrix
-    const cv::Mat perspectiveMatrix = cv::getPerspectiveTransform(dstCorners.data(), srcCorners.data());
+        // Calculate the perspective transform matrix
+        m_perspectiveMatrix = cv::getPerspectiveTransform(dstCorners.data(), srcCorners.data());
+        m_updatePerspectiveMatrix = false;
+    }
+    // else // XXXX
+    // {
+    //     qDebug() << "This helped Transform!";
+    // }
 
     const cv::Size outputSize(WIDTH, HEIGHT);
 
     // Apply the perspective transformation
     cv::Mat warped;
-    cv::warpPerspective(mat, warped, perspectiveMatrix, outputSize);
+    cv::warpPerspective(mat, warped, m_perspectiveMatrix, outputSize);
 
     return warped;
 }
@@ -346,14 +372,7 @@ void ImageProjectionWindow::updateRainbowEdges()
         return;
     }
 
-    // Convert to grayscale
-    cv::Mat grayMat;
-    cv::cvtColor(m_stillFrame, grayMat, cv::COLOR_BGR2GRAY);
-
-    // Apply Canny edge detection
-    cv::Mat edges;
-    cv::Canny(grayMat, edges, m_loSensitivity, m_hiSensitivity);
-
+    cv::Mat edges = m_edgeDetectionFrame;
     // Apply the rainbow effect to the edges
     cv::Mat rainbow_edges = cv::Mat::zeros(edges.size(), CV_8UC3);
 
