@@ -115,7 +115,6 @@ void ImageProjectionWindow::setProjectionState(projectionState state)
         activateRainbowEdge();
         break;
     case projectionState::IMAGE:
-        qDebug("calling activate image");
         activateImage();
         break;
     default:
@@ -279,11 +278,11 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
 
         m_imageLabel->setPixmap(pixmap);
 
-        qDebug() << "QImage created successfully. Size:" << image.size();
-        qDebug() << "Scaled pixmap size:" << pixmap.size();
-        qDebug() << "Label size:" << m_imageLabel->size();
-        qDebug() << "Label geometry:" << m_imageLabel->geometry();
-        qDebug() << "Label is visible:" << m_imageLabel->isVisible();
+        // qDebug() << "QImage created successfully. Size:" << image.size();
+        // qDebug() << "Scaled pixmap size:" << pixmap.size();
+        // qDebug() << "Label size:" << m_imageLabel->size();
+        // qDebug() << "Label geometry:" << m_imageLabel->geometry();
+        // qDebug() << "Label is visible:" << m_imageLabel->isVisible();
 
     }
     else
