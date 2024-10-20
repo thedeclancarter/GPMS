@@ -82,7 +82,7 @@ void ClickableFrame::updateStyle()
 void PickImagesPage::fetchRandomImages(int numImages)
 {
     for (int i = 0; i < numImages; ++i) {
-        QNetworkRequest request(QUrl("https://picsum.photos/200/150"));
+        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
         request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
         QNetworkReply *reply = m_networkManager->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply]() {
