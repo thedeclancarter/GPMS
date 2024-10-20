@@ -224,7 +224,7 @@ void ImageProjectionWindow::activateImage()
     cv::Mat warpedMat = applyPerspectiveTransform(m_finalFrame);
 
     if (!warpedMat.empty()) {
-        updateImage(m_finalFrame); // setting m_imageLabel to contain this image
+        updateImage(warpedMat); // setting m_imageLabel to contain this image
     }
     else {
         qDebug() << "Failed to apply perspective transform in activateImage().";
