@@ -75,7 +75,7 @@ void ImageProjectionWindow::setSensitivity(int lo, int hi)
 void ImageProjectionWindow::setTransformCorners(const std::array<cv::Point2f, 4>& transformCorners)
 {
     m_transformCorners = transformCorners;
-    setProjectionState(m_state);
+    setProjectionState(projectionState::EDGE_DETECTION);
 }
 
 void ImageProjectionWindow::setProjectionState(projectionState state)
