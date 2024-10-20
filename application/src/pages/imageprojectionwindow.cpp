@@ -55,7 +55,6 @@ void ImageProjectionWindow::setStillFrame(const cv::Mat &mat)
 
 void ImageProjectionWindow::setFinalFrame(const cv::Mat &mat)
 {
-    qDebug("In setFinalFRame");
     if (mat.empty()) {
         qDebug() << "Empty Mat provided to setStillFrame.";
         return;
@@ -69,19 +68,14 @@ void ImageProjectionWindow::setSensitivity(int lo, int hi)
 {
     m_loSensitivity = lo;
     m_hiSensitivity = hi;
-    // Optionally update the current state image if edge detection is active
-    if (m_state == projectionState::EDGE_DETECTION || m_state == projectionState::RAINBOW_EDGE) {
-        setProjectionState(m_state);
-    }
+
+    setProjectionState(projectionState::EDGE_DETECTION);
 }
 
 void ImageProjectionWindow::setTransformCorners(const std::array<cv::Point2f, 4>& transformCorners)
 {
     m_transformCorners = transformCorners;
-    // Optionally update the image projection if in IMAGE state
-    if (m_state == projectionState::EDGE_DETECTION) {
-        setProjectionState(m_state);
-    }
+    setProjectionState(m_state);
 }
 
 void ImageProjectionWindow::setProjectionState(projectionState state)
