@@ -67,7 +67,7 @@ private slots:
     void navigateToSensitivityPage();
     void navigateToTextVisionPage();
     void navigateToPickImagesPage();
-    void navigateToProjectPage();
+    void navigateToProjectPage(const cv::Mat& image);
 
 };
 #endif // MAINWINDOW_H
