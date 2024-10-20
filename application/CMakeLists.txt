@@ -9,6 +9,9 @@ set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_PREFIX_PATH $ENV{Qt5_DIR})
 set(Qt5_DIR $ENV{Qt5_DIR})
 
+# set virtual keyboard
+set(ENV{QT_IM_MODULE} "qtvirtualkeyboard")
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -86,6 +89,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt5::Gui
      Qt5::Quick
     Qt5::QuickControls2
+    Qt5::VirtualKeyboard
     ${OpenCV_LIBS}
 )
 
