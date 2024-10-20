@@ -53,6 +53,18 @@ void ImageProjectionWindow::setStillFrame(const cv::Mat &mat)
     setProjectionState(m_state);
 }
 
+void ImageProjectionWindow::setFinalFrame(const cv::Mat &mat)
+{
+    qDebug("In setFinalFRame");
+    if (mat.empty()) {
+        qDebug() << "Empty Mat provided to setStillFrame.";
+        return;
+    }
+
+    m_finalFrame = mat.clone(); // Clone to ensure data integrity
+    setProjectionState(m_state);
+}
+
 void ImageProjectionWindow::setSensitivity(int lo, int hi)
 {
     m_loSensitivity = lo;
@@ -103,6 +115,7 @@ void ImageProjectionWindow::setProjectionState(projectionState state)
         activateRainbowEdge();
         break;
     case projectionState::IMAGE:
+        qDebug("calling activate image");
         activateImage();
         break;
     default:
@@ -123,6 +136,9 @@ QImage ImageProjectionWindow::getCurrentImage() const
         if (!pix->isNull()) {
             return pix->toImage();
         }
+    }
+    else{
+        qDebug("In getCurrentImage, m_imageLabel is null");
     }
     return QImage(); // Return an empty QImage if there's no pixmap
 }
@@ -200,16 +216,16 @@ void ImageProjectionWindow::activateRainbowEdge()
 // Activate IMAGE state (apply perspective transform)
 void ImageProjectionWindow::activateImage()
 {
-    if (m_stillFrame.empty()) {
+    if (m_finalFrame.empty()) {
         qDebug() << "No still frame set for image projection.";
         return;
     }
 
     // Apply perspective transform using the helper function
-    cv::Mat warpedMat = applyPerspectiveTransform(m_stillFrame);
+    cv::Mat warpedMat = applyPerspectiveTransform(m_finalFrame);
 
     if (!warpedMat.empty()) {
-        updateImage(warpedMat);
+        updateImage(m_finalFrame); // setting m_imageLabel to contain this image
     }
     else {
         qDebug() << "Failed to apply perspective transform in activateImage().";
@@ -262,6 +278,13 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
             );
 
         m_imageLabel->setPixmap(pixmap);
+
+        qDebug() << "QImage created successfully. Size:" << image.size();
+        qDebug() << "Scaled pixmap size:" << pixmap.size();
+        qDebug() << "Label size:" << m_imageLabel->size();
+        qDebug() << "Label geometry:" << m_imageLabel->geometry();
+        qDebug() << "Label is visible:" << m_imageLabel->isVisible();
+
     }
     else
     {
