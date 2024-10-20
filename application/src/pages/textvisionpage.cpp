@@ -15,6 +15,8 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupStyleSheets();
     setupConnections();
     setupVirtualKeyboard();
+
+    m_visionInput->installEventFilter(this);
 }
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
@@ -59,6 +61,11 @@ void TextVisionPage::setupVirtualKeyboard()
 {
     // Ensure that the application is configured to use the virtual keyboard
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    // check if rasp pi
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
+    }
 }
 
 void TextVisionPage::setupUI()
