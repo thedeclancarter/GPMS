@@ -130,13 +130,12 @@ void CalibrationPage::processFrame()
         cv::Mat rgbFrame;
         cv::cvtColor(scaledFrame, rgbFrame, cv::COLOR_BGR2RGB);
         qimg = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888).copy();
-        // updateImage(qimg);
 
         // If four points are selected and a still frame hasn't been captured yet, capture it
         if (numSelectedPoints == 4 && !stillFrameCaptured) {
             stillFrame = frame.clone();
             stillFrameCaptured = true;
-            timer->stop(); // Stop capturing frames
+            stopCamera();
             updateProjectionWindow();
             updateDisplayWithStillFrame(); // Update display with the still frame
         }
@@ -163,9 +162,6 @@ void CalibrationPage::updateProjectionWindow()
     sortPointsClockwise(sortedPoints);
     m_projectionWindow->setStillFrame(stillFrame);
     m_projectionWindow->setTransformCorners(sortedPoints);
-
-    // Set the image in the projection window using updateImage
-    m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::EDGE_DETECTION);
 }
 
 // Update the display using the still frame
@@ -202,9 +198,6 @@ void CalibrationPage::updateDisplayWithStillFrame()
     cv::cvtColor(scaledFrame, rgbFrame, cv::COLOR_BGR2RGB);
     qimg = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888).copy();
 
-    // updateImage(qimg);
-    // qDebug("In updateDisplayWithStillFrame() after calling updateImage()");
-
     // Update the widget
     update();
 }
@@ -212,22 +205,7 @@ void CalibrationPage::updateDisplayWithStillFrame()
 // Paint event to render the image on the widget
 void CalibrationPage::paintEvent(QPaintEvent* event)
 {
-    // Q_UNUSED(event);
-    // QPainter painter(this);
-    // if (!qimg.isNull()) {
-    //     // Define the smaller display area (centered)
-    //     int xOffset = (width() - DISPLAY_WIDTH) / 2;
-    //     int yOffset = (height() - DISPLAY_HEIGHT) / 2;
-    //     QRect displayRect(xOffset, yOffset, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
-    //     // Draw the image within the displayRect
-    //     // painter.drawImage(displayRect, qimg);
-    //     updateImage(qimg);
-    // }
-
-    // trying to use m_imageLabel as where to display the image
     Q_UNUSED(event);
-    QPainter painter(this);
     if (!qimg.isNull()) {
         // Get the size of m_imageLabel
         QSize labelSize = m_imageLabel->size();
@@ -239,6 +217,7 @@ void CalibrationPage::paintEvent(QPaintEvent* event)
         m_imageLabel->setPixmap(scaledPixmap);
     }
 }
+
 
 // Handle mouse press events for point selection and dragging
 void CalibrationPage::mousePressEvent(QMouseEvent* event)
