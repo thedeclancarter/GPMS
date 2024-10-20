@@ -237,6 +237,4 @@ void SensitivityPage::updateSensitivity()
     } else {
         qDebug() << "Projection window is not set.";
     }
-
-    // qDebug() << "Sensitivity Updated - Lower:" << lowerValue << ", Upper:" << upperValue;
 }

@@ -1,5 +1,8 @@
 #include "pickimagespage.h"
 #include "ui_pickimagespage.h"
+#include "../utils/image_utils.h"
+#include "imageprojectionwindow.h"
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -9,18 +12,24 @@
 #include <QNetworkReply>
 #include <QPixmap>
 
-ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent), m_selected(false)
-{
-    updateStyle();
 
-    // Add a layout to the frame for displaying an image
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    this->setLayout(layout);  // Ensure layout is applied to frame
+// ClickableFrame implementation
+ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
+    ,m_selected(false)
+    ,m_imageLabel(nullptr)
+{
+    setLayout(new QVBoxLayout(this));
+    m_imageLabel = new QLabel(this);
+    m_imageLabel->setAlignment(Qt::AlignCenter);
+    m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_imageLabel->setScaledContents(true);
+    m_imageLabel->setContentsMargins(5, 5, 5, 5);
+    layout()->addWidget(m_imageLabel);
+    updateStyle();
 }
 
 void ClickableFrame::setSelected(bool selected)
 {
-    qDebug("In setSelected(), selected: %d", selected);
     m_selected = selected;
     updateStyle();
 }
@@ -28,6 +37,24 @@ void ClickableFrame::setSelected(bool selected)
 bool ClickableFrame::isSelected() const
 {
     return m_selected;
+}
+
+void ClickableFrame::setImage(const cv::Mat& mat)
+{
+    if (mat.type() != CV_8UC3) {
+        qDebug() << "Invalid image format. Expected CV_8UC3.";
+        return;
+    }
+    m_image = mat.clone();
+
+    // Convert cv::Mat to QImage without copying data
+    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
+    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+cv::Mat ClickableFrame::getImage() const
+{
+    return m_image;
 }
 
 void ClickableFrame::mousePressEvent(QMouseEvent *event)
@@ -48,105 +75,82 @@ void ClickableFrame::updateStyle()
                         "   border: %1px solid %2;"
                         "}"
                         ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
-
     setStyleSheet(style);
 }
 
-void PickImagesPage::handleImageResponse()
+
+void PickImagesPage::fetchRandomImages(int numImages)
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!reply) {
-        qDebug() << "No reply received";
-        return;
+    for (int i = 0; i < numImages; ++i) {
+        QNetworkRequest request(QUrl("https://picsum.photos/200/150"));
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+        QNetworkReply *reply = m_networkManager->get(request);
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            handleImageResponse(reply);
+        });
     }
-
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray imageData = reply->readAll();
-
-        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-
-        if (contentType.startsWith("image")) {
-            QPixmap pixmap;
-            if (pixmap.loadFromData(imageData)) {
-
-                // Iterate through the frames and set pixmap for the first available frame
-                for (int i = 0; i < m_imageFrames.size(); ++i) {
-                    ClickableFrame* frame = m_imageFrames.at(i);
-
-                    // Check if the frame has any children (e.g., QLabel for image)
-                    if (frame->layout()->isEmpty()) {
-                        QLabel* imageLabel = new QLabel(frame);
-
-                        imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-                        imageLabel->setAlignment(Qt::AlignCenter);
-                        imageLabel->setScaledContents(true);
-
-                        // Scale the pixmap to fit the frame
-                        imageLabel->setPixmap(pixmap);
-
-                        // Add the QLabel to the frame's layout
-                        frame->layout()->addWidget(imageLabel);
-
-                        // Ensure layout updates
-                        frame->update();
-                        frame->adjustSize();
-
-                        break;  // Break after filling the first available frame
-                    }
-                }
-            } else {
-                qDebug() << "Failed to load pixmap from data";
-            }
-        } else {
-            qDebug() << "Received content is not an image!";
-        }
-    } else {
-        qDebug() << "Network reply error: " << reply->errorString();
-    }
-
-    reply->deleteLater();
-}
-
-void PickImagesPage::fetchRandomImages()
-{
-    qDebug() << "Fetching random images...";
-
-    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
-    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QNetworkReply *reply1 = m_networkManager->get(request1);
-
-    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
-    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QNetworkReply *reply2 = m_networkManager->get(request2);
-
-    // Make sure to connect each reply to the image handler
-    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
-    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
 }
 
 
-PickImagesPage::PickImagesPage(QWidget *parent)
+
+
+// Pick Images Page
+PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PickImagesPage)
+    , m_projectionWindow(projectionWindow)
     , m_selectedFrame(nullptr)
-    , m_networkManager(new QNetworkAccessManager(this)) // Add network manager
+    , m_networkManager(new QNetworkAccessManager(this))
 {
     ui->setupUi(this);
     initializeUI();
 
     QCoreApplication::addLibraryPath("C:/Program Files/openssl-1.1/x64/bin");
+    // connect buttons
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
 
-    // Fetch random images when initializing the UI
-    fetchRandomImages();
+    fetchRandomImages(2);
 }
 
 PickImagesPage::~PickImagesPage()
 {
     delete ui;
 }
+
+cv::Mat PickImagesPage::getSelectedImage() const
+{
+    return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
+}
+
+void PickImagesPage::handleImageResponse(QNetworkReply* reply)
+{
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray imageData = reply->readAll();
+        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+
+        if (contentType.startsWith("image")) {
+            QImage qimg;
+            if (qimg.loadFromData(imageData)) {
+                // Ensure the image is in RGB format
+                if (qimg.format() != QImage::Format_RGB888) {
+                    qimg = qimg.convertToFormat(QImage::Format_RGB888);
+                }
+                cv::Mat mat = ImageUtils::qimage_to_mat(qimg);
+                for (int i = 0; i < m_imageFrames.size(); ++i) {
+                    ClickableFrame* frame = m_imageFrames.at(i);
+                    if (frame->getImage().empty()) {
+                        frame->setImage(mat);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    reply->deleteLater();
+}
+
 
 void PickImagesPage::initializeUI()
 {
@@ -157,7 +161,7 @@ void PickImagesPage::initializeUI()
     mainLayout->setSpacing(15);
 
     mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
-    mainLayout->addWidget(createImagesGrid(), 1);
+    mainLayout->addWidget(createImagesGrid(), 1, Qt::AlignHCenter);
     mainLayout->addLayout(createButtonLayout());
 
     setLayout(mainLayout);
@@ -185,13 +189,14 @@ QFrame* PickImagesPage::createImagesGrid()
     QFrame *gridFrame = new QFrame(this);
     gridFrame->setFrameStyle(QFrame::NoFrame);
     gridFrame->setStyleSheet("background-color: transparent;");
+    gridFrame->setFixedWidth(900);
 
     QGridLayout *gridLayout = new QGridLayout(gridFrame);
     gridLayout->setSpacing(10);
 
     for (int i = 0; i < 2; ++i) {
         ClickableFrame *imageFrame = new ClickableFrame(this);
-        imageFrame->setMinimumSize(200, 150);
+        imageFrame->setFixedSize(400, 350);
         connect(imageFrame, &ClickableFrame::clicked, this, [this, imageFrame]() {
             updateSelectedImages(imageFrame);
         });
@@ -205,14 +210,22 @@ QFrame* PickImagesPage::createImagesGrid()
 
 void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
 {
+    // if current fram isnt the clicked frame
     if (m_selectedFrame && m_selectedFrame != clickedFrame) {
         m_selectedFrame->setSelected(false);  // Deselect the previous frame
     }
 
+    // if clicked frame is selected
     if (clickedFrame->isSelected()) {
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
+        cv::Mat finalFrame= clickedFrame->getImage();
+        m_projectionWindow->setFinalFrame(finalFrame); // set final frame w this image
+        m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
+        // change proj to show new image
     } else {
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
+        // change proj to show rainbow
+        m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
     }
 
     // Enable or disable the select button based on whether any frame is selected
@@ -285,12 +298,6 @@ void PickImagesPage::onAcceptButtonClicked()
         qDebug("No frame selected");
         return;
     }
-
-    int selectedIndex = m_imageFrames.indexOf(m_selectedFrame);
-    qDebug("Selected frame index: %d", (selectedIndex));
-
-    QList<int> selectedIndices;
-    selectedIndices.append(selectedIndex);
-
-    emit navigateToProjectPage(selectedIndices);
+    cv::Mat selectedImage = m_selectedFrame->getImage();
+    emit navigateToProjectPage(selectedImage);
 }

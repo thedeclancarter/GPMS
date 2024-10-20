@@ -73,9 +73,9 @@ void MainWindow::setupPages()
     sensitivityPage = new SensitivityPage(imageProjectionWindow, this);
     // what will these show
     textVisionPage = new TextVisionPage(this);
-    pickImagesPage = new PickImagesPage(this);
+    pickImagesPage = new PickImagesPage(imageProjectionWindow, this);
     // will show projected image
-    projectPage = new ProjectPage(this);
+    projectPage = new ProjectPage(imageProjectionWindow, this);
 
     stackedWidget->addWidget(createPage);
 
@@ -124,6 +124,10 @@ void MainWindow::setupConnections()
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
     connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
+
+    // from project page
+    connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
+    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
 }
 
 void MainWindow::navigateToCreatePage()
@@ -164,8 +168,53 @@ void MainWindow::navigateToPickImagesPage()
     stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
-void MainWindow::navigateToProjectPage()
+void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)
 {
+
+    // if (selectedImage.isNull()) {
+    //     qDebug() << "Error: selectedImage is null";
+    //     return;
+    // }
+
+    // qDebug() << "Original QPixmap size:" << selectedImage.size();
+
+    // QImage qImage = selectedImage.toImage();
+    // qImage = qImage.convertToFormat(QImage::Format_RGB888);
+    // qDebug() << "QImage format:" << qImage.format();
+
+    // cv::Mat cvImage;
+    // switch(qImage.format()) {
+    // case QImage::Format_RGBA8888:
+    //     qDebug() << "Converting from Format_RGBA8888";
+    //     cvImage = cv::Mat(qImage.height(), qImage.width(), CV_8UC4, (uchar*)qImage.bits(), qImage.bytesPerLine());
+    //     cv::cvtColor(cvImage, cvImage, cv::COLOR_RGBA2BGR);
+    //     break;
+    // case QImage::Format_RGB888:
+    //     qDebug() << "Converting from Format_RGB888";
+    //     cvImage = cv::Mat(qImage.height(), qImage.width(), CV_8UC3, (uchar*)qImage.bits(), qImage.bytesPerLine());
+    //     cv::cvtColor(cvImage, cvImage, cv::COLOR_RGB2BGR);
+    //     break;
+    // default:
+    //     qDebug() << "Unsupported QImage format:" << qImage.format();
+    //     return;
+    // }
+
+    // qDebug() << "cvImage size:" << cvImage.size().width << "x" << cvImage.size().height;
+    // qDebug() << "cvImage channels:" << cvImage.channels();
+    // qDebug() << "cvImage type:" << cvImage.type();
+
+    // // Check if the image has any non-zero pixels
+    // cv::Scalar sum = cv::sum(cvImage);
+    // qDebug() << "Image sum:" << sum[0] + sum[1] + sum[2] + sum[3];
+
+    // // Save the debug image
+    // QString debugImagePath = QDir::currentPath() + "/debug_image.png";
+    // cv::imwrite(debugImagePath.toStdString(), cvImage);
+    // qDebug() << "Saved debug image to:" << debugImagePath;
+
+    imageProjectionWindow->setStillFrame(selectedImage);
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
+    projectPage->setSelectedImage(selectedImage);
     stackedWidget->setCurrentWidget(projectPage);
 }
 
