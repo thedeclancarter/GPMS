@@ -231,7 +231,6 @@ void CalibrationPage::paintEvent(QPaintEvent* event)
     if (!qimg.isNull()) {
         // Get the size of m_imageLabel
         QSize labelSize = m_imageLabel->size();
-        qDebug() << "Label size:" << labelSize.width() << "x" << labelSize.height();
 
         // Scale the image to fit the label while maintaining aspect ratio
         QPixmap scaledPixmap = QPixmap::fromImage(qimg).scaled(labelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -244,22 +243,41 @@ void CalibrationPage::paintEvent(QPaintEvent* event)
 // Handle mouse press events for point selection and dragging
 void CalibrationPage::mousePressEvent(QMouseEvent* event)
 {
-    // Define the smaller display area (centered)
-    int xOffset = (width() - DISPLAY_WIDTH) / 2;
-    int yOffset = (height() - DISPLAY_HEIGHT) / 2;
+    // Get the position of m_imageLabel within the widget
+    QPoint labelTopLeft = m_imageLabel->mapTo(this, QPoint(0, 0));
+    int labelX = labelTopLeft.x();
+    int labelY = labelTopLeft.y();
 
-    // Check if the click is within the displayRect
-    if (event->x() >= xOffset && event->x() <= (xOffset + DISPLAY_WIDTH) &&
-        event->y() >= yOffset && event->y() <= (yOffset + DISPLAY_HEIGHT)) {
+    // Get the size of m_imageLabel
+    int labelWidth = m_imageLabel->width();
+    int labelHeight = m_imageLabel->height();
+
+    // Get the size of the displayed image within m_imageLabel
+    QSize imageSize = qimg.size();
+    QSize scaledImageSize = imageSize.scaled(m_imageLabel->size(), Qt::KeepAspectRatio);
+
+    int imageWidth = scaledImageSize.width();
+    int imageHeight = scaledImageSize.height();
+
+    // Compute the top-left corner of the displayed image within the label
+    int imageXOffset = (labelWidth - imageWidth) / 2;
+    int imageYOffset = (labelHeight - imageHeight) / 2;
+
+    // Compute the top-left corner of the displayed image within the widget
+    int imageTopLeftX = labelX + imageXOffset;
+    int imageTopLeftY = labelY + imageYOffset;
+
+    // Check if the click is within the displayed image
+    if (event->x() >= imageTopLeftX && event->x() <= (imageTopLeftX + imageWidth) &&
+        event->y() >= imageTopLeftY && event->y() <= (imageTopLeftY + imageHeight)) {
 
         // Map the click position to the image coordinates
-        int imgX = event->x() - xOffset;
-        int imgY = event->y() - yOffset;
+        int imgX = event->x() - imageTopLeftX;
+        int imgY = event->y() - imageTopLeftY;
 
-        // Since the image is scaled down to DISPLAY_WIDTH x DISPLAY_HEIGHT,
-        // map imgX and imgY back to the original frame coordinates
-        float scaleX = static_cast<float>(WIDTH) / DISPLAY_WIDTH;
-        float scaleY = static_cast<float>(HEIGHT) / DISPLAY_HEIGHT;
+        // Since the image is scaled, map imgX and imgY back to the original frame coordinates
+        float scaleX = static_cast<float>(WIDTH) / imageWidth;
+        float scaleY = static_cast<float>(HEIGHT) / imageHeight;
 
         mouseX = imgX * scaleX;
         mouseY = imgY * scaleY;
@@ -294,35 +312,41 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
 // Handle mouse move events for dragging points
 void CalibrationPage::mouseMoveEvent(QMouseEvent* event)
 {
-    // Define the smaller display area (centered)
-    int xOffset = (width() - DISPLAY_WIDTH) / 2;
-    int yOffset = (height() - DISPLAY_HEIGHT) / 2;
+    QPoint labelTopLeft = m_imageLabel->mapTo(this, QPoint(0, 0));
+    int labelX = labelTopLeft.x();
+    int labelY = labelTopLeft.y();
 
-    // Check if the mouse is within the displayRect
-    if (event->x() >= xOffset && event->x() <= (xOffset + DISPLAY_WIDTH) &&
-        event->y() >= yOffset && event->y() <= (yOffset + DISPLAY_HEIGHT)) {
+    int labelWidth = m_imageLabel->width();
+    int labelHeight = m_imageLabel->height();
 
-        // Map the mouse position to the image coordinates
-        int imgX = event->x() - xOffset;
-        int imgY = event->y() - yOffset;
+    QSize imageSize = qimg.size();
+    QSize scaledImageSize = imageSize.scaled(m_imageLabel->size(), Qt::KeepAspectRatio);
 
-        // Map to original frame coordinates
-        float scaleX = static_cast<float>(WIDTH) / DISPLAY_WIDTH;
-        float scaleY = static_cast<float>(HEIGHT) / DISPLAY_HEIGHT;
+    int imageWidth = scaledImageSize.width();
+    int imageHeight = scaledImageSize.height();
+
+    int imageXOffset = (labelWidth - imageWidth) / 2;
+    int imageYOffset = (labelHeight - imageHeight) / 2;
+
+    int imageTopLeftX = labelX + imageXOffset;
+    int imageTopLeftY = labelY + imageYOffset;
+
+    if (event->x() >= imageTopLeftX && event->x() <= (imageTopLeftX + imageWidth) &&
+        event->y() >= imageTopLeftY && event->y() <= (imageTopLeftY + imageHeight)) {
+
+        int imgX = event->x() - imageTopLeftX;
+        int imgY = event->y() - imageTopLeftY;
+
+        float scaleX = static_cast<float>(WIDTH) / imageWidth;
+        float scaleY = static_cast<float>(HEIGHT) / imageHeight;
 
         mouseX = imgX * scaleX;
         mouseY = imgY * scaleY;
 
         if (dragging && selectedCorner != -1) {
             selectedPoints[selectedCorner] = cv::Point2f(mouseX, mouseY);
-            // qDebug() << "Point dragged to:" << mouseX << "," << mouseY;
-
-            pointsChanged = true; // Points have changed
-
-            // Update the projection window with the new point positions
+            pointsChanged = true;
             updateProjectionWindow();
-
-            // Update the display with the still frame
             updateDisplayWithStillFrame();
         }
     }
@@ -561,7 +585,6 @@ QFrame* CalibrationPage::createImageFrame()
     m_imageLabel->setAlignment(Qt::AlignCenter);
     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QSize labelSize = m_imageLabel->size();
-    qDebug() << "Label size:" << labelSize.width() << "x" << labelSize.height();
     cameraLayout->addWidget(m_imageLabel);
 
     return cameraFrame;
