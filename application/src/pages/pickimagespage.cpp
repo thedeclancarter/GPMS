@@ -219,6 +219,7 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
     if (clickedFrame->isSelected()) {
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
         cv::Mat finalFrame= clickedFrame->getImage();
+        cv::cvtColor(finalFrame, finalFrame, cv::COLOR_RGB2BGR);
         m_projectionWindow->setFinalFrame(finalFrame); // set final frame w this image
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
         // change proj to show new image
