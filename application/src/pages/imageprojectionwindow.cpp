@@ -47,6 +47,7 @@ void ImageProjectionWindow::setStillFrame(const cv::Mat &mat)
         return;
     }
 
+    m_updateEdgeDetectionFrame = true;
     m_stillFrame = mat.clone();
 }
 
