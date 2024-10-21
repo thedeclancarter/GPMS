@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     setupPages();
     setupConnections();
+    setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    // setWindowFlags(Qt::Window);
 }
 
 void MainWindow::setupUI()
@@ -95,10 +97,10 @@ void MainWindow::showImageProjectionWindow()
 {
     if (imageProjectionWindow) {
         // Set window flags to keep it behind other windows
-        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
+        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
 
         imageProjectionWindow->show();
-        imageProjectionWindow->lower(); // Ensure it stays behind other windows
+        // imageProjectionWindow->lower(); // Ensure it stays behind other windows
     }
 }
 
