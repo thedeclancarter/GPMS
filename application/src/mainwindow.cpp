@@ -135,6 +135,12 @@ void MainWindow::navigateToCreatePage()
 {
     // proj window should show video, currently will be still image
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
+    // reset everything
+    calibrationPage->resetPoints(); // points for calibration
+    sensitivityPage->resetSensitivitySliders(); // reset sensitivity bars
+    textVisionPage->clearInput();// clear textbox
+    pickImagesPage->clearSelections();// selected photos
+
     stackedWidget->setCurrentWidget(createPage);
 }
 
@@ -171,7 +177,6 @@ void MainWindow::navigateToPickImagesPage()
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)
 {
-    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
     projectPage->setSelectedImage(selectedImage);
     stackedWidget->setCurrentWidget(projectPage);
 }

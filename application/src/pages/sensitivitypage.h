@@ -24,6 +24,7 @@ class SensitivityPage : public QWidget
         explicit SensitivityPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~SensitivityPage();
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
+        void resetSensitivitySliders();
 
     signals:
         void navigateToTextVisionPage();

@@ -28,6 +28,8 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     updateStyle();
 }
 
+
+
 void ClickableFrame::setSelected(bool selected)
 {
     m_selected = selected;
@@ -117,6 +119,10 @@ PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget 
 PickImagesPage::~PickImagesPage()
 {
     delete ui;
+}
+
+void PickImagesPage::clearSelections(){
+    m_selectedFrame->setSelected(false);
 }
 
 cv::Mat PickImagesPage::getSelectedImage() const
@@ -219,8 +225,9 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
     if (clickedFrame->isSelected()) {
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
         cv::Mat finalFrame= clickedFrame->getImage();
-        cv::cvtColor(finalFrame, finalFrame, cv::COLOR_RGB2BGR);
-        m_projectionWindow->setFinalFrame(finalFrame); // set final frame w this image
+        cv::Mat BGR_image;
+        cv::cvtColor(finalFrame, BGR_image, cv::COLOR_RGB2BGR);
+        m_projectionWindow->setFinalFrame(BGR_image); // set final frame w this image
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
         // change proj to show new image
     } else {

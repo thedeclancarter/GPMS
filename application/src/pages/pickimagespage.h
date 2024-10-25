@@ -50,6 +50,7 @@ public:
     explicit PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
     ~PickImagesPage();
     cv::Mat getSelectedImage() const;
+    void clearSelections();
 
 signals:
     void navigateToTextVisionPage();
