@@ -29,7 +29,6 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
 }
 
 
-
 void ClickableFrame::setSelected(bool selected)
 {
     m_selected = selected;
@@ -122,7 +121,9 @@ PickImagesPage::~PickImagesPage()
 }
 
 void PickImagesPage::clearSelections(){
-    m_selectedFrame->setSelected(false);
+    if (m_selectedFrame){
+        m_selectedFrame->setSelected(false);
+    }
 }
 
 cv::Mat PickImagesPage::getSelectedImage() const

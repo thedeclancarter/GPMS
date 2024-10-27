@@ -133,14 +133,14 @@ void MainWindow::setupConnections()
 
 void MainWindow::navigateToCreatePage()
 {
-    // proj window should show video, currently will be still image
-    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     // reset everything
     calibrationPage->resetPoints(); // points for calibration
     sensitivityPage->resetSensitivitySliders(); // reset sensitivity bars
     textVisionPage->clearInput();// clear textbox
     pickImagesPage->clearSelections();// selected photos
 
+    // proj window should show video, currently will be still image
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
 }
 
