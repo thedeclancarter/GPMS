@@ -386,6 +386,8 @@ void CalibrationPage::finalizeSelection()
 // Slot for the Complete button to navigate to the sensitivity page
 void CalibrationPage::onCompleteButtonClicked()
 {
+    // change the button to be deselected again
+    ui->completeButton->setEnabled(false);
     // Navigate to the sensitivity page
     emit navigateToSensitivityPage();
 }
