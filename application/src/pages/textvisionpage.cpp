@@ -14,18 +14,28 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupLayouts();
     setupStyleSheets();
     setupConnections();
-    setupVirtualKeyboard();
 
-    m_visionInput->installEventFilter(this);
+    // Only setup virtual keyboard on Raspberry Pi
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        setupVirtualKeyboard();
+        m_visionInput->installEventFilter(this);
+    }
 }
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput) {
-        if (event->type() == QEvent::FocusIn) {
-            showVirtualKeyboard();
-        } else if (event->type() == QEvent::FocusOut) {
-            hideVirtualKeyboard();
+    // Only handle keyboard events on Raspberry Pi
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        if (obj == m_visionInput) {
+            if (event->type() == QEvent::FocusIn) {
+                showVirtualKeyboard();
+            } else if (event->type() == QEvent::FocusOut) {
+                hideVirtualKeyboard();
+            }
         }
     }
     return QWidget::eventFilter(obj, event);
@@ -33,38 +43,54 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 
 void TextVisionPage::showVirtualKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (!inputMethod->isVisible()) {
-        inputMethod->show();
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        QInputMethod *inputMethod = QGuiApplication::inputMethod();
+        if (!inputMethod->isVisible()) {
+            inputMethod->show();
+        }
     }
 }
 
 void TextVisionPage::hideVirtualKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (inputMethod->isVisible()) {
-        inputMethod->hide();
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        QInputMethod *inputMethod = QGuiApplication::inputMethod();
+        if (inputMethod->isVisible()) {
+            inputMethod->hide();
+        }
     }
 }
 
 void TextVisionPage::toggleVirtualKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (inputMethod->isVisible()) {
-        hideVirtualKeyboard();
-    } else {
-        showVirtualKeyboard();
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        QInputMethod *inputMethod = QApplication::inputMethod();
+        if (inputMethod->isVisible()) {
+            hideVirtualKeyboard();
+        } else {
+            showVirtualKeyboard();
+        }
     }
 }
 
 void TextVisionPage::setupVirtualKeyboard()
 {
-    // Ensure that the application is configured to use the virtual keyboard
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-    // check if rasp pi
+    // Configure virtual keyboard only on Raspberry Pi
     QString productType = QSysInfo::productType();
     if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
         qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
+
+        // Additional Raspberry Pi specific settings
+        qputenv("QT_QPA_EGLFS_HIDECURSOR", QByteArray("1"));
+        qputenv("QT_QPA_EGLFS_DISABLE_INPUT", QByteArray("0"));
     }
 }
 
