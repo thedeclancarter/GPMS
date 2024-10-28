@@ -27,7 +27,8 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     qDebug() << "Initializing TextVisionPage";
 
     if (isRunningOnRaspberryPi()) {
-        m_visionInput->setAttribute(Qt::WA_InputMethodEnabled, true);
+        qDebug() << "Setting up virtual keyboard for Raspberry Pi";
+        setupVirtualKeyboard();
         m_visionInput->installEventFilter(this);
     }
 }
@@ -52,6 +53,53 @@ bool TextVisionPage::isRunningOnRaspberryPi()
 
 void TextVisionPage::clearInput(){
     m_visionInput->clear();
+}
+
+bool TextVisionPage::isRunningOnRaspberryPi()
+{
+    // Method 1: Check model name in /proc/cpuinfo
+    QFile cpuinfo("/proc/cpuinfo");
+    if (cpuinfo.open(QFile::ReadOnly)) {
+        QString content = cpuinfo.readAll();
+        cpuinfo.close();
+
+        qDebug() << "CPU Info content:" << content;
+
+        if (content.contains("Raspberry Pi", Qt::CaseInsensitive) ||
+            content.contains("BCM2", Qt::CaseInsensitive)) {
+            qDebug("Detected Raspberry Pi via /proc/cpuinfo");
+            return true;
+        }
+    }
+
+    // Method 2: Check product type
+    QString productType = QSysInfo::productType();
+    QString prettyProductName = QSysInfo::prettyProductName();
+    QString kernelVersion = QSysInfo::kernelVersion();
+
+    qDebug() << "Product Type:" << productType;
+    qDebug() << "Pretty Product Name:" << prettyProductName;
+    qDebug() << "Kernel Version:" << kernelVersion;
+
+    if (productType.contains("raspbian", Qt::CaseInsensitive) ||
+        prettyProductName.contains("raspberry", Qt::CaseInsensitive) ||
+        kernelVersion.contains("raspberrypi", Qt::CaseInsensitive)) {
+        qDebug() << "Detected Raspberry Pi via QSysInfo";
+        return true;
+    }
+
+    // Method 3: Check if running on Linux arm
+#ifdef Q_PROCESSOR_ARM
+    QString architecture = QSysInfo::currentCpuArchitecture();
+    qDebug() << "CPU Architecture:" << architecture;
+    if (architecture.contains("arm", Qt::CaseInsensitive)) {
+        qDebug() << "Detected ARM architecture";
+        return true;
+    }
+#endif
+
+    qDebug() << "Not running on Raspberry Pi";
+    return false;
 }
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
@@ -117,45 +165,22 @@ void TextVisionPage::setupVirtualKeyboard()
 {
     qDebug() << "Setting up virtual keyboard...";
 
-    // Force the input method to be the virtual keyboard
+    // Set environment variables
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
+    qputenv("QT_QPA_EGLFS_HIDECURSOR", QByteArray("1"));
+    qputenv("QT_QPA_EGLFS_DISABLE_INPUT", QByteArray("0"));
 
-    // Check if input method is available
+    // Additional debug information
+    qDebug() << "QT_IM_MODULE:" << qgetenv("QT_IM_MODULE");
+    qDebug() << "QT_QPA_PLATFORM:" << qgetenv("QT_QPA_PLATFORM");
+
+    // Initialize virtual keyboard
     QInputMethod *inputMethod = QGuiApplication::inputMethod();
     if (inputMethod) {
         qDebug() << "Input method is available";
-        qDebug() << "Input method type:" << qgetenv("QT_IM_MODULE");
-
-        // Connect to visibility changes
-        connect(inputMethod, &QInputMethod::visibleChanged, this, [this]() {
-            qDebug() << "Keyboard visibility changed:" << QGuiApplication::inputMethod()->isVisible();
-            adjustLayoutForKeyboard();
-        });
     } else {
         qDebug() << "Input method is NOT available";
-    }
-}
-
-void TextVisionPage::adjustLayoutForKeyboard()
-{
-    QInputMethod *inputMethod = QGuiApplication::inputMethod();
-    if (!inputMethod)
-        return;
-
-    QScreen *screen = QGuiApplication::primaryScreen();
-    if (!screen)
-        return;
-
-    // Get keyboard rectangle in global coordinates
-    QRectF keyboardRect = inputMethod->keyboardRectangle();
-    qDebug() << "Keyboard rectangle:" << keyboardRect;
-
-    if (inputMethod->isVisible()) {
-        // Add bottom margin to avoid keyboard overlap
-        setContentsMargins(0, 0, 0, keyboardRect.height());
-    } else {
-        // Reset margins when keyboard is hidden
-        setContentsMargins(0, 0, 0, 0);
     }
 }
 
