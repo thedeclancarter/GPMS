@@ -4,7 +4,7 @@
 #include <QVBoxLayout>
 #include <QMessageBox>  // Include this header for QMessageBox on onSubmitButtonClicked function
 #include <QFile>
-#include <qDebug>
+#include <QDebug>
 
 
 TextVisionPage::TextVisionPage(QWidget *parent)
@@ -34,57 +34,23 @@ bool TextVisionPage::isRunningOnRaspberryPi()
         QString content = cpuinfo.readAll();
         cpuinfo.close();
 
-        qDebug() << "CPU Info content:" << content;
-
         if (content.contains("Raspberry Pi", Qt::CaseInsensitive) ||
             content.contains("BCM2", Qt::CaseInsensitive)) {
             qDebug("Detected Raspberry Pi via /proc/cpuinfo");
             return true;
         }
     }
-
-    // Method 2: Check product type
-    QString productType = QSysInfo::productType();
-    QString prettyProductName = QSysInfo::prettyProductName();
-    QString kernelVersion = QSysInfo::kernelVersion();
-
-    qDebug() << "Product Type:" << productType;
-    qDebug() << "Pretty Product Name:" << prettyProductName;
-    qDebug() << "Kernel Version:" << kernelVersion;
-
-    if (productType.contains("raspbian", Qt::CaseInsensitive) ||
-        prettyProductName.contains("raspberry", Qt::CaseInsensitive) ||
-        kernelVersion.contains("raspberrypi", Qt::CaseInsensitive)) {
-        qDebug() << "Detected Raspberry Pi via QSysInfo";
-        return true;
-    }
-
-    // Method 3: Check if running on Linux arm
-#ifdef Q_PROCESSOR_ARM
-    QString architecture = QSysInfo::currentCpuArchitecture();
-    qDebug() << "CPU Architecture:" << architecture;
-    if (architecture.contains("arm", Qt::CaseInsensitive)) {
-        qDebug() << "Detected ARM architecture";
-        return true;
-    }
-#endif
-
     qDebug() << "Not running on Raspberry Pi";
     return false;
 }
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    // Only handle keyboard events on Raspberry Pi
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
-        if (obj == m_visionInput) {
-            if (event->type() == QEvent::FocusIn) {
-                showVirtualKeyboard();
-            } else if (event->type() == QEvent::FocusOut) {
-                hideVirtualKeyboard();
-            }
+    if (obj == m_visionInput) {
+        if (event->type() == QEvent::FocusIn) {
+            showVirtualKeyboard();
+        } else if (event->type() == QEvent::FocusOut) {
+            hideVirtualKeyboard();
         }
     }
     return QWidget::eventFilter(obj, event);
@@ -92,39 +58,27 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 
 void TextVisionPage::showVirtualKeyboard()
 {
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
-        QInputMethod *inputMethod = QGuiApplication::inputMethod();
-        if (!inputMethod->isVisible()) {
-            inputMethod->show();
-        }
+    QInputMethod *inputMethod = QGuiApplication::inputMethod();
+    if (!inputMethod->isVisible()) {
+        inputMethod->show();
     }
 }
 
 void TextVisionPage::hideVirtualKeyboard()
 {
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
-        QInputMethod *inputMethod = QGuiApplication::inputMethod();
-        if (inputMethod->isVisible()) {
-            inputMethod->hide();
-        }
+    QInputMethod *inputMethod = QGuiApplication::inputMethod();
+    if (inputMethod->isVisible()) {
+        inputMethod->hide();
     }
 }
 
 void TextVisionPage::toggleVirtualKeyboard()
 {
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
-        QInputMethod *inputMethod = QApplication::inputMethod();
-        if (inputMethod->isVisible()) {
-            hideVirtualKeyboard();
-        } else {
-            showVirtualKeyboard();
-        }
+    QInputMethod *inputMethod = QApplication::inputMethod();
+    if (inputMethod->isVisible()) {
+        hideVirtualKeyboard();
+    } else {
+        showVirtualKeyboard();
     }
 }
 
