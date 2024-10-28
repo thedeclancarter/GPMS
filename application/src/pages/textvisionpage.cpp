@@ -101,11 +101,15 @@ void TextVisionPage::hideVirtualKeyboard()
 
 void TextVisionPage::toggleVirtualKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (inputMethod->isVisible()) {
-        hideVirtualKeyboard();
-    } else {
-        showVirtualKeyboard();
+    QString productType = QSysInfo::productType();
+    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
+        qDebug("This is raspbarian");
+        QInputMethod *inputMethod = QApplication::inputMethod();
+        if (inputMethod->isVisible()) {
+            hideVirtualKeyboard();
+        } else {
+            showVirtualKeyboard();
+        }
     }
 }
 
