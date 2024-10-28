@@ -10,7 +10,7 @@ set(CMAKE_PREFIX_PATH $ENV{Qt5_DIR})
 set(Qt5_DIR $ENV{Qt5_DIR})
 
 # set virtual keyboard
-set(ENV{QT_IM_MODULE} "qtvirtualkeyboard")
+# set(ENV{QT_IM_MODULE} "qtvirtualkeyboard")
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,9 +20,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Core Multimedia MultimediaWidgets VirtualKeyboard)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Core Multimedia MultimediaWidgets)
 find_package(Qt5QuickControls2 REQUIRED)
 find_package(OpenCV REQUIRED)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_package(Qt5 COMPONENTS VirtualKeyboard)
+endif()
 
 set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/main.cpp
@@ -82,7 +85,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt5::Core
     Qt5::Gui
     Qt5::QuickControls2
-    Qt5::VirtualKeyboard
+    # Qt5::VirtualKeyboard
     ${OpenCV_LIBS}
 )
 
@@ -118,5 +121,5 @@ install(TARGETS gpms_ui
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(your_target_name PRIVATE Qt5::VirtualKeyboard)
+    target_link_libraries(gpms_ui PRIVATE Qt5::VirtualKeyboard)
 endif()
