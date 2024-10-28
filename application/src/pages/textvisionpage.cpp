@@ -12,6 +12,13 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     , ui(new Ui::TextVisionPage)
     , m_isRealistic(true)
 {
+
+    // Initialize keyboard before setting up UI
+    if (isRunningOnRaspberryPi()) {
+        qDebug() << "Setting up virtual keyboard for Raspberry Pi";
+        setupVirtualKeyboard();
+    }
+
     setupUI();
     setupLayouts();
     setupStyleSheets();
@@ -20,8 +27,7 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     qDebug() << "Initializing TextVisionPage";
 
     if (isRunningOnRaspberryPi()) {
-        qDebug() << "Setting up virtual keyboard for Raspberry Pi";
-        setupVirtualKeyboard();
+        m_visionInput->setAttribute(Qt::WA_InputMethodEnabled, true);
         m_visionInput->installEventFilter(this);
     }
 }
@@ -47,10 +53,27 @@ bool TextVisionPage::isRunningOnRaspberryPi()
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_visionInput) {
-        if (event->type() == QEvent::FocusIn) {
-            showVirtualKeyboard();
-        } else if (event->type() == QEvent::FocusOut) {
-            hideVirtualKeyboard();
+        switch (event->type()) {
+        case QEvent::FocusIn: {
+            qDebug() << "Focus in event - showing keyboard";
+            QInputMethod *inputMethod = QGuiApplication::inputMethod();
+            if (inputMethod) {
+                inputMethod->show();
+                qDebug() << "Requested keyboard show";
+            }
+            return false;
+        }
+        case QEvent::FocusOut: {
+            qDebug() << "Focus out event - hiding keyboard";
+            QInputMethod *inputMethod = QGuiApplication::inputMethod();
+            if (inputMethod) {
+                inputMethod->hide();
+                qDebug() << "Requested keyboard hide";
+            }
+            return false;
+        }
+        default:
+            break;
         }
     }
     return QWidget::eventFilter(obj, event);
@@ -86,22 +109,45 @@ void TextVisionPage::setupVirtualKeyboard()
 {
     qDebug() << "Setting up virtual keyboard...";
 
-    // Set environment variables
+    // Force the input method to be the virtual keyboard
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-    qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
-    qputenv("QT_QPA_EGLFS_HIDECURSOR", QByteArray("1"));
-    qputenv("QT_QPA_EGLFS_DISABLE_INPUT", QByteArray("0"));
 
-    // Additional debug information
-    qDebug() << "QT_IM_MODULE:" << qgetenv("QT_IM_MODULE");
-    qDebug() << "QT_QPA_PLATFORM:" << qgetenv("QT_QPA_PLATFORM");
-
-    // Initialize virtual keyboard
+    // Check if input method is available
     QInputMethod *inputMethod = QGuiApplication::inputMethod();
     if (inputMethod) {
         qDebug() << "Input method is available";
+        qDebug() << "Input method type:" << qgetenv("QT_IM_MODULE");
+
+        // Connect to visibility changes
+        connect(inputMethod, &QInputMethod::visibleChanged, this, [this]() {
+            qDebug() << "Keyboard visibility changed:" << QGuiApplication::inputMethod()->isVisible();
+            adjustLayoutForKeyboard();
+        });
     } else {
         qDebug() << "Input method is NOT available";
+    }
+}
+
+void TextVisionPage::adjustLayoutForKeyboard()
+{
+    QInputMethod *inputMethod = QGuiApplication::inputMethod();
+    if (!inputMethod)
+        return;
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (!screen)
+        return;
+
+    // Get keyboard rectangle in global coordinates
+    QRectF keyboardRect = inputMethod->keyboardRectangle();
+    qDebug() << "Keyboard rectangle:" << keyboardRect;
+
+    if (inputMethod->isVisible()) {
+        // Add bottom margin to avoid keyboard overlap
+        setContentsMargins(0, 0, 0, keyboardRect.height());
+    } else {
+        // Reset margins when keyboard is hidden
+        setContentsMargins(0, 0, 0, 0);
     }
 }
 
@@ -115,6 +161,8 @@ void TextVisionPage::setupUI()
 
     m_visionInput = new QTextEdit(this);
     m_visionInput->setFixedSize(600, 200);
+    m_visionInput->setAttribute(Qt::WA_InputMethodEnabled, true);
+
     m_submitButton = createSubmitButton();
     m_submitButton->setEnabled(false); // Initially disabled
     // Set the hand cursor when hovering over the button
