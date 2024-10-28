@@ -58,6 +58,53 @@ void TextVisionPage::clearInput(){
     m_visionInput->clear();
 }
 
+bool TextVisionPage::isRunningOnRaspberryPi()
+{
+    // Method 1: Check model name in /proc/cpuinfo
+    QFile cpuinfo("/proc/cpuinfo");
+    if (cpuinfo.open(QFile::ReadOnly)) {
+        QString content = cpuinfo.readAll();
+        cpuinfo.close();
+
+        qDebug() << "CPU Info content:" << content;
+
+        if (content.contains("Raspberry Pi", Qt::CaseInsensitive) ||
+            content.contains("BCM2", Qt::CaseInsensitive)) {
+            qDebug("Detected Raspberry Pi via /proc/cpuinfo");
+            return true;
+        }
+    }
+
+    // Method 2: Check product type
+    QString productType = QSysInfo::productType();
+    QString prettyProductName = QSysInfo::prettyProductName();
+    QString kernelVersion = QSysInfo::kernelVersion();
+
+    qDebug() << "Product Type:" << productType;
+    qDebug() << "Pretty Product Name:" << prettyProductName;
+    qDebug() << "Kernel Version:" << kernelVersion;
+
+    if (productType.contains("raspbian", Qt::CaseInsensitive) ||
+        prettyProductName.contains("raspberry", Qt::CaseInsensitive) ||
+        kernelVersion.contains("raspberrypi", Qt::CaseInsensitive)) {
+        qDebug() << "Detected Raspberry Pi via QSysInfo";
+        return true;
+    }
+
+    // Method 3: Check if running on Linux arm
+#ifdef Q_PROCESSOR_ARM
+    QString architecture = QSysInfo::currentCpuArchitecture();
+    qDebug() << "CPU Architecture:" << architecture;
+    if (architecture.contains("arm", Qt::CaseInsensitive)) {
+        qDebug() << "Detected ARM architecture";
+        return true;
+    }
+#endif
+
+    qDebug() << "Not running on Raspberry Pi";
+    return false;
+}
+
 void TextVisionPage::clearInput(){
     m_visionInput->clear();
 }
