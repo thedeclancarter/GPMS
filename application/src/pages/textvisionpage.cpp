@@ -127,6 +127,29 @@ void TextVisionPage::hideKeyboard()
     }
 }
 
+void TextVisionPage::adjustLayoutForKeyboard()
+{
+    QInputMethod *inputMethod = QGuiApplication::inputMethod();
+    if (!inputMethod)
+        return;
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (!screen)
+        return;
+
+    // Get keyboard rectangle in global coordinates
+    QRectF keyboardRect = inputMethod->keyboardRectangle();
+    qDebug() << "Keyboard rectangle:" << keyboardRect;
+
+    if (inputMethod->isVisible()) {
+        // Add bottom margin to avoid keyboard overlap
+        setContentsMargins(0, 0, 0, keyboardRect.height());
+    } else {
+        // Reset margins when keyboard is hidden
+        setContentsMargins(0, 0, 0, 0);
+    }
+}
+
 void TextVisionPage::setupUI()
 {
     m_title = createTitleLabel();
