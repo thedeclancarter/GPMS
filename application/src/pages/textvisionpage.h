@@ -58,7 +58,6 @@ private:
     QTextEdit *m_visionInput;
     QPushButton *m_submitButton;
     bool isRunningOnRaspberryPi();
-    void adjustLayoutForKeyboard();
 
 
     QString m_visionText;
