@@ -57,6 +57,7 @@ private:
     QPushButton *m_animatedButton;
     QTextEdit *m_visionInput;
     QPushButton *m_submitButton;
+    bool isRunningOnRaspberryPi();
 
 
     QString m_visionText;

@@ -3,6 +3,8 @@
 
 #include <QVBoxLayout>
 #include <QMessageBox>  // Include this header for QMessageBox on onSubmitButtonClicked function
+#include <QFile>
+#include <qDebug>
 
 
 TextVisionPage::TextVisionPage(QWidget *parent)
@@ -15,13 +17,60 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     setupStyleSheets();
     setupConnections();
 
-    // Only setup virtual keyboard on Raspberry Pi
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
+    qDebug() << "Initializing TextVisionPage";
+
+    if (isRunningOnRaspberryPi()) {
+        qDebug() << "Setting up virtual keyboard for Raspberry Pi";
         setupVirtualKeyboard();
         m_visionInput->installEventFilter(this);
     }
+}
+
+bool TextVisionPage::isRunningOnRaspberryPi()
+{
+    // Method 1: Check model name in /proc/cpuinfo
+    QFile cpuinfo("/proc/cpuinfo");
+    if (cpuinfo.open(QFile::ReadOnly)) {
+        QString content = cpuinfo.readAll();
+        cpuinfo.close();
+
+        qDebug() << "CPU Info content:" << content;
+
+        if (content.contains("Raspberry Pi", Qt::CaseInsensitive) ||
+            content.contains("BCM2", Qt::CaseInsensitive)) {
+            qDebug("Detected Raspberry Pi via /proc/cpuinfo");
+            return true;
+        }
+    }
+
+    // Method 2: Check product type
+    QString productType = QSysInfo::productType();
+    QString prettyProductName = QSysInfo::prettyProductName();
+    QString kernelVersion = QSysInfo::kernelVersion();
+
+    qDebug() << "Product Type:" << productType;
+    qDebug() << "Pretty Product Name:" << prettyProductName;
+    qDebug() << "Kernel Version:" << kernelVersion;
+
+    if (productType.contains("raspbian", Qt::CaseInsensitive) ||
+        prettyProductName.contains("raspberry", Qt::CaseInsensitive) ||
+        kernelVersion.contains("raspberrypi", Qt::CaseInsensitive)) {
+        qDebug() << "Detected Raspberry Pi via QSysInfo";
+        return true;
+    }
+
+    // Method 3: Check if running on Linux arm
+#ifdef Q_PROCESSOR_ARM
+    QString architecture = QSysInfo::currentCpuArchitecture();
+    qDebug() << "CPU Architecture:" << architecture;
+    if (architecture.contains("arm", Qt::CaseInsensitive)) {
+        qDebug() << "Detected ARM architecture";
+        return true;
+    }
+#endif
+
+    qDebug() << "Not running on Raspberry Pi";
+    return false;
 }
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
@@ -81,16 +130,24 @@ void TextVisionPage::toggleVirtualKeyboard()
 
 void TextVisionPage::setupVirtualKeyboard()
 {
-    // Configure virtual keyboard only on Raspberry Pi
-    QString productType = QSysInfo::productType();
-    if (productType.contains("raspbian", Qt::CaseInsensitive)) {
-        qDebug("This is raspbarian");
-        qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-        qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
+    qDebug() << "Setting up virtual keyboard...";
 
-        // Additional Raspberry Pi specific settings
-        qputenv("QT_QPA_EGLFS_HIDECURSOR", QByteArray("1"));
-        qputenv("QT_QPA_EGLFS_DISABLE_INPUT", QByteArray("0"));
+    // Set environment variables
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));
+    qputenv("QT_QPA_EGLFS_HIDECURSOR", QByteArray("1"));
+    qputenv("QT_QPA_EGLFS_DISABLE_INPUT", QByteArray("0"));
+
+    // Additional debug information
+    qDebug() << "QT_IM_MODULE:" << qgetenv("QT_IM_MODULE");
+    qDebug() << "QT_QPA_PLATFORM:" << qgetenv("QT_QPA_PLATFORM");
+
+    // Initialize virtual keyboard
+    QInputMethod *inputMethod = QGuiApplication::inputMethod();
+    if (inputMethod) {
+        qDebug() << "Input method is available";
+    } else {
+        qDebug() << "Input method is NOT available";
     }
 }
 

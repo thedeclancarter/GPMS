@@ -6,8 +6,6 @@
 
 int main(int argc, char *argv[])
 {
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-
     // for rasp pi
     #ifdef Q_OS_RASPBERRYPI
         qputenv("QT_QPA_PLATFORM", QByteArray("eglfs"));

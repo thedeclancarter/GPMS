@@ -84,6 +84,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt5::MultimediaWidgets
     Qt5::Core
     Qt5::Gui
+     Qt5::Quick
     Qt5::QuickControls2
     # Qt5::VirtualKeyboard
     ${OpenCV_LIBS}
@@ -121,5 +122,9 @@ install(TARGETS gpms_ui
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(gpms_ui PRIVATE Qt5::VirtualKeyboard)
+    target_link_libraries(gpms_ui PRIVATE
+        Qt5::VirtualKeyboard
+        Qt5::QuickWidgets
+        Qt5::Qml
+    )
 endif()
