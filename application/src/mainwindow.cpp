@@ -117,13 +117,17 @@ void MainWindow::setupConnections()
     connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
-    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
+    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateFromTextVisionToPickImages);
         // take picture here when clicked
 
     // from pick images page
     connect(pickImagesPage, &PickImagesPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(pickImagesPage, &PickImagesPage::navigateToProjectPage, this, &MainWindow::navigateToProjectPage);
-    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);    
+    connect(pickImagesPage, &PickImagesPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
+
+    // from project page
+    connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
+    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
 }
 
 void MainWindow::navigateToCreatePage()
@@ -160,13 +164,28 @@ void MainWindow::navigateToTextVisionPage()
     stackedWidget->setCurrentWidget(textVisionPage);
 }
 
-void MainWindow::navigateToPickImagesPage()
+void MainWindow::navigateFromProjectPageToPickImagesPage()
 {
     stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
-void MainWindow::navigateToProjectPage()
+// to only refresh when nav from textVision
+void MainWindow::navigateFromTextVisionToPickImages()
 {
+    pickImagesPage->refreshImages();
+    stackedWidget->setCurrentWidget(pickImagesPage);
+}
+
+// to only refresh when nav from textVision
+void MainWindow::navigateFromTextVisionToPickImages()
+{
+    pickImagesPage->refreshImages(selectedImage);
+    stackedWidget->setCurrentWidget(pickImagesPage);
+}
+
+void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)
+{
+    projectPage->setSelectedImage(selectedImage);
     stackedWidget->setCurrentWidget(projectPage);
 }
 

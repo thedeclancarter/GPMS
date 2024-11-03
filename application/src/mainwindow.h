@@ -66,8 +66,10 @@ private slots:
     void navigateToCalibrationPage();
     void navigateToSensitivityPage();
     void navigateToTextVisionPage();
-    void navigateToPickImagesPage();
-    void navigateToProjectPage();
+    void navigateFromProjectPageToPickImagesPage();
+    void navigateFromTextVisionToPickImages(); // in order to refresh
+    void navigateToProjectPage(const cv::Mat& image);
+
 
 };
 #endif // MAINWINDOW_H

@@ -41,6 +41,9 @@ class PickImagesPage : public QWidget
 public:
     explicit PickImagesPage(QWidget *parent = nullptr);
     ~PickImagesPage();
+    cv::Mat getSelectedImage() const;
+    void clearSelections();
+    void refreshImages();
 
 signals:
     void navigateToTextVisionPage();
@@ -67,6 +70,7 @@ private:
 
     void handleImageResponse();
     void fetchRandomImages();
+    void clearImages();
 
 };
 
