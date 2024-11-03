@@ -24,7 +24,7 @@ class SensitivityPage : public QWidget
         explicit SensitivityPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~SensitivityPage();
         void setProjectionWindow(ImageProjectionWindow *projectionWindow);
-        void startCaptureTimer();
+        void resetSensitivitySliders();
         void endCaptureTimer();
 
     signals:
@@ -33,8 +33,9 @@ class SensitivityPage : public QWidget
 
     private slots:
         void onAcceptButtonClicked();
-        void captureAndProcessFrame();
         void onRejectButtonClicked();
+
+    public slots:
         void updateSensitivity();
 
     private:
@@ -60,14 +61,6 @@ class SensitivityPage : public QWidget
         QSlider* createSlider(QSlider* slider);
         QHBoxLayout* createButtonLayout();
         QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
-
-        void setupCamera();
-        void captureImage();
-        // void processFrame(const QVideoFrame &frame);
-        void processFrame(int id, const QVideoFrame &frame);
-        void updateDisplays(const QImage &image);
-        // void processFrame();
-        // void applyCannyEdgeDetection(int lowerThreshold, int upperThreshold);
 };
 
 #endif // SENSITIVITYPAGE_H

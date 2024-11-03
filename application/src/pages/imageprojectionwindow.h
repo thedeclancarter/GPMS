@@ -24,21 +24,30 @@ public:
 
     // Setters
     void setStillFrame(const cv::Mat &image);
+    void setFinalFrame(const cv::Mat &mat);
     void setSensitivity(int lo, int hi);
     void setTransformCorners(const std::array<cv::Point2f, 4>& transformCorners);
     void setProjectionState(projectionState state);
 
     // Getters
     bool getIsCalibrated(void) const;
+    QImage getCurrentImage() const;
 
 private:
     static constexpr int WIDTH = 1280, HEIGHT = 720;
 
     cv::Mat m_stillFrame;
+    cv::Mat m_finalFrame;
     int m_loSensitivity, m_hiSensitivity;
     std::array<cv::Point2f, 4> m_transformCorners;
     projectionState m_state;
     bool m_isCalibrated = false;
+
+    // Cached Values
+    bool m_updatePerspectiveMatrix = true;
+    bool m_updateEdgeDetectionFrame = true;
+    cv::Mat m_perspectiveMatrix;
+    cv::Mat m_edgeDetectionFrame;
 
     QLabel *m_imageLabel;
 

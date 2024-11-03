@@ -25,6 +25,7 @@ void MainWindow::setupUI()
 
     // Create main layout
     QHBoxLayout *mainLayout = new QHBoxLayout();
+    mainLayout->setContentsMargins(0,0,0,0);
 
     // Create a QStackedWidget
     stackedWidget = new QStackedWidget(this);
@@ -39,7 +40,7 @@ void MainWindow::setupUI()
 
     // Create and set up the logo
     logoButton = new QPushButton(this);
-    QPixmap logo(":/icons/GPMS_logo2.webp");
+    QPixmap logo(":/icons/GPMS_logo2.png");
     logoButton->setIcon(QIcon(logo));
     logoButton->setIconSize(QSize(60, 60));  // Set the size of the icon
     logoButton->setFixedSize(60, 60);  // Set the size of the button
@@ -73,9 +74,9 @@ void MainWindow::setupPages()
     sensitivityPage = new SensitivityPage(imageProjectionWindow, this);
     // what will these show
     textVisionPage = new TextVisionPage(this);
-    pickImagesPage = new PickImagesPage(this);
+    pickImagesPage = new PickImagesPage(imageProjectionWindow, this);
     // will show projected image
-    projectPage = new ProjectPage(this);
+    projectPage = new ProjectPage(imageProjectionWindow, this);
 
     stackedWidget->addWidget(createPage);
 
@@ -132,6 +133,12 @@ void MainWindow::setupConnections()
 
 void MainWindow::navigateToCreatePage()
 {
+    // reset everything
+    calibrationPage->resetPoints(); // points for calibration
+    sensitivityPage->resetSensitivitySliders(); // reset sensitivity bars
+    textVisionPage->clearInput();// clear textbox
+    pickImagesPage->clearSelections();// selected photos
+
     // proj window should show video, currently will be still image
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
@@ -153,9 +160,8 @@ void MainWindow::navigateToCalibrationPage()
 
 void MainWindow::navigateToSensitivityPage()
 {
-    // only start timer when on this page
-    sensitivityPage->startCaptureTimer();
     stackedWidget->setCurrentWidget(sensitivityPage);
+    sensitivityPage->updateSensitivity();
 }
 
 void MainWindow::navigateToTextVisionPage()

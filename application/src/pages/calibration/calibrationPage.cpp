@@ -35,6 +35,7 @@ CalibrationPage::CalibrationPage(ImageProjectionWindow *projectionWindow, QWidge
     pointsChanged(false) // Initialize the flag
 {
     ui->setupUi(this);
+    initializeUI();
 
     setFocusPolicy(Qt::StrongFocus);
 
@@ -134,7 +135,7 @@ void CalibrationPage::processFrame()
         if (numSelectedPoints == 4 && !stillFrameCaptured) {
             stillFrame = frame.clone();
             stillFrameCaptured = true;
-            timer->stop(); // Stop capturing frames
+            stopCamera();
             updateProjectionWindow();
             updateDisplayWithStillFrame(); // Update display with the still frame
         }
@@ -161,15 +162,13 @@ void CalibrationPage::updateProjectionWindow()
     sortPointsClockwise(sortedPoints);
     m_projectionWindow->setStillFrame(stillFrame);
     m_projectionWindow->setTransformCorners(sortedPoints);
-
-    // Set the image in the projection window using updateImage
-    m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::EDGE_DETECTION);
 }
 
 // Update the display using the still frame
 void CalibrationPage::updateDisplayWithStillFrame()
 {
     if (stillFrame.empty()) {
+        qDebug("Still frame is empty");
         return;
     }
 
@@ -207,37 +206,57 @@ void CalibrationPage::updateDisplayWithStillFrame()
 void CalibrationPage::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event);
-    QPainter painter(this);
     if (!qimg.isNull()) {
-        // Define the smaller display area (centered)
-        int xOffset = (width() - DISPLAY_WIDTH) / 2;
-        int yOffset = (height() - DISPLAY_HEIGHT) / 2;
-        QRect displayRect(xOffset, yOffset, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        // Get the size of m_imageLabel
+        QSize labelSize = m_imageLabel->size();
 
-        // Draw the image within the displayRect
-        painter.drawImage(displayRect, qimg);
+        // Scale the image to fit the label while maintaining aspect ratio
+        QPixmap scaledPixmap = QPixmap::fromImage(qimg).scaled(labelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+        // Set the pixmap on m_imageLabel
+        m_imageLabel->setPixmap(scaledPixmap);
     }
 }
+
 
 // Handle mouse press events for point selection and dragging
 void CalibrationPage::mousePressEvent(QMouseEvent* event)
 {
-    // Define the smaller display area (centered)
-    int xOffset = (width() - DISPLAY_WIDTH) / 2;
-    int yOffset = (height() - DISPLAY_HEIGHT) / 2;
+    // Get the position of m_imageLabel within the widget
+    QPoint labelTopLeft = m_imageLabel->mapTo(this, QPoint(0, 0));
+    int labelX = labelTopLeft.x();
+    int labelY = labelTopLeft.y();
 
-    // Check if the click is within the displayRect
-    if (event->x() >= xOffset && event->x() <= (xOffset + DISPLAY_WIDTH) &&
-        event->y() >= yOffset && event->y() <= (yOffset + DISPLAY_HEIGHT)) {
+    // Get the size of m_imageLabel
+    int labelWidth = m_imageLabel->width();
+    int labelHeight = m_imageLabel->height();
+
+    // Get the size of the displayed image within m_imageLabel
+    QSize imageSize = qimg.size();
+    QSize scaledImageSize = imageSize.scaled(m_imageLabel->size(), Qt::KeepAspectRatio);
+
+    int imageWidth = scaledImageSize.width();
+    int imageHeight = scaledImageSize.height();
+
+    // Compute the top-left corner of the displayed image within the label
+    int imageXOffset = (labelWidth - imageWidth) / 2;
+    int imageYOffset = (labelHeight - imageHeight) / 2;
+
+    // Compute the top-left corner of the displayed image within the widget
+    int imageTopLeftX = labelX + imageXOffset;
+    int imageTopLeftY = labelY + imageYOffset;
+
+    // Check if the click is within the displayed image
+    if (event->x() >= imageTopLeftX && event->x() <= (imageTopLeftX + imageWidth) &&
+        event->y() >= imageTopLeftY && event->y() <= (imageTopLeftY + imageHeight)) {
 
         // Map the click position to the image coordinates
-        int imgX = event->x() - xOffset;
-        int imgY = event->y() - yOffset;
+        int imgX = event->x() - imageTopLeftX;
+        int imgY = event->y() - imageTopLeftY;
 
-        // Since the image is scaled down to DISPLAY_WIDTH x DISPLAY_HEIGHT,
-        // map imgX and imgY back to the original frame coordinates
-        float scaleX = static_cast<float>(WIDTH) / DISPLAY_WIDTH;
-        float scaleY = static_cast<float>(HEIGHT) / DISPLAY_HEIGHT;
+        // Since the image is scaled, map imgX and imgY back to the original frame coordinates
+        float scaleX = static_cast<float>(WIDTH) / imageWidth;
+        float scaleY = static_cast<float>(HEIGHT) / imageHeight;
 
         mouseX = imgX * scaleX;
         mouseY = imgY * scaleY;
@@ -256,6 +275,7 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
                     timer->stop();
                     updateProjectionWindow();
                     updateDisplayWithStillFrame();
+                    ui->completeButton->setEnabled(numSelectedPoints == 4);
                 }
             } else {
                 qDebug() << "Point is too close to an existing point.";
@@ -272,35 +292,41 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
 // Handle mouse move events for dragging points
 void CalibrationPage::mouseMoveEvent(QMouseEvent* event)
 {
-    // Define the smaller display area (centered)
-    int xOffset = (width() - DISPLAY_WIDTH) / 2;
-    int yOffset = (height() - DISPLAY_HEIGHT) / 2;
+    QPoint labelTopLeft = m_imageLabel->mapTo(this, QPoint(0, 0));
+    int labelX = labelTopLeft.x();
+    int labelY = labelTopLeft.y();
 
-    // Check if the mouse is within the displayRect
-    if (event->x() >= xOffset && event->x() <= (xOffset + DISPLAY_WIDTH) &&
-        event->y() >= yOffset && event->y() <= (yOffset + DISPLAY_HEIGHT)) {
+    int labelWidth = m_imageLabel->width();
+    int labelHeight = m_imageLabel->height();
 
-        // Map the mouse position to the image coordinates
-        int imgX = event->x() - xOffset;
-        int imgY = event->y() - yOffset;
+    QSize imageSize = qimg.size();
+    QSize scaledImageSize = imageSize.scaled(m_imageLabel->size(), Qt::KeepAspectRatio);
 
-        // Map to original frame coordinates
-        float scaleX = static_cast<float>(WIDTH) / DISPLAY_WIDTH;
-        float scaleY = static_cast<float>(HEIGHT) / DISPLAY_HEIGHT;
+    int imageWidth = scaledImageSize.width();
+    int imageHeight = scaledImageSize.height();
+
+    int imageXOffset = (labelWidth - imageWidth) / 2;
+    int imageYOffset = (labelHeight - imageHeight) / 2;
+
+    int imageTopLeftX = labelX + imageXOffset;
+    int imageTopLeftY = labelY + imageYOffset;
+
+    if (event->x() >= imageTopLeftX && event->x() <= (imageTopLeftX + imageWidth) &&
+        event->y() >= imageTopLeftY && event->y() <= (imageTopLeftY + imageHeight)) {
+
+        int imgX = event->x() - imageTopLeftX;
+        int imgY = event->y() - imageTopLeftY;
+
+        float scaleX = static_cast<float>(WIDTH) / imageWidth;
+        float scaleY = static_cast<float>(HEIGHT) / imageHeight;
 
         mouseX = imgX * scaleX;
         mouseY = imgY * scaleY;
 
         if (dragging && selectedCorner != -1) {
             selectedPoints[selectedCorner] = cv::Point2f(mouseX, mouseY);
-            // qDebug() << "Point dragged to:" << mouseX << "," << mouseY;
-
-            pointsChanged = true; // Points have changed
-
-            // Update the projection window with the new point positions
+            pointsChanged = true;
             updateProjectionWindow();
-
-            // Update the display with the still frame
             updateDisplayWithStillFrame();
         }
     }
@@ -360,6 +386,8 @@ void CalibrationPage::finalizeSelection()
 // Slot for the Complete button to navigate to the sensitivity page
 void CalibrationPage::onCompleteButtonClicked()
 {
+    // change the button to be deselected again
+    ui->completeButton->setEnabled(false);
     // Navigate to the sensitivity page
     emit navigateToSensitivityPage();
 }
@@ -476,4 +504,128 @@ bool CalibrationPage::isValidPoint(const cv::Point2f& newPoint, double minDistan
         }
     }
     return true;
+}
+
+
+
+// UI FUNCTIONS
+
+void CalibrationPage::initializeUI()
+{
+    setStyleSheet("background-color: #1E1E1E;");
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(30, 20, 30, 5);
+    mainLayout->setSpacing(15);
+
+    mainLayout->addWidget(createTitleLabel(), 0, Qt::AlignHCenter);
+
+    mainLayout->addWidget(createImageFrame(), 1, Qt::AlignHCenter);
+
+    mainLayout->addStretch(3); // move the buttons to the bottom
+    mainLayout->addLayout(createButtonLayout());
+
+    setLayout(mainLayout);
+
+    // Connect the complete button to navigate to the sensitivity page
+    connect(ui->completeButton, &QPushButton::clicked, this, &CalibrationPage::onCompleteButtonClicked);
+
+    // **Connect the rejectCalibrationButton to resetPoints()**
+    connect(ui->rejectCalibrationButton, &QPushButton::clicked, this, &CalibrationPage::resetPoints);
+}
+
+// Creates the UI title bar
+QLabel* CalibrationPage::createTitleLabel()
+{
+    QLabel *titleLabel = new QLabel("Select Edges of Projection Region", this);
+    titleLabel->setStyleSheet(
+        "color: white;"
+        "font-size: 30px;"
+        "font-weight: bold;"
+        "background-color: #3E3E3E;"
+        "border-radius: 20px;"
+        "padding: 15px 20px;"
+        );
+    titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    titleLabel->setFixedWidth(800);
+    titleLabel->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+    return titleLabel;
+}
+
+// Creates the UI Image Box
+QFrame* CalibrationPage::createImageFrame()
+{
+    // startCamera();
+    QFrame *cameraFrame = new QFrame(this);
+    cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
+    cameraFrame->setLineWidth(2);
+    cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
+    cameraFrame->setFixedSize(800,400);
+
+    QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
+    m_imageLabel = new QLabel(cameraFrame);
+    m_imageLabel->setAlignment(Qt::AlignCenter);
+    m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QSize labelSize = m_imageLabel->size();
+    cameraLayout->addWidget(m_imageLabel);
+
+    return cameraFrame;
+
+}
+
+// void CalibrationPage::updateImage(const QImage& image)
+// {
+//     if (!image.isNull()) {
+//         m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+//     }
+// }
+
+// Creates the button layout
+QHBoxLayout* CalibrationPage::createButtonLayout()
+{
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->addWidget(styleButton(ui->rejectCalibrationButton, "LET'S TRY AGAIN", "#CD6F6F"));
+    buttonLayout->addWidget(styleButton(ui->completeButton, "THIS LOOKS GOOD!", "#BB64C7"));
+    ui->completeButton->setEnabled(false); // initially false
+    return buttonLayout;
+}
+
+// Styles the button
+QPushButton* CalibrationPage::styleButton(QPushButton* button, const QString& text, const QString& bgColor)
+{
+    // Compute the darker color by applying a 30% reduction
+    QString darkerColor;
+    if (bgColor == "#CD6F6F") {
+        darkerColor = "#8B4D4D";  // 30% darker color for red
+    } else if (bgColor == "#BB64C7") {
+        darkerColor = "#83468B";  // 30% darker color for purple
+    } else {
+        darkerColor = "#4A5A9F";  // Default color (if none of the above match)
+    }
+
+    button->setText(text);
+    button->setFixedSize(200, 50);
+    button->setStyleSheet(QString(
+                              "QPushButton {"
+                              "   background-color: %1;"  // Original color
+                              "   color: black;"
+                              "   border-radius: 25px;"
+                              "   font-weight: bold;"
+                              "   font-size: 16px;"
+                              "}"
+                              "QPushButton:hover {"
+                              "   background-color: %2;"  // 30% darker color for hover
+                              "}"
+                              "QPushButton:pressed {"
+                              "   background-color: %3;"  // 30% darker color for pressed
+                              "}"
+                              "QPushButton:disabled {"
+                              "   background-color: #808080;"  // Disabled state color
+                              "}"
+                              ).arg(bgColor).arg(darkerColor).arg(darkerColor));
+
+    // Set the hand cursor when hovering over the button
+    button->setCursor(Qt::PointingHandCursor);
+    return button;
 }
