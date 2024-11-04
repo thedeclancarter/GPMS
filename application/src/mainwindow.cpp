@@ -105,7 +105,7 @@ void MainWindow::showImageProjectionWindow()
 void MainWindow::setupConnections()
 {
     // logo
-    connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
+    connect(logoButton, &QPushButton::clicked, this, &MainWindow::logoClicked);
 
     // from create page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
@@ -130,6 +130,11 @@ void MainWindow::setupConnections()
     connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
     connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
     connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::refreshImages);
+}
+
+void MainWindow::logoClicked(){
+    navigateToCreatePage();
+    pickImagesPage->refreshImages();
 }
 
 void MainWindow::navigateToCreatePage()

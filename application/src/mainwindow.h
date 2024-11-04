@@ -61,6 +61,7 @@ private:
 private slots:
     // main page
     void navigateToCreatePage();
+    void logoClicked();
 
     // create page pages
     void navigateToCalibrationPage();
