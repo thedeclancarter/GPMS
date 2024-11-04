@@ -46,44 +46,42 @@ class PickImagesPage : public QWidget
 {
     Q_OBJECT
 
-public:
-    explicit PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
-    ~PickImagesPage();
-    cv::Mat getSelectedImage() const;
-    void clearSelections();
-    void refreshImages();
+    public:
+        explicit PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
+        ~PickImagesPage();
+        cv::Mat getSelectedImage() const;
+        void clearSelections();
+        void refreshImages();
 
-signals:
-    void navigateToTextVisionPage();
-    void navigateToSensitivityPage();
-    void navigateToProjectPage(const cv::Mat& image);
+    signals:
+        void navigateToTextVisionPage();
+        void navigateToSensitivityPage();
+        void navigateToProjectPage(const cv::Mat& image);
 
-private slots:
-    void onAcceptButtonClicked();
-    void onRejectButtonClicked();
-    void onRetakePhotoButtonClicked();
-    void handleImageResponse(QNetworkReply* reply);
+    private slots:
+        void onAcceptButtonClicked();
+        void onRejectButtonClicked();
+        void onRetakePhotoButtonClicked();
+        void handleImageResponse(QNetworkReply* reply);
 
-private:
-    Ui::PickImagesPage *ui;
-    ImageProjectionWindow *m_projectionWindow;
-    QList<ClickableFrame*> m_imageFrames;
-    ClickableFrame* m_selectedFrame;
-    QNetworkAccessManager *m_networkManager;
+    private:
+        Ui::PickImagesPage *ui;
+        ImageProjectionWindow *m_projectionWindow;
+        QList<ClickableFrame*> m_imageFrames;
+        ClickableFrame* m_selectedFrame;
+        QNetworkAccessManager *m_networkManager;
 
-    void initializeUI();
-    QLabel* createTitleLabel();
-    QFrame* createImagesGrid();
-    QHBoxLayout* createButtonLayout();
-    QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
-    void updateSelectedImages(ClickableFrame *clickedFrame);
-    void fetchRandomImages(int numImages);
+        void initializeUI();
+        QLabel* createTitleLabel();
+        QFrame* createImagesGrid();
+        QHBoxLayout* createButtonLayout();
+        QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
+        void updateSelectedImages(ClickableFrame *clickedFrame);
+        void fetchRandomImages(int numImages);
 
-    // image methods
-    cv::Mat qimage_to_mat(const QImage& img);
-    void handleImageResponse();
-    void fetchRandomImages();
-    void clearImages();
+        // image methods
+        cv::Mat qimage_to_mat(const QImage& img);
+        void clearImages();
 
 };
 

@@ -129,6 +129,7 @@ void MainWindow::setupConnections()
     // from project page
     connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
     connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
+    connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::refreshImages);
 }
 
 void MainWindow::navigateToCreatePage()
@@ -178,15 +179,9 @@ void MainWindow::navigateFromProjectPageToPickImagesPage()
 // to only refresh when nav from textVision
 void MainWindow::navigateFromTextVisionToPickImages()
 {
-    pickImagesPage->refreshImages();
     stackedWidget->setCurrentWidget(pickImagesPage);
-}
+    // pickImagesPage->refreshImages();
 
-// to only refresh when nav from textVision
-void MainWindow::navigateFromTextVisionToPickImages()
-{
-    pickImagesPage->refreshImages(selectedImage);
-    stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)

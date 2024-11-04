@@ -11,12 +11,14 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPixmap>
+#include <QTimer>
 
 
 // ClickableFrame implementation
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     ,m_selected(false)
     ,m_imageLabel(nullptr)
+    ,m_image(cv::Mat())
 {
     setLayout(new QVBoxLayout(this));
     m_imageLabel = new QLabel(this);
@@ -27,9 +29,9 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     layout()->addWidget(m_imageLabel);
     updateStyle();
 
-    // Add a layout to the frame for displaying an image
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    this->setLayout(layout); // Ensure layout is applied to frame
+    // // Add a layout to the frame for displaying an image
+    // QVBoxLayout *layout = new QVBoxLayout(this);
+    // this->setLayout(layout); // Ensure layout is applied to frame
 }
 
 
@@ -85,103 +87,6 @@ void ClickableFrame::updateStyle()
     setStyleSheet(style);
 }
 
-void PickImagesPage::handleImageResponse()
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!reply)
-    {
-        qDebug() << "No reply received";
-        return;
-    }
-
-    if (reply->error() == QNetworkReply::NoError)
-    {
-        QByteArray imageData = reply->readAll();
-
-        QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-
-        if (contentType.startsWith("image"))
-        {
-            QPixmap pixmap;
-            if (pixmap.loadFromData(imageData))
-            {
-
-                // Iterate through the frames and set pixmap for the first available frame
-                for (int i = 0; i < m_imageFrames.size(); ++i)
-                {
-                    ClickableFrame *frame = m_imageFrames.at(i);
-
-                    // Check if the frame has any children (e.g., QLabel for image)
-                    if (frame->layout()->isEmpty())
-                    {
-                        QLabel *imageLabel = new QLabel(frame);
-
-                        imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-                        imageLabel->setAlignment(Qt::AlignCenter);
-                        imageLabel->setScaledContents(true);
-
-                        // Scale the pixmap to fit the frame
-                        imageLabel->setPixmap(pixmap);
-
-                        // Add the QLabel to the frame's layout
-                        frame->layout()->addWidget(imageLabel);
-
-                        // Ensure layout updates
-                        frame->update();
-                        frame->adjustSize();
-
-                        break; // Break after filling the first available frame
-                    }
-                }
-            }
-            else
-            {
-                qDebug() << "Failed to load pixmap from data";
-            }
-        }
-        else
-        {
-            qDebug() << "Received content is not an image!";
-        }
-    }
-    else
-    {
-        qDebug() << "Network reply error: " << reply->errorString();
-    }
-
-    reply->deleteLater();
-}
-
-void PickImagesPage::fetchRandomImages()
-{
-    qDebug() << "Fetching random images...";
-
-    QNetworkRequest request1(QUrl("https://picsum.photos/200/150"));
-    request1.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QNetworkReply *reply1 = m_networkManager->get(request1);
-
-    QNetworkRequest request2(QUrl("https://picsum.photos/200/150"));
-    request2.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QNetworkReply *reply2 = m_networkManager->get(request2);
-
-    // Make sure to connect each reply to the image handler
-    connect(reply1, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
-    connect(reply2, &QNetworkReply::finished, this, &PickImagesPage::handleImageResponse);
-}
-
-
-void PickImagesPage::fetchRandomImages(int numImages)
-{
-    for (int i = 0; i < numImages; ++i) {
-        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-        QNetworkReply *reply = m_networkManager->get(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-            handleImageResponse(reply);
-        });
-    }
-}
-
 
 
 
@@ -221,8 +126,28 @@ cv::Mat PickImagesPage::getSelectedImage() const
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
 }
 
+void PickImagesPage::fetchRandomImages(int numImages)
+{
+    qDebug() << "Fetching" << numImages << "random images...";
+
+    // Reset fetch counter
+    static int currentFetchIndex = 0;
+    currentFetchIndex = 0;
+
+    for (int i = 0; i < numImages; ++i) {
+        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+        QNetworkReply *reply = m_networkManager->get(request);
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            handleImageResponse(reply);
+        });
+    }
+}
+
 void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 {
+    static int currentFrameIndex = 0;
+
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray imageData = reply->readAll();
         QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
@@ -234,18 +159,80 @@ void PickImagesPage::handleImageResponse(QNetworkReply* reply)
                 if (qimg.format() != QImage::Format_RGB888) {
                     qimg = qimg.convertToFormat(QImage::Format_RGB888);
                 }
+
                 cv::Mat mat = ImageUtils::qimage_to_mat(qimg);
-                for (int i = 0; i < m_imageFrames.size(); ++i) {
-                    ClickableFrame* frame = m_imageFrames.at(i);
-                    if (frame->getImage().empty()) {
-                        frame->setImage(mat);
-                        break;
+
+                if (currentFrameIndex < m_imageFrames.size()) {
+                    qDebug() << "Setting image for frame" << currentFrameIndex;
+                    m_imageFrames[currentFrameIndex]->setImage(mat);
+                    currentFrameIndex++;
+
+                    // Reset counter if we've filled all frames
+                    if (currentFrameIndex >= m_imageFrames.size()) {
+                        currentFrameIndex = 0;
                     }
                 }
             }
         }
     }
     reply->deleteLater();
+}
+
+
+void PickImagesPage::onRejectButtonClicked()
+{
+    refreshImages();
+    QTimer::singleShot(300, this, [this]() {
+        emit navigateToTextVisionPage();
+    });
+}
+
+void PickImagesPage::onRetakePhotoButtonClicked()
+{
+    refreshImages();
+    QTimer::singleShot(100, this, [this]() {
+        emit navigateToSensitivityPage();
+    });
+}
+
+void PickImagesPage::onAcceptButtonClicked()
+{
+    if (!m_selectedFrame)
+    {
+        qDebug("No frame selected");
+        return;
+    }
+
+    cv::Mat selectedImage = m_selectedFrame->getImage();
+
+    emit navigateToProjectPage(selectedImage);
+}
+
+void PickImagesPage::clearImages()
+{
+    qDebug() << "Clearing images...";
+    // Clear all frame images properly
+    for (int i = 0; i < m_imageFrames.size(); ++i) {
+        ClickableFrame* frame = m_imageFrames[i];
+        // Explicitly clear image data
+        frame->setImage(cv::Mat());
+        qDebug() << "Cleared frame" << i;
+    }
+}
+
+void PickImagesPage::refreshImages()
+{
+    qDebug() << "Starting refresh...";
+
+    // Clear selection first
+    if (m_selectedFrame) {
+        m_selectedFrame->setSelected(false);
+        m_selectedFrame = nullptr;
+    }
+
+    // Now fetch new images
+    qDebug() << "Fetching new images...";
+    fetchRandomImages(2);
 }
 
 
@@ -325,6 +312,7 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
         // change proj to show rainbow
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
+        qDebug("is null");
     }
 
     // Enable or disable the select button based on whether any frame is selected
@@ -387,69 +375,4 @@ QPushButton *PickImagesPage::styleButton(QPushButton *button, const QString &tex
     return button;
 }
 
-void PickImagesPage::onRejectButtonClicked()
-{
-    updateSelectedImages(m_selectedFrame);
-    clearImages();
-    fetchRandomImages(2);
-    emit navigateToTextVisionPage();
-}
 
-void PickImagesPage::onRetakePhotoButtonClicked()
-{
-    updateSelectedImages(m_selectedFrame);
-    clearImages();
-    fetchRandomImages(2);
-    emit navigateToSensitivityPage();
-}
-
-void PickImagesPage::onAcceptButtonClicked()
-{
-    if (!m_selectedFrame)
-    {
-        qDebug("No frame selected");
-        return;
-    }
-
-    cv::Mat selectedImage = m_selectedFrame->getImage();
-
-    emit navigateToProjectPage(selectedImage);
-}
-
-void PickImagesPage::clearImages()
-{
-    // Iterate through the frames and remove all child widgets (i.e., the QLabel holding the images)
-    for (int i = 0; i < m_imageFrames.size(); ++i)
-    {
-        QLayout *layout = m_imageFrames[i]->layout();
-        while (QLayoutItem *item = layout->takeAt(0))
-        {
-            delete item->widget(); // Delete the QLabel
-        }
-    }
-}
-
-void PickImagesPage::refreshImages()
-{
-    clearImages();
-    fetchRandomImages(2);
-}
-
-void PickImagesPage::clearImages()
-{
-    // Iterate through the frames and remove all child widgets (i.e., the QLabel holding the images)
-    for (int i = 0; i < m_imageFrames.size(); ++i)
-    {
-        QLayout *layout = m_imageFrames[i]->layout();
-        while (QLayoutItem *item = layout->takeAt(0))
-        {
-            delete item->widget(); // Delete the QLabel
-        }
-    }
-}
-
-void PickImagesPage::refreshImages()
-{
-    clearImages();
-    fetchRandomImages(2);
-}
