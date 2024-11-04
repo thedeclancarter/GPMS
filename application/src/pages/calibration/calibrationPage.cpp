@@ -275,6 +275,7 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
                     timer->stop();
                     updateProjectionWindow();
                     updateDisplayWithStillFrame();
+                    ui->completeButton->setEnabled(numSelectedPoints == 4);
                 }
             } else {
                 qDebug() << "Point is too close to an existing point.";
@@ -385,6 +386,8 @@ void CalibrationPage::finalizeSelection()
 // Slot for the Complete button to navigate to the sensitivity page
 void CalibrationPage::onCompleteButtonClicked()
 {
+    // change the button to be deselected again
+    ui->completeButton->setEnabled(false);
     // Navigate to the sensitivity page
     emit navigateToSensitivityPage();
 }
@@ -584,6 +587,7 @@ QHBoxLayout* CalibrationPage::createButtonLayout()
     buttonLayout->setContentsMargins(0, 0, 0, 0);
     buttonLayout->addWidget(styleButton(ui->rejectCalibrationButton, "LET'S TRY AGAIN", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->completeButton, "THIS LOOKS GOOD!", "#BB64C7"));
+    ui->completeButton->setEnabled(false); // initially false
     return buttonLayout;
 }
 
@@ -615,6 +619,9 @@ QPushButton* CalibrationPage::styleButton(QPushButton* button, const QString& te
                               "}"
                               "QPushButton:pressed {"
                               "   background-color: %3;"  // 30% darker color for pressed
+                              "}"
+                              "QPushButton:disabled {"
+                              "   background-color: #808080;"  // Disabled state color
                               "}"
                               ).arg(bgColor).arg(darkerColor).arg(darkerColor));
 

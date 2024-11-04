@@ -50,6 +50,10 @@ bool TextVisionPage::isRunningOnRaspberryPi()
     return false;
 }
 
+void TextVisionPage::clearInput(){
+    m_visionInput->clear();
+}
+
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_visionInput) {

@@ -139,5 +139,6 @@ void ProjectPage::onRejectButtonClicked()
 
 void ProjectPage::onDoneButtonClicked()
 {
+    emit requestImageRefresh();
     emit navigateToCreatePage();
 }

@@ -105,7 +105,7 @@ void MainWindow::showImageProjectionWindow()
 void MainWindow::setupConnections()
 {
     // logo
-    connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
+    connect(logoButton, &QPushButton::clicked, this, &MainWindow::logoClicked);
 
     // from create page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
@@ -118,7 +118,7 @@ void MainWindow::setupConnections()
     connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
-    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
+    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateFromTextVisionToPickImages);
         // take picture here when clicked
 
     // from pick images page
@@ -128,11 +128,23 @@ void MainWindow::setupConnections()
 
     // from project page
     connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
-    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
+    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
+    connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::refreshImages);
+}
+
+void MainWindow::logoClicked(){
+    navigateToCreatePage();
+    pickImagesPage->refreshImages();
 }
 
 void MainWindow::navigateToCreatePage()
 {
+    // reset everything
+    calibrationPage->resetPoints(); // points for calibration
+    sensitivityPage->resetSensitivitySliders(); // reset sensitivity bars
+    textVisionPage->clearInput();// clear textbox
+    pickImagesPage->clearSelections();// selected photos
+
     // proj window should show video, currently will be still image
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
@@ -164,14 +176,21 @@ void MainWindow::navigateToTextVisionPage()
     stackedWidget->setCurrentWidget(textVisionPage);
 }
 
-void MainWindow::navigateToPickImagesPage()
+void MainWindow::navigateFromProjectPageToPickImagesPage()
 {
     stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
+// to only refresh when nav from textVision
+void MainWindow::navigateFromTextVisionToPickImages()
+{
+    stackedWidget->setCurrentWidget(pickImagesPage);
+    // pickImagesPage->refreshImages();
+
+}
+
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)
 {
-    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
     projectPage->setSelectedImage(selectedImage);
     stackedWidget->setCurrentWidget(projectPage);
 }
