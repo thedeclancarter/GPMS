@@ -35,6 +35,11 @@ void SensitivityPage::init()
     initializeUI();
 }
 
+void SensitivityPage::resetSensitivitySliders(){
+    lowerSlider->setValue(150);
+    upperSlider->setValue(150);
+}
+
 void SensitivityPage::setProjectionWindow(ImageProjectionWindow *projectionWindow)
 {
     if (projectionWindow){
