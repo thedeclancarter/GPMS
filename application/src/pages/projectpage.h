@@ -24,6 +24,7 @@ public:
 signals:
     void navigateToPickImagesPage();
     void navigateToCreatePage();
+    void requestImageRefresh();
 
 private slots:
     void onRejectButtonClicked();

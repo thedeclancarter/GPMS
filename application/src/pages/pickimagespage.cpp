@@ -11,12 +11,14 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPixmap>
+#include <QTimer>
 
 
 // ClickableFrame implementation
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     ,m_selected(false)
     ,m_imageLabel(nullptr)
+    ,m_image(cv::Mat())
 {
     setLayout(new QVBoxLayout(this));
     m_imageLabel = new QLabel(this);
@@ -26,7 +28,12 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     m_imageLabel->setContentsMargins(5, 5, 5, 5);
     layout()->addWidget(m_imageLabel);
     updateStyle();
+
+    // // Add a layout to the frame for displaying an image
+    // QVBoxLayout *layout = new QVBoxLayout(this);
+    // this->setLayout(layout); // Ensure layout is applied to frame
 }
+
 
 void ClickableFrame::setSelected(bool selected)
 {
@@ -59,7 +66,8 @@ cv::Mat ClickableFrame::getImage() const
 
 void ClickableFrame::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::LeftButton)
+    {
         setSelected(!m_selected);
         emit clicked();
     }
@@ -73,22 +81,10 @@ void ClickableFrame::updateStyle()
                         "   border-radius: 20px;"
                         "   background-color: #3E3E3E;"
                         "   border: %1px solid %2;"
-                        "}"
-                        ).arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
+                        "}")
+                        .arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
+
     setStyleSheet(style);
-}
-
-
-void PickImagesPage::fetchRandomImages(int numImages)
-{
-    for (int i = 0; i < numImages; ++i) {
-        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-        QNetworkReply *reply = m_networkManager->get(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-            handleImageResponse(reply);
-        });
-    }
 }
 
 
@@ -119,13 +115,39 @@ PickImagesPage::~PickImagesPage()
     delete ui;
 }
 
+void PickImagesPage::clearSelections(){
+    if (m_selectedFrame){
+        m_selectedFrame->setSelected(false);
+    }
+}
+
 cv::Mat PickImagesPage::getSelectedImage() const
 {
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
 }
 
+void PickImagesPage::fetchRandomImages(int numImages)
+{
+    qDebug() << "Fetching" << numImages << "random images...";
+
+    // Reset fetch counter
+    static int currentFetchIndex = 0;
+    currentFetchIndex = 0;
+
+    for (int i = 0; i < numImages; ++i) {
+        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+        QNetworkReply *reply = m_networkManager->get(request);
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            handleImageResponse(reply);
+        });
+    }
+}
+
 void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 {
+    static int currentFrameIndex = 0;
+
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray imageData = reply->readAll();
         QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
@@ -137,18 +159,80 @@ void PickImagesPage::handleImageResponse(QNetworkReply* reply)
                 if (qimg.format() != QImage::Format_RGB888) {
                     qimg = qimg.convertToFormat(QImage::Format_RGB888);
                 }
+
                 cv::Mat mat = ImageUtils::qimage_to_mat(qimg);
-                for (int i = 0; i < m_imageFrames.size(); ++i) {
-                    ClickableFrame* frame = m_imageFrames.at(i);
-                    if (frame->getImage().empty()) {
-                        frame->setImage(mat);
-                        break;
+
+                if (currentFrameIndex < m_imageFrames.size()) {
+                    qDebug() << "Setting image for frame" << currentFrameIndex;
+                    m_imageFrames[currentFrameIndex]->setImage(mat);
+                    currentFrameIndex++;
+
+                    // Reset counter if we've filled all frames
+                    if (currentFrameIndex >= m_imageFrames.size()) {
+                        currentFrameIndex = 0;
                     }
                 }
             }
         }
     }
     reply->deleteLater();
+}
+
+
+void PickImagesPage::onRejectButtonClicked()
+{
+    refreshImages();
+    QTimer::singleShot(300, this, [this]() {
+        emit navigateToTextVisionPage();
+    });
+}
+
+void PickImagesPage::onRetakePhotoButtonClicked()
+{
+    refreshImages();
+    QTimer::singleShot(100, this, [this]() {
+        emit navigateToSensitivityPage();
+    });
+}
+
+void PickImagesPage::onAcceptButtonClicked()
+{
+    if (!m_selectedFrame)
+    {
+        qDebug("No frame selected");
+        return;
+    }
+
+    cv::Mat selectedImage = m_selectedFrame->getImage();
+
+    emit navigateToProjectPage(selectedImage);
+}
+
+void PickImagesPage::clearImages()
+{
+    qDebug() << "Clearing images...";
+    // Clear all frame images properly
+    for (int i = 0; i < m_imageFrames.size(); ++i) {
+        ClickableFrame* frame = m_imageFrames[i];
+        // Explicitly clear image data
+        frame->setImage(cv::Mat());
+        qDebug() << "Cleared frame" << i;
+    }
+}
+
+void PickImagesPage::refreshImages()
+{
+    qDebug() << "Starting refresh...";
+
+    // Clear selection first
+    if (m_selectedFrame) {
+        m_selectedFrame->setSelected(false);
+        m_selectedFrame = nullptr;
+    }
+
+    // Now fetch new images
+    qDebug() << "Fetching new images...";
+    fetchRandomImages(2);
 }
 
 
@@ -167,7 +251,7 @@ void PickImagesPage::initializeUI()
     setLayout(mainLayout);
 }
 
-QLabel* PickImagesPage::createTitleLabel()
+QLabel *PickImagesPage::createTitleLabel()
 {
     QLabel *titleLabel = new QLabel("Pick The Images You like Best", this);
     titleLabel->setStyleSheet(
@@ -176,15 +260,14 @@ QLabel* PickImagesPage::createTitleLabel()
         "font-weight: bold;"
         "background-color: #3E3E3E;"
         "border-radius: 20px;"
-        "padding: 15px 20px;"
-        );
+        "padding: 15px 20px;");
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     titleLabel->setFixedWidth(800);
     return titleLabel;
 }
 
-QFrame* PickImagesPage::createImagesGrid()
+QFrame *PickImagesPage::createImagesGrid()
 {
     QFrame *gridFrame = new QFrame(this);
     gridFrame->setFrameStyle(QFrame::NoFrame);
@@ -194,7 +277,8 @@ QFrame* PickImagesPage::createImagesGrid()
     QGridLayout *gridLayout = new QGridLayout(gridFrame);
     gridLayout->setSpacing(10);
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i)
+    {
         ClickableFrame *imageFrame = new ClickableFrame(this);
         imageFrame->setFixedSize(400, 350);
         connect(imageFrame, &ClickableFrame::clicked, this, [this, imageFrame]() {
@@ -219,39 +303,46 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
     if (clickedFrame->isSelected()) {
         m_selectedFrame = clickedFrame;  // Update to the newly selected frame
         cv::Mat finalFrame= clickedFrame->getImage();
-        cv::cvtColor(finalFrame, finalFrame, cv::COLOR_RGB2BGR);
-        m_projectionWindow->setFinalFrame(finalFrame); // set final frame w this image
+        cv::Mat BGR_image;
+        cv::cvtColor(finalFrame, BGR_image, cv::COLOR_RGB2BGR);
+        m_projectionWindow->setFinalFrame(BGR_image); // set final frame w this image
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::IMAGE);
         // change proj to show new image
     } else {
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
         // change proj to show rainbow
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
+        qDebug("is null");
     }
 
     // Enable or disable the select button based on whether any frame is selected
     ui->selectImagesButton->setEnabled(m_selectedFrame != nullptr);
 }
 
-QHBoxLayout* PickImagesPage::createButtonLayout()
+QHBoxLayout *PickImagesPage::createButtonLayout()
 {
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(styleButton(ui->retakePhotoButton, "RETAKE PHOTO", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->rejectImagesButton, "REVISE MY VISION", "#CD6F6F"));
     buttonLayout->addWidget(styleButton(ui->selectImagesButton, "CHOOSE PICTURE", "#BB64c7"));
-    ui->selectImagesButton->setEnabled(false);  // Initially disabled
+    ui->selectImagesButton->setEnabled(false); // Initially disabled
     return buttonLayout;
 }
 
-QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& text, const QString& bgColor)
+QPushButton *PickImagesPage::styleButton(QPushButton *button, const QString &text, const QString &bgColor)
 {
     // Define hover colors as 30% darker versions of the original colors
     QString hoverColor;
-    if (bgColor == "#CD6F6F") {
+    if (bgColor == "#CD6F6F")
+    {
         hoverColor = "#9F5D5D"; // 30% darker version of #CD6F6F
-    } else if (bgColor == "#BB64c7") {
+    }
+    else if (bgColor == "#BB64c7")
+    {
         hoverColor = "#83468B"; // 30% darker version of #6FCD6F
-    } else {
+    }
+    else
+    {
         hoverColor = "#FFD700"; // Fallback hover color (for other cases)
     }
 
@@ -260,7 +351,7 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
     button->setFixedWidth(250);
     button->setStyleSheet(QString(
                               "QPushButton {"
-                              "   background-color: %1;"   // Original color
+                              "   background-color: %1;" // Original color
                               "   color: black;"
                               "   border-radius: 25px;"
                               "   font-weight: bold;"
@@ -268,37 +359,20 @@ QPushButton* PickImagesPage::styleButton(QPushButton* button, const QString& tex
                               "   padding: 0 20px;"
                               "}"
                               "QPushButton:hover {"
-                              "   background-color: %2;"   // 30% darker color for hover
+                              "   background-color: %2;" // 30% darker color for hover
                               "}"
                               "QPushButton:pressed {"
                               "   background-color: darker(%1, 140%);" // Ensure the pressed color is darker
                               "}"
                               "QPushButton:disabled {"
-                              "   background-color: #808080;"  // Disabled state color
-                              "}"
-                              ).arg(bgColor).arg(hoverColor));
+                              "   background-color: #808080;" // Disabled state color
+                              "}")
+                              .arg(bgColor)
+                              .arg(hoverColor));
 
     // Set the hand cursor when hovering over the button
     button->setCursor(Qt::PointingHandCursor);
     return button;
 }
 
-void PickImagesPage::onRejectButtonClicked()
-{
-    emit navigateToTextVisionPage();
-}
 
-void PickImagesPage::onRetakePhotoButtonClicked()
-{
-    emit navigateToSensitivityPage();
-}
-
-void PickImagesPage::onAcceptButtonClicked()
-{
-    if (!m_selectedFrame) {
-        qDebug("No frame selected");
-        return;
-    }
-    cv::Mat selectedImage = m_selectedFrame->getImage();
-    emit navigateToProjectPage(selectedImage);
-}

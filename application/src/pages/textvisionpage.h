@@ -22,6 +22,7 @@ public:
 
     QString getVisionText() const { return m_visionText; }
     bool isRealistic() const { return m_isRealistic; }
+    void clearInput();
 
 signals:
     void navigateToPickImagesPage();
