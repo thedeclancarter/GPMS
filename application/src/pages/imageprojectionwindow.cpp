@@ -18,6 +18,14 @@ ImageProjectionWindow::ImageProjectionWindow(QWidget* parent)
     , m_rainbowTimer(new QTimer(this))
     , m_frameCount(0)
 {
+
+    setAttribute(Qt::WA_DeleteOnClose, false);
+    setAttribute(Qt::WA_ShowWithoutActivating, true);
+
+    // Ensure window has no parent to allow free positioning
+    setParent(nullptr);
+
+
     // Set fixed size
     setFixedSize(FIXED_SIZE);
 
@@ -48,6 +56,7 @@ void ImageProjectionWindow::showOnProjector()
     }
 
     show();
+    debugPositionInfo();
     raise();
     activateWindow();
 }
@@ -88,6 +97,32 @@ void ImageProjectionWindow::setupUI()
     layout->addWidget(m_imageLabel);
 
     setStyleSheet("background-color: white;");
+}
+
+void ImageProjectionWindow::debugPositionInfo()
+{
+    qDebug() << "\n=== Window Position Debug ===";
+    qDebug() << "Window Geometry:" << geometry();
+    qDebug() << "Window Frame Geometry:" << frameGeometry();
+    qDebug() << "Window Global Position:" << mapToGlobal(QPoint(0,0));
+
+    QScreen* currentScreen = QGuiApplication::screenAt(geometry().center());
+    if (currentScreen) {
+        qDebug() << "Current Screen:" << currentScreen->name();
+        qDebug() << "Screen Geometry:" << currentScreen->geometry();
+        qDebug() << "Screen Virtual Geometry:" << currentScreen->virtualGeometry();
+
+        // Calculate relative position on screen
+        QPoint relativePos = geometry().topLeft() - currentScreen->geometry().topLeft();
+        qDebug() << "Relative Position on Screen:" << relativePos;
+    } else {
+        qDebug() << "Window not on any screen!";
+    }
+
+    qDebug() << "Window Flags:" << windowFlags();
+    qDebug() << "Window State:" << windowState();
+    qDebug() << "Is Visible:" << isVisible();
+    qDebug() << "========================\n";
 }
 
 // Setters

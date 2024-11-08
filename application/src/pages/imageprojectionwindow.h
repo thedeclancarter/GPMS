@@ -76,6 +76,7 @@ private:
 
     // ui functions
     void setupUI();
+    void debugPositionInfo();
 
     // for the projector screen
     QScreen* findProjectorScreen();
