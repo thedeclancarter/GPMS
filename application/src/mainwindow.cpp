@@ -118,17 +118,32 @@ void MainWindow::moveToProjector()
 
 QScreen* MainWindow::findProjectorScreen()
 {
-    QList<QScreen*> screens = QGuiApplication::screens();
+    const QList<QScreen*>& screens = QGuiApplication::screens();
+    qDebug() << "Number of screens found:" << screens.size();
+
+    QScreen* primaryScreen = QGuiApplication::primaryScreen();
+    qDebug() << "Primary screen:" << primaryScreen->name()
+             << "Geometry:" << primaryScreen->geometry()
+             << "Physical size:" << primaryScreen->physicalSize();
+
+    for (QScreen* screen : qAsConst(screens)) {
+        qDebug() << "Screen:" << screen->name()
+        << "\n  Geometry:" << screen->geometry()
+        << "\n  Physical size:" << screen->physicalSize()
+        << "\n  Manufacturer:" << screen->manufacturer()
+        << "\n  Model:" << screen->model()
+        << "\n  Is primary?" << (screen == primaryScreen);
+    }
+
     if (screens.size() <= 1) {
-        qDebug() << "Only 1 screen found" << screens[0];
+        qDebug() << "No secondary screen found";
         return nullptr;
     }
 
-    // Assume the first non-primary screen is the projector
-    QScreen* primaryScreen = QGuiApplication::primaryScreen();
-    for (QScreen*screen : qAsConst(screens)) {
+    // Find first non-primary screen
+    for (QScreen* screen : qAsConst(screens)) {
         if (screen != primaryScreen) {
-            qDebug() << "Found screen " << screen;
+            qDebug() << "Selected projector screen:" << screen->name();
             return screen;
         }
     }
