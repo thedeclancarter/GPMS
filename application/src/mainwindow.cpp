@@ -94,15 +94,26 @@ void MainWindow::setupPages()
 void MainWindow::showImageProjectionWindow()
 {
     if (imageProjectionWindow) {
+        qDebug() << "Before showing window:";
+        qDebug() << "  Window geometry:" << imageProjectionWindow->geometry();
+        qDebug() << "  Window visibility:" << imageProjectionWindow->isVisible();
+        qDebug() << "  Window flags:" << imageProjectionWindow->windowFlags();
+
+
         // Set window flags to keep it behind other windows
-        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
+        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
 
         imageProjectionWindow->show();
 
         // Move to projector if available
         moveToProjector();
 
-        imageProjectionWindow->lower(); // Ensure it stays behind other windows
+        // imageProjectionWindow->lower(); // Ensure it stays behind other windows
+
+        qDebug() << "After showing window:";
+        qDebug() << "  Window geometry:" << imageProjectionWindow->geometry();
+        qDebug() << "  Window visibility:" << imageProjectionWindow->isVisible();
+        qDebug() << "  Window flags:" << imageProjectionWindow->windowFlags();
     }
 }
 
@@ -111,8 +122,20 @@ void MainWindow::moveToProjector()
     QScreen* projectorScreen = findProjectorScreen();
     if (projectorScreen) {
         QRect screenGeometry = projectorScreen->geometry();
+        qDebug() << "Moving window to projector:";
+        qDebug() << "  Target screen:" << projectorScreen->name();
+        qDebug() << "  Target geometry:" << screenGeometry;
+        qDebug() << "  Current window geometry:" << imageProjectionWindow->geometry();
+
         imageProjectionWindow->move(screenGeometry.x(), screenGeometry.y());
-        qDebug("Found projector");
+
+        qDebug() << "  New window geometry:" << imageProjectionWindow->geometry();
+
+        imageProjectionWindow->raise();
+        imageProjectionWindow->activateWindow();
+    }
+    else {
+        qDebug() << "No projector screen found in moveToProjector()";
     }
 }
 
