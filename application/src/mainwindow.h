@@ -52,10 +52,10 @@ private:
     void setupPages();
     void setupConnections();
 
+    // for projection window
     void showImageProjectionWindow();
-
-    QWidget* createSidebar();
-    QPushButton* createSidebarButton(const QIcon& icon);
+    void moveToProjector();
+    QScreen* findProjectorScreen();
 
 
 private slots:

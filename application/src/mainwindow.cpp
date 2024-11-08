@@ -98,8 +98,42 @@ void MainWindow::showImageProjectionWindow()
         imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
 
         imageProjectionWindow->show();
+
+        // Move to projector if available
+        moveToProjector();
+
         imageProjectionWindow->lower(); // Ensure it stays behind other windows
     }
+}
+
+void MainWindow::moveToProjector()
+{
+    QScreen* projectorScreen = findProjectorScreen();
+    if (projectorScreen) {
+        QRect screenGeometry = projectorScreen->geometry();
+        imageProjectionWindow->move(screenGeometry.x(), screenGeometry.y());
+        qDebug("Found projector");
+    }
+}
+
+QScreen* MainWindow::findProjectorScreen()
+{
+    QList<QScreen*> screens = QGuiApplication::screens();
+    if (screens.size() <= 1) {
+        qDebug() << "Only 1 screen found" << screens[0];
+        return nullptr;
+    }
+
+    // Assume the first non-primary screen is the projector
+    QScreen* primaryScreen = QGuiApplication::primaryScreen();
+    for (QScreen*screen : qAsConst(screens)) {
+        if (screen != primaryScreen) {
+            qDebug() << "Found screen " << screen;
+            return screen;
+        }
+    }
+
+    return nullptr;
 }
 
 void MainWindow::setupConnections()
