@@ -47,6 +47,8 @@ private:
     PickImagesPage *pickImagesPage;
     ProjectPage *projectPage;
 
+    QWidget* m_projectionContainer;
+
     // functions
     void setupUI();
     void setupPages();
@@ -54,7 +56,6 @@ private:
 
     // for projection window
     void showImageProjectionWindow();
-    void moveToProjector();
     QScreen* findProjectorScreen();
 
 

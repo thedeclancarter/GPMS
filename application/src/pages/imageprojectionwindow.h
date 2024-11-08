@@ -1,13 +1,14 @@
 #ifndef IMAGEPROJECTIONWINDOW_H
 #define IMAGEPROJECTIONWINDOW_H
 
+#include <QWindow>
 #include <QWidget>
 #include <QLabel>
 #include <QImage>
 #include <QTimer>
 #include <opencv2/opencv.hpp>
 
-class ImageProjectionWindow : public QWidget
+class ImageProjectionWindow : public QWindow
 {
     Q_OBJECT
 
@@ -20,7 +21,10 @@ public:
         IMAGE
     } projectionState;
 
-    explicit ImageProjectionWindow(QWidget *parent = nullptr);
+    explicit ImageProjectionWindow();
+    ~ImageProjectionWindow();
+
+    QWidget* containerWidget() const { return m_container; }
 
     // Setters
     void setStillFrame(const cv::Mat &image);
@@ -33,15 +37,18 @@ public:
     bool getIsCalibrated(void) const;
     QImage getCurrentImage() const;
 
-private:
-    static constexpr int WIDTH = 1280, HEIGHT = 720;
+    // Functions
+    void showOnProjector();
 
+private:
+    static constexpr int WIDTH = 1280, HEIGHT = 1280;
+    QWidget* m_container; // for the window
+
+    // image for proj
     cv::Mat m_stillFrame;
     cv::Mat m_finalFrame;
-    int m_loSensitivity, m_hiSensitivity;
-    std::array<cv::Point2f, 4> m_transformCorners;
-    projectionState m_state;
-    bool m_isCalibrated = false;
+
+    QLabel *m_imageLabel; // holding the image on screen
 
     // Cached Values
     bool m_updatePerspectiveMatrix = true;
@@ -49,12 +56,14 @@ private:
     cv::Mat m_perspectiveMatrix;
     cv::Mat m_edgeDetectionFrame;
 
-    QLabel *m_imageLabel;
+    int m_loSensitivity, m_hiSensitivity;
+    std::array<cv::Point2f, 4> m_transformCorners;
 
     QTimer *m_rainbowTimer;
     int m_frameCount;
 
-    void setupUI();
+    bool m_isCalibrated = false;
+    projectionState m_state;
 
     // State Transitions
     void activateLogo();
@@ -67,6 +76,18 @@ private:
     void updateImage(const cv::Mat &mat);
     void updateImage(const QImage &image);
     cv::Mat applyPerspectiveTransform(const cv::Mat& mat);
+
+
+    // ui functions
+    void setupUI();
+
+    // for the projector screen
+    QScreen* findProjectorScreen();
+    void moveToScreen(QScreen* screen);
+    void setupProjectorMode();
+    const QSize FIXED_SIZE{1280, 1280};
+    bool m_isOnProjector = false;
+
 
 private slots:
     void updateRainbowEdges();

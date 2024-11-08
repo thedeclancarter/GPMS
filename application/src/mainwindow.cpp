@@ -61,7 +61,7 @@ void MainWindow::setupPages()
 {
     // window will be passed to all windows that use it
     imageProjectionWindow = new ImageProjectionWindow();
-    imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    m_projectionContainer = imageProjectionWindow->containerWidget();
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     showImageProjectionWindow();
 
@@ -90,89 +90,22 @@ void MainWindow::setupPages()
     stackedWidget->setCurrentWidget(createPage);
 }
 
-
 void MainWindow::showImageProjectionWindow()
 {
     if (imageProjectionWindow) {
-        qDebug() << "Before showing window:";
-        qDebug() << "  Window geometry:" << imageProjectionWindow->geometry();
-        qDebug() << "  Window visibility:" << imageProjectionWindow->isVisible();
-        qDebug() << "  Window flags:" << imageProjectionWindow->windowFlags();
-
-
-        // Set window flags to keep it behind other windows
-        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
-
-        imageProjectionWindow->show();
-
-        // Move to projector if available
-        moveToProjector();
-
-        // imageProjectionWindow->lower(); // Ensure it stays behind other windows
-
-        qDebug() << "After showing window:";
-        qDebug() << "  Window geometry:" << imageProjectionWindow->geometry();
-        qDebug() << "  Window visibility:" << imageProjectionWindow->isVisible();
-        qDebug() << "  Window flags:" << imageProjectionWindow->windowFlags();
+        imageProjectionWindow->showOnProjector();
     }
+    else{
+        qDebug("Not shown on proj");
+    }
+
+    // Debug info
+    qDebug() << "Window geometry:" << imageProjectionWindow->geometry();
+    qDebug() << "Container geometry:" << m_projectionContainer->geometry();
+    qDebug() << "Window visible:" << imageProjectionWindow->isVisible();
+    qDebug() << "Container visible:" << m_projectionContainer->isVisible();
 }
 
-void MainWindow::moveToProjector()
-{
-    QScreen* projectorScreen = findProjectorScreen();
-    if (projectorScreen) {
-        QRect screenGeometry = projectorScreen->geometry();
-        qDebug() << "Moving window to projector:";
-        qDebug() << "  Target screen:" << projectorScreen->name();
-        qDebug() << "  Target geometry:" << screenGeometry;
-        qDebug() << "  Current window geometry:" << imageProjectionWindow->geometry();
-
-        imageProjectionWindow->move(screenGeometry.x(), screenGeometry.y());
-
-        qDebug() << "  New window geometry:" << imageProjectionWindow->geometry();
-
-        imageProjectionWindow->raise();
-        imageProjectionWindow->activateWindow();
-    }
-    else {
-        qDebug() << "No projector screen found in moveToProjector()";
-    }
-}
-
-QScreen* MainWindow::findProjectorScreen()
-{
-    const QList<QScreen*>& screens = QGuiApplication::screens();
-    qDebug() << "Number of screens found:" << screens.size();
-
-    QScreen* primaryScreen = QGuiApplication::primaryScreen();
-    qDebug() << "Primary screen:" << primaryScreen->name()
-             << "Geometry:" << primaryScreen->geometry()
-             << "Physical size:" << primaryScreen->physicalSize();
-
-    for (QScreen* screen : qAsConst(screens)) {
-        qDebug() << "Screen:" << screen->name()
-        << "\n  Geometry:" << screen->geometry()
-        << "\n  Physical size:" << screen->physicalSize()
-        << "\n  Manufacturer:" << screen->manufacturer()
-        << "\n  Model:" << screen->model()
-        << "\n  Is primary?" << (screen == primaryScreen);
-    }
-
-    if (screens.size() <= 1) {
-        qDebug() << "No secondary screen found";
-        return nullptr;
-    }
-
-    // Find first non-primary screen
-    for (QScreen* screen : qAsConst(screens)) {
-        if (screen != primaryScreen) {
-            qDebug() << "Selected projector screen:" << screen->name();
-            return screen;
-        }
-    }
-
-    return nullptr;
-}
 
 void MainWindow::setupConnections()
 {
