@@ -8,7 +8,7 @@
 #include <QTimer>
 #include <opencv2/opencv.hpp>
 
-class ImageProjectionWindow : public QWindow
+class ImageProjectionWindow : public QWidget
 {
     Q_OBJECT
 
@@ -21,10 +21,7 @@ public:
         IMAGE
     } projectionState;
 
-    explicit ImageProjectionWindow();
-    ~ImageProjectionWindow();
-
-    QWidget* containerWidget() const { return m_container; }
+    explicit ImageProjectionWindow(QWidget* parent = nullptr);
 
     // Setters
     void setStillFrame(const cv::Mat &image);
@@ -41,8 +38,7 @@ public:
     void showOnProjector();
 
 private:
-    static constexpr int WIDTH = 1280, HEIGHT = 1280;
-    QWidget* m_container; // for the window
+    static constexpr int WIDTH = 1280, HEIGHT = 720;
 
     // image for proj
     cv::Mat m_stillFrame;
@@ -85,7 +81,7 @@ private:
     QScreen* findProjectorScreen();
     void moveToScreen(QScreen* screen);
     void setupProjectorMode();
-    const QSize FIXED_SIZE{1280, 1280};
+    const QSize FIXED_SIZE{1280, 720};
     bool m_isOnProjector = false;
 
 

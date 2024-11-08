@@ -10,22 +10,16 @@
 #include <opencv2/imgcodecs.hpp>
 
 // Constructor
-ImageProjectionWindow::ImageProjectionWindow()
-    : QWindow()  // Changed from QWidget constructor // | Qt::FramelessWindowHint
+ImageProjectionWindow::ImageProjectionWindow(QWidget* parent)
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint)  // Changed from QWidget constructor // | Qt::FramelessWindowHint
     , m_loSensitivity(50) // Default sensitivity values
     , m_hiSensitivity(150)
     , m_state(projectionState::LOGO)
     , m_rainbowTimer(new QTimer(this))
     , m_frameCount(0)
 {
-    setSurfaceType(QWindow::OpenGLSurface);
-    // Remove window frame
-    setFlags(Qt::Window | Qt::FramelessWindowHint);
-    resize(FIXED_SIZE);
-
-    // Create a container widget to hold the QLabel
-    m_container = QWidget::createWindowContainer(this);
-    m_container->setFixedSize(WIDTH, HEIGHT);
+    // Set fixed size
+    setFixedSize(FIXED_SIZE);
 
     setupUI();
     setProjectionState(projectionState::LOGO); // Initialize with LOGO state
@@ -37,105 +31,63 @@ ImageProjectionWindow::ImageProjectionWindow()
 void ImageProjectionWindow::showOnProjector()
 {
     QScreen* projectorScreen = findProjectorScreen();
+
     if (projectorScreen) {
         qDebug() << "Moving to projector screen:" << projectorScreen->name();
-        moveToScreen(projectorScreen);
-        m_isOnProjector = true;
+        QRect screenGeometry = projectorScreen->geometry();
+        int x = screenGeometry.x() + (screenGeometry.width() - width()) / 2;
+        int y = screenGeometry.y() + (screenGeometry.height() - height()) / 2;
+        move(x, y);
+
+        // Optionally set to stay on top when on projector
+        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     } else {
         qDebug() << "No projector found, showing on main screen";
-        moveToScreen(QGuiApplication::primaryScreen());
-        m_isOnProjector = false;
-        setPosition(100, 100);
+        move(100, 100);  // Position on main screen
+        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
     }
 
-    setupProjectorMode();
     show();
-    requestActivate();
-}
-
-void ImageProjectionWindow::moveToScreen(QScreen* screen)
-{
-    if (!screen) return;
-
-    // Set the target screen
-    setScreen(screen);
-
-    QRect screenGeometry = screen->geometry();
-
-    // Calculate center position
-    int x = screenGeometry.x() + (screenGeometry.width() - FIXED_SIZE.width()) / 2;
-    int y = screenGeometry.y() + (screenGeometry.height() - FIXED_SIZE.height()) / 2;
-
-    // Move the window
-    setPosition(x, y);
-
-    // Also move the container widget to match
-    if (m_container) {
-        m_container->move(x, y);
-    }
+    raise();
+    activateWindow();
 }
 
 QScreen* ImageProjectionWindow::findProjectorScreen()
 {
-    const QList<QScreen*>& screens = QGuiApplication::screens();
-    QScreen* primaryScreen = QGuiApplication::primaryScreen();
+    const QList<QScreen*>& screens = QApplication::screens();
+    QScreen* primaryScreen = QApplication::primaryScreen();
 
     if (screens.size() <= 1) {
-        qDebug("Only found 1 screen");
+        qDebug() << "Only found 1 screen";
         return nullptr;
     }
 
     // First try to find a screen that matches projector characteristics
     for (QScreen* screen : screens) {
         if (screen != primaryScreen) {
-            // Check if this screen matches your projector's characteristics
-            QSize screenSize = screen->size();
-            if (screenSize == FIXED_SIZE) {
-                qDebug("Found screen with the correct size");
-                return screen; // Found a screen matching our target resolution
-            }
-            else{
-                qDebug("Doesnt match characteristics of target screen");
-            }
-        }
-    }
-
-    // Fallback: return first non-primary screen
-    for (QScreen* screen : screens) {
-        if (screen != primaryScreen) {
-            qDebug() << "Found a non primary screen: " << screen;
-            return screen;
+            QRect screenGeometry = screen->geometry();
+            qDebug() << "Found screen:" << screen->name()
+                     << "Geometry:" << screenGeometry
+                     << "Size:" << screen->size();
+            return screen;  // Return first non-primary screen
         }
     }
 
     return nullptr;
 }
 
-void ImageProjectionWindow::setupProjectorMode()
-{
-    if (m_isOnProjector) {
-        // Settings specific to projector display
-        setFlags(Qt::Window | Qt::FramelessWindowHint);
-        // Ensure window stays on top when on projector
-        setFlags(flags() | Qt::WindowStaysOnTopHint);
-    } else {
-        // Settings for regular window mode
-        setFlags(Qt::Window | Qt::FramelessWindowHint);
-    }
-}
-
 // Setup UI
 void ImageProjectionWindow::setupUI()
 {
-    QVBoxLayout *layout = new QVBoxLayout(m_container);
+    QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    m_imageLabel = new QLabel(m_container);
+    m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
-    m_imageLabel->setFixedSize(WIDTH, HEIGHT);
+    m_imageLabel->setFixedSize(FIXED_SIZE);
     layout->addWidget(m_imageLabel);
 
-    m_container->setStyleSheet("background-color: white;");
+    setStyleSheet("background-color: white;");
 }
 
 // Setters
@@ -259,7 +211,7 @@ void ImageProjectionWindow::activateScanning()
 {
     m_isCalibrated = false;
     m_imageLabel->clear();
-    m_container->setStyleSheet("background-color: white;");
+    setStyleSheet("background-color: white;");
 }
 
 // Activate EDGE_DETECTION state
@@ -507,9 +459,4 @@ void ImageProjectionWindow::updateRainbowEdges()
     }
 
     m_frameCount++; // Increment frame count for animation
-}
-
-ImageProjectionWindow::~ImageProjectionWindow()
-{
-    delete m_container;
 }

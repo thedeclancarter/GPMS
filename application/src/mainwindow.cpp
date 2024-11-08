@@ -60,11 +60,9 @@ void MainWindow::setupUI()
 void MainWindow::setupPages()
 {
     // window will be passed to all windows that use it
-    imageProjectionWindow = new ImageProjectionWindow();
-    m_projectionContainer = imageProjectionWindow->containerWidget();
+    imageProjectionWindow = new ImageProjectionWindow(this);
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     showImageProjectionWindow();
-
 
     // will show GPMS logo
     createPage = new CreatePage(imageProjectionWindow, this);
@@ -101,9 +99,7 @@ void MainWindow::showImageProjectionWindow()
 
     // Debug info
     qDebug() << "Window geometry:" << imageProjectionWindow->geometry();
-    qDebug() << "Container geometry:" << m_projectionContainer->geometry();
     qDebug() << "Window visible:" << imageProjectionWindow->isVisible();
-    qDebug() << "Container visible:" << m_projectionContainer->isVisible();
 }
 
 
