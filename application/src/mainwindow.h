@@ -47,15 +47,16 @@ private:
     PickImagesPage *pickImagesPage;
     ProjectPage *projectPage;
 
+    QWidget* m_projectionContainer;
+
     // functions
     void setupUI();
     void setupPages();
     void setupConnections();
 
+    // for projection window
     void showImageProjectionWindow();
-
-    QWidget* createSidebar();
-    QPushButton* createSidebarButton(const QIcon& icon);
+    QScreen* findProjectorScreen();
 
 
 private slots:

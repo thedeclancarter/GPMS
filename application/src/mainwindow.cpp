@@ -60,11 +60,9 @@ void MainWindow::setupUI()
 void MainWindow::setupPages()
 {
     // window will be passed to all windows that use it
-    imageProjectionWindow = new ImageProjectionWindow();
-    imageProjectionWindow->setAttribute(Qt::WA_DeleteOnClose);
+    imageProjectionWindow = new ImageProjectionWindow(this);
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     showImageProjectionWindow();
-
 
     // will show GPMS logo
     createPage = new CreatePage(imageProjectionWindow, this);
@@ -90,17 +88,20 @@ void MainWindow::setupPages()
     stackedWidget->setCurrentWidget(createPage);
 }
 
-
 void MainWindow::showImageProjectionWindow()
 {
     if (imageProjectionWindow) {
-        // Set window flags to keep it behind other windows
-        imageProjectionWindow->setWindowFlags(Qt::Window | Qt::WindowStaysOnBottomHint);
-
-        imageProjectionWindow->show();
-        imageProjectionWindow->lower(); // Ensure it stays behind other windows
+        imageProjectionWindow->showOnProjector();
     }
+    else{
+        qDebug("Not shown on proj");
+    }
+
+    // Debug info
+    qDebug() << "Window geometry:" << imageProjectionWindow->geometry();
+    qDebug() << "Window visible:" << imageProjectionWindow->isVisible();
 }
+
 
 void MainWindow::setupConnections()
 {
