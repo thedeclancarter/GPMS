@@ -10,33 +10,119 @@
 #include <opencv2/imgcodecs.hpp>
 
 // Constructor
-ImageProjectionWindow::ImageProjectionWindow(QWidget *parent)
-    : QWidget(parent, Qt::Window) // | Qt::FramelessWindowHint
+ImageProjectionWindow::ImageProjectionWindow(QWidget* parent)
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint)  // Changed from QWidget constructor // | Qt::FramelessWindowHint
     , m_loSensitivity(50) // Default sensitivity values
     , m_hiSensitivity(150)
     , m_state(projectionState::LOGO)
     , m_rainbowTimer(new QTimer(this))
     , m_frameCount(0)
 {
+
+    setAttribute(Qt::WA_DeleteOnClose, false);
+    setAttribute(Qt::WA_ShowWithoutActivating, true);
+
+    // Ensure window has no parent to allow free positioning
+    setParent(nullptr);
+
+
+    // Set fixed size
+    setFixedSize(FIXED_SIZE);
+
     setupUI();
-    setFixedSize(WIDTH, HEIGHT);
     setProjectionState(projectionState::LOGO); // Initialize with LOGO state
 
     connect(m_rainbowTimer, &QTimer::timeout, this, &ImageProjectionWindow::updateRainbowEdges);
 }
 
+// attempt to show on projector
+void ImageProjectionWindow::showOnProjector()
+{
+    QScreen* projectorScreen = findProjectorScreen();
+
+    if (projectorScreen) {
+        qDebug() << "Moving to projector screen:" << projectorScreen->name();
+        QRect screenGeometry = projectorScreen->geometry();
+        int x = screenGeometry.x() + (screenGeometry.width() - width()) / 2;
+        int y = screenGeometry.y() + (screenGeometry.height() - height()) / 2;
+        move(x, y);
+
+        // Optionally set to stay on top when on projector
+        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    } else {
+        qDebug() << "No projector found, showing on main screen";
+        move(100, 100);  // Position on main screen
+        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+    }
+
+    show();
+    debugPositionInfo();
+    raise();
+    activateWindow();
+}
+
+QScreen* ImageProjectionWindow::findProjectorScreen()
+{
+    const QList<QScreen*>& screens = QApplication::screens();
+    QScreen* primaryScreen = QApplication::primaryScreen();
+
+    if (screens.size() <= 1) {
+        qDebug() << "Only found 1 screen";
+        return nullptr;
+    }
+
+    // First try to find a screen that matches projector characteristics
+    for (QScreen* screen : screens) {
+        if (screen != primaryScreen) {
+            QRect screenGeometry = screen->geometry();
+            qDebug() << "Found screen:" << screen->name()
+                     << "Geometry:" << screenGeometry
+                     << "Size:" << screen->size();
+            return screen;  // Return first non-primary screen
+        }
+    }
+
+    return nullptr;
+}
+
 // Setup UI
 void ImageProjectionWindow::setupUI()
 {
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
-    m_imageLabel->setFixedSize(WIDTH, HEIGHT);
+    m_imageLabel->setFixedSize(FIXED_SIZE);
     layout->addWidget(m_imageLabel);
 
     setStyleSheet("background-color: white;");
+}
+
+void ImageProjectionWindow::debugPositionInfo()
+{
+    qDebug() << "\n=== Window Position Debug ===";
+    qDebug() << "Window Geometry:" << geometry();
+    qDebug() << "Window Frame Geometry:" << frameGeometry();
+    qDebug() << "Window Global Position:" << mapToGlobal(QPoint(0,0));
+
+    QScreen* currentScreen = QGuiApplication::screenAt(geometry().center());
+    if (currentScreen) {
+        qDebug() << "Current Screen:" << currentScreen->name();
+        qDebug() << "Screen Geometry:" << currentScreen->geometry();
+        qDebug() << "Screen Virtual Geometry:" << currentScreen->virtualGeometry();
+
+        // Calculate relative position on screen
+        QPoint relativePos = geometry().topLeft() - currentScreen->geometry().topLeft();
+        qDebug() << "Relative Position on Screen:" << relativePos;
+    } else {
+        qDebug() << "Window not on any screen!";
+    }
+
+    qDebug() << "Window Flags:" << windowFlags();
+    qDebug() << "Window State:" << windowState();
+    qDebug() << "Is Visible:" << isVisible();
+    qDebug() << "========================\n";
 }
 
 // Setters

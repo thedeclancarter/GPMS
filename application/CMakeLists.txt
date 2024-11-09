@@ -17,6 +17,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 #set(CMAKE_PREFIX_PATH "C:/opencv/opencv/build/x64/vc16/lib" ${CMAKE_PREFIX_PATH})
 
+
+if(APPLE)
+    set(OpenCV_DIR "/opt/homebrew/Cellar/opencv/4.10.0_12/lib/cmake/opencv4")
+    include_directories("/opt/homebrew/Cellar/opencv/4.10.0_12/include/opencv4")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -108,6 +114,7 @@ if(APPLE)
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist
     )
+
 endif()
 
 if(WIN32)
