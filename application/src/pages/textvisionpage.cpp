@@ -12,12 +12,22 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TextVisionPage)
     , m_isRealistic(true)
+    , m_onRaspberryPi(isRunningOnRaspberryPi())
+
 {
 
-    if (isRunningOnRaspberryPi()) {
+    setupUI();
+    setupLayouts();
+    setupStyleSheets();
+    setupConnections();
+
+    qDebug() << "Initializing TextVisionPage";
+
+
+    if (m_onRaspberryPi) {
         qDebug() << "Setting up keyboard handling for Raspberry Pi";
         // Set the path to wvkbd in home directory
-        m_wvkbdPath = QDir::homePath() + "/wvkbd/wvkbd";
+        m_wvkbdPath = QDir::homePath() + "/wvkbd";
         qDebug() << "wvkbd path set to:" << m_wvkbdPath;
 
         // Verify the path exists
@@ -28,12 +38,7 @@ TextVisionPage::TextVisionPage(QWidget *parent)
         m_visionInput->installEventFilter(this);
     }
 
-    setupUI();
-    setupLayouts();
-    setupStyleSheets();
-    setupConnections();
 
-    qDebug() << "Initializing TextVisionPage";
 }
 
 bool TextVisionPage::isRunningOnRaspberryPi()
@@ -60,7 +65,7 @@ void TextVisionPage::clearInput(){
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput && isRunningOnRaspberryPi()) {
+    if (obj == m_visionInput && m_onRaspberryPi) {
         switch (event->type()) {
         case QEvent::FocusIn: {
             qDebug() << "Focus in event - showing wvkbd";
@@ -83,31 +88,42 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 
 void TextVisionPage::showKeyboard()
 {
-    if (isRunningOnRaspberryPi() && !m_wvkbdPath.isEmpty()) {
+    if (m_onRaspberryPi) {
+        qDebug() << "Attempting to show keyboard from directory:" << m_wvkbdPath;
+
         qint64 pid;
-        QStringList args = { "-monintl" };  // or whatever the correct command is for your wvkbd version
-        bool success = QProcess::startDetached(m_wvkbdPath, args, QString(), &pid);
+        QString cmd = m_wvkbdPath + "/wvkbd-mobintl";
+
+        // Using non-deprecated version of startDetached
+        bool success = QProcess::startDetached(cmd, QStringList(), m_wvkbdPath, &pid);
+
         if (!success) {
-            qDebug() << "Failed to show keyboard at path:" << m_wvkbdPath;
+            qDebug() << "Failed to start keyboard using primary method. Trying alternative...";
+
+            // Fallback method using QProcess with non-deprecated start
+            QProcess *process = new QProcess(this);
+            process->setWorkingDirectory(m_wvkbdPath);
+            process->start("./wvkbd-mobintl", QStringList(), QIODevice::ReadWrite);
+
+            if (!process->waitForStarted()) {
+                qDebug() << "Failed to start keyboard with fallback. Error:" << process->errorString();
+                delete process;
+            } else {
+                qDebug() << "Keyboard started successfully with fallback method";
+            }
         } else {
-            qDebug() << "Keyboard show command started with PID:" << pid;
+            qDebug() << "Keyboard started successfully with PID:" << pid;
         }
     }
 }
 
 void TextVisionPage::hideKeyboard()
 {
-    if (isRunningOnRaspberryPi() && !m_wvkbdPath.isEmpty()) {
-        // For now, let's try sending a signal to the process
+    if (m_onRaspberryPi) {
         QProcess pkill;
-        pkill.start("pkill", QStringList() << "-f" << "wvkbd");
+        pkill.start("pkill", QStringList() << "-f" << "wvkbd-mobintl");
         pkill.waitForFinished();
-        qDebug() << "Attempted to hide keyboard by killing wvkbd process";
-
-        // Or alternatively, you might want to try these options:
-        // QStringList args = { "-quit" };  // Common command for quitting
-        // QStringList args = { "-close" }; // Another common option
-        // bool success = QProcess::startDetached(m_wvkbdPath, args, QString(), &pid);
+        qDebug() << "Attempted to hide keyboard";
     }
 }
 
