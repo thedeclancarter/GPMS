@@ -5,6 +5,7 @@
 #include <QMessageBox>  // Include this header for QMessageBox on onSubmitButtonClicked function
 #include <QFile>
 #include <QDebug>
+#include <QProcess>
 
 
 TextVisionPage::TextVisionPage(QWidget *parent)
@@ -13,10 +14,9 @@ TextVisionPage::TextVisionPage(QWidget *parent)
     , m_isRealistic(true)
 {
 
-    // Initialize keyboard before setting up UI
     if (isRunningOnRaspberryPi()) {
-        qDebug() << "Setting up virtual keyboard for Raspberry Pi";
-        setupVirtualKeyboard();
+        qDebug() << "Setting up keyboard handling for Raspberry Pi";
+        m_visionInput->installEventFilter(this);
     }
 
     setupUI();
@@ -104,24 +104,16 @@ bool TextVisionPage::isRunningOnRaspberryPi()
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput) {
+    if (obj == m_visionInput && isRunningOnRaspberryPi()) {
         switch (event->type()) {
         case QEvent::FocusIn: {
-            qDebug() << "Focus in event - showing keyboard";
-            QInputMethod *inputMethod = QGuiApplication::inputMethod();
-            if (inputMethod) {
-                inputMethod->show();
-                qDebug() << "Requested keyboard show";
-            }
+            qDebug() << "Focus in event - showing wvkbd";
+            showKeyboard();
             return false;
         }
         case QEvent::FocusOut: {
-            qDebug() << "Focus out event - hiding keyboard";
-            QInputMethod *inputMethod = QGuiApplication::inputMethod();
-            if (inputMethod) {
-                inputMethod->hide();
-                qDebug() << "Requested keyboard hide";
-            }
+            qDebug() << "Focus out event - hiding wvkbd";
+            hideKeyboard();
             return false;
         }
         default:
@@ -131,7 +123,9 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
     return QWidget::eventFilter(obj, event);
 }
 
-void TextVisionPage::showVirtualKeyboard()
+
+
+void TextVisionPage::showKeyboard()
 {
     QInputMethod *inputMethod = QGuiApplication::inputMethod();
     if (!inputMethod->isVisible()) {
