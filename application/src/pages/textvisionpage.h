@@ -52,6 +52,7 @@ private:
     void updateButtonStyles();
     QPushButton* createSubmitButton();
 
+    QString m_wvkbdPath; // keyboard path
     QLabel *m_title;
     QPushButton *m_realisticButton;
     QPushButton *m_animatedButton;

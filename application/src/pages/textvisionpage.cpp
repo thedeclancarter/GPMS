@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QProcess>
-
+#include <QDir>
 
 TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
@@ -16,6 +16,15 @@ TextVisionPage::TextVisionPage(QWidget *parent)
 
     if (isRunningOnRaspberryPi()) {
         qDebug() << "Setting up keyboard handling for Raspberry Pi";
+        // Set the path to wvkbd in home directory
+        m_wvkbdPath = QDir::homePath() + "/wvkbd/wvkbd";
+        qDebug() << "wvkbd path set to:" << m_wvkbdPath;
+
+        // Verify the path exists
+        if (!QFile::exists(m_wvkbdPath)) {
+            qDebug() << "Warning: wvkbd not found at" << m_wvkbdPath;
+        }
+
         m_visionInput->installEventFilter(this);
     }
 
@@ -74,22 +83,31 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 
 void TextVisionPage::showKeyboard()
 {
-    QInputMethod *inputMethod = QGuiApplication::inputMethod();
-    if (!inputMethod->isVisible()) {
-        inputMethod->show();
+    if (isRunningOnRaspberryPi() && !m_wvkbdPath.isEmpty()) {
+        qint64 pid;
+        QStringList args = { "-monintl" };  // or whatever the correct command is for your wvkbd version
+        bool success = QProcess::startDetached(m_wvkbdPath, args, QString(), &pid);
+        if (!success) {
+            qDebug() << "Failed to show keyboard at path:" << m_wvkbdPath;
+        } else {
+            qDebug() << "Keyboard show command started with PID:" << pid;
+        }
     }
 }
 
 void TextVisionPage::hideKeyboard()
 {
-    if (isRunningOnRaspberryPi()) {
-        qint64 pid;
-        bool success = QProcess::startDetached("wvkbd-hide", QStringList(), QString(), &pid);
-        if (!success) {
-            qDebug() << "Failed to hide keyboard";
-        } else {
-            qDebug() << "Keyboard hide command started with PID:" << pid;
-        }
+    if (isRunningOnRaspberryPi() && !m_wvkbdPath.isEmpty()) {
+        // For now, let's try sending a signal to the process
+        QProcess pkill;
+        pkill.start("pkill", QStringList() << "-f" << "wvkbd");
+        pkill.waitForFinished();
+        qDebug() << "Attempted to hide keyboard by killing wvkbd process";
+
+        // Or alternatively, you might want to try these options:
+        // QStringList args = { "-quit" };  // Common command for quitting
+        // QStringList args = { "-close" }; // Another common option
+        // bool success = QProcess::startDetached(m_wvkbdPath, args, QString(), &pid);
     }
 }
 
