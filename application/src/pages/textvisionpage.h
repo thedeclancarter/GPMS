@@ -35,7 +35,6 @@ private slots:
     void onRealisticButtonClicked();
     void onAnimatedButtonClicked();
     void onTextChanged();
-    void toggleVirtualKeyboard();
 
 private:
     Ui::TextVisionPage *ui;
@@ -47,8 +46,8 @@ private:
     void setupVirtualKeyboard();
     QLabel* createTitleLabel();
 
-    void showVirtualKeyboard();
-    void hideVirtualKeyboard();
+    void showKeyboard();
+    void hideKeyboard();
 
     void updateButtonStyles();
     QPushButton* createSubmitButton();
