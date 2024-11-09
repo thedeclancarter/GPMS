@@ -53,6 +53,7 @@ private:
     QPushButton* createSubmitButton();
 
     QString m_wvkbdPath; // keyboard path
+    bool m_onRaspberryPi;
     QLabel *m_title;
     QPushButton *m_realisticButton;
     QPushButton *m_animatedButton;
