@@ -8,6 +8,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QEvent>
+#include <QMouseEvent>
 
 TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
@@ -35,7 +36,7 @@ TextVisionPage::TextVisionPage(QWidget *parent)
         if (!QFile::exists(m_wvkbdPath)) {
             qDebug() << "Warning: wvkbd not found at" << m_wvkbdPath;
         }
-
+        this->installEventFilter(this); // to see when clicking out
         m_visionInput->installEventFilter(this);
     }
 }
@@ -65,17 +66,25 @@ void TextVisionPage::clearInput(){
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput && m_onRaspberryPi) {
+    if (m_onRaspberryPi) {
         switch (event->type()) {
         case QEvent::FocusIn: {
-            qDebug() << "Focus in event - showing wvkbd";
-            showKeyboard();
-            return false;
+            if (obj == m_visionInput) {
+                qDebug() << "Focus in event - showing wvkbd";
+                showKeyboard();
+                return false;
+            }
+            break;
         }
-        case QEvent::FocusOut: {
-            qDebug() << "Focus out event - hiding wvkbd";
-            hideKeyboard();
-            return false;
+        case QEvent::MouseButtonPress: {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            // If click is not on the text input, hide keyboard
+            if (obj != m_visionInput) {
+                qDebug() << "Click outside input - hiding wvkbd";
+                hideKeyboard();
+                return false;
+            }
+            break;
         }
         default:
             break;
