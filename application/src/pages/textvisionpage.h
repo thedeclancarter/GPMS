@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLineEdit>
-// #include <QVirtualKeyboard>
 #include <QTextEdit>
 #include <QLabel>
 
@@ -43,7 +42,6 @@ private:
     void setupLayouts();
     void setupStyleSheets();
     void setupConnections();
-    void setupVirtualKeyboard();
     QLabel* createTitleLabel();
 
     void showKeyboard();
