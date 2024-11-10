@@ -68,20 +68,25 @@ bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
     if (m_onRaspberryPi) {
         switch (event->type()) {
-        case QEvent::FocusIn: {
+        case QEvent::MouseButtonPress: {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             if (obj == m_visionInput) {
-                qDebug() << "Focus in event - showing wvkbd";
+                qDebug() << "Click inside input - showing wvkbd";
                 showKeyboard();
+                m_visionInput->setFocus();
+                return false;
+            } else {
+                qDebug() << "Click outside input - hiding wvkbd";
+                hideKeyboard();
+                m_visionInput->clearFocus();
                 return false;
             }
             break;
         }
-        case QEvent::MouseButtonPress: {
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            // If click is not on the text input, hide keyboard
-            if (obj != m_visionInput) {
-                qDebug() << "Click outside input - hiding wvkbd";
-                hideKeyboard();
+        case QEvent::FocusIn: {
+            if (obj == m_visionInput) {
+                qDebug() << "Focus in event - showing wvkbd";
+                showKeyboard();
                 return false;
             }
             break;
