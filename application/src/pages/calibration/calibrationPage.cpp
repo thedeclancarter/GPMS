@@ -560,7 +560,7 @@ QFrame* CalibrationPage::createImageFrame()
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
     cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
-    cameraFrame->setFixedSize(800,400);
+    cameraFrame->setFixedSize(800,380);
 
     QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
     m_imageLabel = new QLabel(cameraFrame);
