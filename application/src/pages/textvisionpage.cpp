@@ -241,11 +241,9 @@ void TextVisionPage::onSubmitButtonClicked()
 {
     m_visionText = m_visionInput->toPlainText();
 
-    if (m_visionText.isEmpty()) {
-        // Optionally, show a message box to inform the user
-        QMessageBox::warning(this, "Input Required", "Please enter text before submitting.");
-        return;
-    }
+    // if (m_visionText.isEmpty()) {
+    //     return;
+    // }
 
     emit navigateToPickImagesPage();
 }
