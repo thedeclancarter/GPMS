@@ -3,66 +3,128 @@
 
 #include <QVBoxLayout>
 #include <QMessageBox>  // Include this header for QMessageBox on onSubmitButtonClicked function
-
+#include <QFile>
+#include <QDebug>
+#include <QProcess>
+#include <QDir>
+#include <QEvent>
 
 TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TextVisionPage)
     , m_isRealistic(true)
+    , m_onRaspberryPi(isRunningOnRaspberryPi())
+
 {
+
     setupUI();
     setupLayouts();
     setupStyleSheets();
     setupConnections();
-    setupVirtualKeyboard();
+
+    qDebug() << "Initializing TextVisionPage";
+
+
+    if (m_onRaspberryPi) {
+        qDebug() << "Setting up keyboard handling for Raspberry Pi";
+        // Set the path to wvkbd in home directory
+        m_wvkbdPath = QDir::homePath() + "/wvkbd";
+        qDebug() << "wvkbd path set to:" << m_wvkbdPath;
+
+        // Verify the path exists
+        if (!QFile::exists(m_wvkbdPath)) {
+            qDebug() << "Warning: wvkbd not found at" << m_wvkbdPath;
+        }
+
+        m_visionInput->installEventFilter(this);
+    }
+}
+
+bool TextVisionPage::isRunningOnRaspberryPi()
+{
+    // Method 1: Check model name in /proc/cpuinfo
+    QFile cpuinfo("/proc/cpuinfo");
+    if (cpuinfo.open(QFile::ReadOnly)) {
+        QString content = cpuinfo.readAll();
+        cpuinfo.close();
+
+        if (content.contains("Raspberry Pi", Qt::CaseInsensitive) ||
+            content.contains("BCM2", Qt::CaseInsensitive)) {
+            qDebug("Detected Raspberry Pi via /proc/cpuinfo");
+            return true;
+        }
+    }
+    qDebug() << "Not running on Raspberry Pi";
+    return false;
 }
 
 void TextVisionPage::clearInput(){
     m_visionInput->clear();
 }
 
+
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput) {
-        if (event->type() == QEvent::FocusIn) {
-            showVirtualKeyboard();
-        } else if (event->type() == QEvent::FocusOut) {
-            hideVirtualKeyboard();
+    if (obj == m_visionInput && m_onRaspberryPi) {
+        switch (event->type()) {
+        case QEvent::FocusIn: {
+            qDebug() << "Focus in event - showing wvkbd";
+            showKeyboard();
+            return false;
+        }
+        case QEvent::FocusOut: {
+            qDebug() << "Focus out event - hiding wvkbd";
+            hideKeyboard();
+            return false;
+        }
+        default:
+            break;
         }
     }
     return QWidget::eventFilter(obj, event);
 }
 
-void TextVisionPage::showVirtualKeyboard()
+
+
+void TextVisionPage::showKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (!inputMethod->isVisible()) {
-        inputMethod->show();
+    if (m_onRaspberryPi) {
+        qDebug() << "Attempting to show keyboard from directory:" << m_wvkbdPath;
+
+        qint64 pid;
+        QString cmd = m_wvkbdPath + "/wvkbd-mobintl";
+
+        // Using non-deprecated version of startDetached
+        bool success = QProcess::startDetached(cmd, QStringList(), m_wvkbdPath, &pid);
+
+        if (!success) {
+            qDebug() << "Failed to start keyboard using primary method. Trying alternative...";
+
+            // Fallback method using QProcess with non-deprecated start
+            QProcess *process = new QProcess(this);
+            process->setWorkingDirectory(m_wvkbdPath);
+            process->start("./wvkbd-mobintl", QStringList(), QIODevice::ReadWrite);
+
+            if (!process->waitForStarted()) {
+                qDebug() << "Failed to start keyboard with fallback. Error:" << process->errorString();
+                delete process;
+            } else {
+                qDebug() << "Keyboard started successfully with fallback method";
+            }
+        } else {
+            qDebug() << "Keyboard started successfully with PID:" << pid;
+        }
     }
 }
 
-void TextVisionPage::hideVirtualKeyboard()
+void TextVisionPage::hideKeyboard()
 {
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (inputMethod->isVisible()) {
-        inputMethod->hide();
+    if (m_onRaspberryPi) {
+        QProcess pkill;
+        pkill.start("pkill", QStringList() << "-f" << "wvkbd-mobintl");
+        pkill.waitForFinished();
+        qDebug() << "Attempted to hide keyboard";
     }
-}
-
-void TextVisionPage::toggleVirtualKeyboard()
-{
-    QInputMethod *inputMethod = QApplication::inputMethod();
-    if (inputMethod->isVisible()) {
-        hideVirtualKeyboard();
-    } else {
-        showVirtualKeyboard();
-    }
-}
-
-void TextVisionPage::setupVirtualKeyboard()
-{
-    // Ensure that the application is configured to use the virtual keyboard
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
 }
 
 void TextVisionPage::setupUI()
@@ -75,6 +137,8 @@ void TextVisionPage::setupUI()
 
     m_visionInput = new QTextEdit(this);
     m_visionInput->setFixedSize(600, 200);
+    m_visionInput->setAttribute(Qt::WA_InputMethodEnabled, true);
+
     m_submitButton = createSubmitButton();
     m_submitButton->setEnabled(false); // Initially disabled
     // Set the hand cursor when hovering over the button
@@ -175,11 +239,9 @@ void TextVisionPage::onSubmitButtonClicked()
 {
     m_visionText = m_visionInput->toPlainText();
 
-    if (m_visionText.isEmpty()) {
-        // Optionally, show a message box to inform the user
-        QMessageBox::warning(this, "Input Required", "Please enter text before submitting.");
-        return;
-    }
+    // if (m_visionText.isEmpty()) {
+    //     return;
+    // }
 
     emit navigateToPickImagesPage();
 }

@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLineEdit>
-// #include <QVirtualKeyboard>
 #include <QTextEdit>
 #include <QLabel>
 
@@ -35,7 +34,6 @@ private slots:
     void onRealisticButtonClicked();
     void onAnimatedButtonClicked();
     void onTextChanged();
-    void toggleVirtualKeyboard();
 
 private:
     Ui::TextVisionPage *ui;
@@ -44,20 +42,22 @@ private:
     void setupLayouts();
     void setupStyleSheets();
     void setupConnections();
-    void setupVirtualKeyboard();
     QLabel* createTitleLabel();
 
-    void showVirtualKeyboard();
-    void hideVirtualKeyboard();
+    void showKeyboard();
+    void hideKeyboard();
 
     void updateButtonStyles();
     QPushButton* createSubmitButton();
 
+    QString m_wvkbdPath; // keyboard path
+    bool m_onRaspberryPi;
     QLabel *m_title;
     QPushButton *m_realisticButton;
     QPushButton *m_animatedButton;
     QTextEdit *m_visionInput;
     QPushButton *m_submitButton;
+    bool isRunningOnRaspberryPi();
 
 
     QString m_visionText;
