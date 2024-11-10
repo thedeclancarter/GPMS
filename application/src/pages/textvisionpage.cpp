@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QProcess>
 #include <QDir>
+#include <QEvent>
 
 TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
@@ -61,9 +62,6 @@ void TextVisionPage::clearInput(){
     m_visionInput->clear();
 }
 
-void TextVisionPage::clearInput(){
-    m_visionInput->clear();
-}
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
