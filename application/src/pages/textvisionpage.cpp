@@ -37,8 +37,6 @@ TextVisionPage::TextVisionPage(QWidget *parent)
 
         m_visionInput->installEventFilter(this);
     }
-
-
 }
 
 bool TextVisionPage::isRunningOnRaspberryPi()
