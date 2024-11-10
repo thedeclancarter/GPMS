@@ -109,7 +109,7 @@ void CalibrationPage::processFrame()
 
         // Draw selected points
         for (int i = 0; i < numSelectedPoints; ++i) {
-            cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
+            cv::circle(displayFrame, selectedPoints[i], 10, cv::Scalar(0, 255, 0), -1);
         }
 
         // Draw ROI if 4 points are selected
@@ -176,7 +176,7 @@ void CalibrationPage::updateDisplayWithStillFrame()
 
     // Draw selected points
     for (int i = 0; i < numSelectedPoints; ++i) {
-        cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
+        cv::circle(displayFrame, selectedPoints[i], 10, cv::Scalar(0, 255, 0), -1);
     }
 
     // Draw ROI
@@ -445,7 +445,7 @@ void CalibrationPage::drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& 
 
     // Draw the rectangle (ROI)
     for (int i = 0; i < 4; i++) {
-        cv::line(frame, sortedPoints[i], sortedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
+        cv::line(frame, sortedPoints[i], sortedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 4);
     }
 
     const float oneThird = 1.0f / 3.0f;
@@ -458,12 +458,12 @@ void CalibrationPage::drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& 
     cv::Point2f vec4 = sortedPoints[2] - sortedPoints[1];
 
     // Draw vertical grid lines
-    cv::line(frame, sortedPoints[0] + vec1 * oneThird, sortedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, sortedPoints[0] + vec1 * twoThirds, sortedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec1 * oneThird, sortedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 2);
+    cv::line(frame, sortedPoints[0] + vec1 * twoThirds, sortedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 2);
 
     // Draw horizontal grid lines
-    cv::line(frame, sortedPoints[0] + vec3 * oneThird, sortedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, sortedPoints[0] + vec3 * twoThirds, sortedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec3 * oneThird, sortedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 2);
+    cv::line(frame, sortedPoints[0] + vec3 * twoThirds, sortedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 2);
 }
 
 // Sort points in clockwise order based on their angles from the center
