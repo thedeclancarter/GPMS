@@ -1,7 +1,7 @@
 # stable_diffusion/pipeline_service.py
 
 import torch
-from .image_processing import process_controlnet_image
+from .image_processing import process_controlnet_image, resize_final_image
 from .pipeline_initialization import initialize_pipelines
 from .gif_creator import save_gif
 from PIL import Image
@@ -152,8 +152,10 @@ def generate_image(
         # Clear PyTorch cache
         torch.cuda.empty_cache()
 
+        final_image = resize_final_image(refined_images[0], 1280, 720)
+
         # Return the refined image
-        return refined_images[0]
+        return final_image
 
 def create_fading_gif(
     original_image_path: str,

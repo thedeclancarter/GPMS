@@ -31,3 +31,8 @@ def process_controlnet_image(image_path, lo_treshold = 100, hi_treshold = 200):
     controlnet_img = HWC3(edges)
 
     return Image.fromarray(controlnet_img).convert("RGB"), new_width, new_height
+
+# Make the Image being returned scaled to 1280 x 720
+def resize_final_image(image, new_width, new_height):
+    image = image.resize((new_width, new_height))
+    return image
