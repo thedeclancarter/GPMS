@@ -14,53 +14,31 @@ _init_lock = threading.Lock()
 _pipe = None
 _refiner = None
 
-# Define keyword lists for different styles
-ANIMATED_KEYWORDS = [
-    "Cartoon",
-    "Animated",
-    "Vibrant colors",
-    "Bold outlines",
-    "Cel-shaded",
-    "Anime",
-    "Hand-drawn",
-    "Simplified shapes",
-    "Expressive eyes",
-    "Dynamic poses"
-]
+# Define prompt templates for styles
+STYLE_PROMPTS = {
+    "animated": (
+        "surreal painting representing strange vision of {prompt}. harmonious madness, synergy with chance. "
+        "unique artstyle, mindbending art, magical surrealism. best quality, high resolution"
+    ),
+    "realistic": "{prompt}"
+}
 
-REALISTIC_KEYWORDS = [
-    "Photorealistic",
-    "High Detail",
-    "Natural Lighting",
-    "Accurate Textures",
-    "UHD",
-    "8k",
-    "f10",
-    "DSLR",
-    "Depth of Field",
-    "Real-life Colors",
-    "Shadow and Light",
-    "Accurate Perspective",
-    "135mm",
-    "professional color grading",
-    "atmospheric",
-    "cinematic",
-    "high resolution",
-    "atmospheric",
-    "vibrant"
-]
-
-# General Negative Prompt (can be customized further if needed)
-GENERAL_NEGATIVE_PROMPT = (
-    "low quality, blurry, pixelated, distorted, deformed, poorly drawn, text, "
-    "watermark, logo, signature, grainy, artifacts, unnatural colors, oversaturated, "
-    "undersaturated, bad anatomy, missing limbs, extra limbs, poorly lit, dark shadows, "
-    "unrealistic lighting, cluttered, messy, chaotic, unrelated objects, people, animals, "
-    "vehicles, buildings not matching style, sketches, cartoons, photorealistic, noise, "
-    "halos, ghosting, duplication, repetitive patterns, incorrect perspective, low resolution, "
-    "flat lighting, lack of detail, oversimplified, exaggerated features, abstract elements, "
-    "surreal elements"
-)
+# Define negative prompts for styles
+STYLE_NEGATIVE_PROMPTS = {
+    "animated": (
+        "photography, illustration, drawing. realistic, possible. logical, sane. low quality, low resolution"
+    ),
+    "realistic": (
+        "(worst quality, low quality, normal quality, lowres, low details, oversaturated, undersaturated, "
+        "overexposed, underexposed, grayscale, bw, bad photo, bad photography, bad art:1.4), "
+        "(watermark, signature, text font, username, error, logo, words, letters, digits, autograph, trademark, "
+        "name:1.2), (blur, blurry, grainy), morbid, ugly, asymmetrical, mutated malformed, mutilated, poorly lit, "
+        "bad shadow, draft, cropped, out of frame, cut off, censored, jpeg artifacts, out of focus, glitch, "
+        "duplicate, (airbrushed, cartoon, anime, semi-realistic, cgi, render, blender, digital art, manga, "
+        "amateur:1.3), (3D ,3D Game, 3D Game Scene, 3D Character:1.1), (bad hands, bad anatomy, bad body, bad face, "
+        "bad teeth, bad arms, bad legs, deformities:1.3)"
+    )
+}
 
 def load_pipelines(device):
     global _pipe, _refiner
@@ -86,20 +64,7 @@ def generate_image(
     hi_treshold: int = 200
 ) -> Image.Image:
     """
-    Generates and refines an image using the Stable Diffusion pipeline.
-
-    Args:
-        image_path (str): Path to the input image.
-        prompt (str): The text prompt for image generation.
-        style (str, optional): Desired style ("animated" or "realistic"). Defaults to "".
-        controlnet_conditioning_scale (float, optional): Scaling factor for ControlNet conditioning. Defaults to 1.0.
-        guidance_scale (float, optional): Guidance scale for the pipeline. Defaults to 10.0.
-        control_guidance_end (float, optional): ControlNet influence percentage. Defaults to 0.8.
-        num_inference_steps (int, optional): Number of inference steps for the base image. Defaults to 60.
-        num_refiner_steps (int, optional): Number of inference steps for refining. Defaults to 40.
-
-    Returns:
-        Image.Image: The refined generated image.
+    Generates and refines an image using the Stable Diffusion pipeline with style-specific prompts.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     load_pipelines(device)
@@ -108,21 +73,14 @@ def generate_image(
     if pipe is None or refiner is None:
         raise RuntimeError("Pipelines are not initialized.")
 
-    # Append style-specific keywords to the prompt
-    if style.lower() == "animated":
-        style_keywords = ", ".join(ANIMATED_KEYWORDS)
-        print("Animated Style Selected")
-    elif style.lower() == "realistic":
-        style_keywords = ", ".join(REALISTIC_KEYWORDS)
-        print("Realsistic Style Selected")
-    else:
-        style_keywords = ""  # No additional keywords if style is not specified
+    # Retrieve style-specific prompt template and negative prompt
+    style_prompt_template = STYLE_PROMPTS.get(style.lower(), "{prompt}")
+    style_negative_prompt = STYLE_NEGATIVE_PROMPTS.get(style.lower(), "")
 
-    # Combine the original prompt with style-specific keywords
-    if style_keywords:
-        full_prompt = f"{prompt}, {style_keywords}"
-    else:
-        full_prompt = prompt
+    # Embed the prompt into the style-specific template
+    full_prompt = style_prompt_template.format(prompt=prompt)
+
+    print(f"Full Prompt: {full_prompt}")
 
     with torch.no_grad():
         # Read and process the ControlNet image
@@ -138,7 +96,7 @@ def generate_image(
             guidance_scale=guidance_scale,
             control_guidance_end=control_guidance_end,
             num_inference_steps=num_inference_steps,
-            negative_prompt=[GENERAL_NEGATIVE_PROMPT],
+            negative_prompt=[style_negative_prompt] if style_negative_prompt else None,
         ).images
 
         # Refine the generated image
@@ -146,7 +104,7 @@ def generate_image(
             prompt=[full_prompt],
             image=base_images,
             num_inference_steps=num_refiner_steps,
-            negative_prompt=[GENERAL_NEGATIVE_PROMPT],
+            negative_prompt=[style_negative_prompt] if style_negative_prompt else None,
         ).images
 
         # Clear PyTorch cache
@@ -156,6 +114,7 @@ def generate_image(
 
         # Return the refined image
         return final_image
+
 
 def create_fading_gif(
     original_image_path: str,

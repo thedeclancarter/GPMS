@@ -4,27 +4,25 @@ from diffusers import ControlNetModel, StableDiffusionXLControlNetPipeline, Stab
 def initialize_pipelines(device):
     # Initialize the scheduler
     scheduler = DPMSolverMultistepScheduler.from_pretrained(
-        "stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler",
-        safety_checker=None,
+        "stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler"
     )
 
     # Initialize the ControlNet model
     controlnet = ControlNetModel.from_pretrained(
-        "diffusers/controlnet-canny-sdxl-1.0",
+        "xinsir/controlnet-canny-sdxl-1.0",
         torch_dtype=torch.float16
     ).to(device)
 
     # Initialize the VAE
     vae = AutoencoderKL.from_pretrained(
-        "stabilityai/sdxl-vae", torch_dtype=torch.float16
+        "madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16
     ).to(device)
 
-    # Initialize the base pipeline
+    # Initialize the base pipeline with JuggernautXL_v8
     pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-        "stabilityai/stable-diffusion-xl-base-1.0",
+        "RunDiffusion/Juggernaut-XL-v8",
         controlnet=controlnet,
         vae=vae,
-        safety_checker=None,
         torch_dtype=torch.float16,
         scheduler=scheduler,
     ).to(device)
