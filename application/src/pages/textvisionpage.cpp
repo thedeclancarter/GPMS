@@ -243,21 +243,15 @@ void TextVisionPage::updateButtonStyles()
     m_animatedButton->setStyleSheet(m_isRealistic ? UNSELECTED_STYLE : SELECTED_STYLE);
 }
 
-// void TextVisionPage::onSubmitButtonClicked()
-// {
-//     m_visionText = m_visionInput->toPlainText();
-//     emit navigateToPickImagesPage();
-// }
-
 void TextVisionPage::onSubmitButtonClicked()
 {
     m_visionText = m_visionInput->toPlainText();
 
-    // if (m_visionText.isEmpty()) {
-    //     return;
-    // }
+    if (m_visionText.isEmpty()) {
+        return;
+    }
 
-    emit navigateToPickImagesPage();
+    emit navigateToPickImagesPage(m_visionText, m_isRealistic);
 }
 
 
