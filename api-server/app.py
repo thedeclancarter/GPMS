@@ -108,28 +108,22 @@ def generate():
 
     # Get additional form data
     prompt = request.form.get('prompt')
-    negative_prompt = request.form.get('negative_prompt', "")  # Optional
-    sensitivity = request.form.get('sensitivity', "1.0")  # Default sensitivity
+    style = request.form.get('style', "animated") # Default style
+    lo_treshold = request.form.get('lo_treshold', 100)
+    hi_treshold = request.form.get('hi_treshold', 200)
 
     if not prompt:
         logger.error("No prompt provided in the request.")
         return jsonify({'error': 'No prompt provided'}), 400
 
     try:
-        sensitivity = float(sensitivity)
-        if not (0 <= sensitivity <= 1):
-            raise ValueError
-    except ValueError:
-        logger.error("Invalid sensitivity value provided.")
-        return jsonify({'error': 'Sensitivity must be a float between 0 and 1'}), 400
-
-    try:
         # Generate the image using the pipeline
         generated_image = generate_image(
             image_path=str(upload_path),
             prompt=prompt,
-            negative_prompt=negative_prompt,
-            controlnet_conditioning_scale=sensitivity
+            style=style,
+            lo_treshold=lo_treshold,
+            hi_treshold=hi_treshold
         )
 
         # Convert PIL Image to bytes
