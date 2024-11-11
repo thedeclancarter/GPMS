@@ -12,6 +12,7 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QTimer>
+#include <QUrlQuery>
 
 
 // ClickableFrame implementation
@@ -28,10 +29,6 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     m_imageLabel->setContentsMargins(5, 5, 5, 5);
     layout()->addWidget(m_imageLabel);
     updateStyle();
-
-    // // Add a layout to the frame for displaying an image
-    // QVBoxLayout *layout = new QVBoxLayout(this);
-    // this->setLayout(layout); // Ensure layout is applied to frame
 }
 
 
@@ -97,6 +94,10 @@ PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget 
     , m_projectionWindow(projectionWindow)
     , m_selectedFrame(nullptr)
     , m_networkManager(new QNetworkAccessManager(this))
+    , m_prompt("")
+    , m_isRealistic(false)
+    , m_lowThreshold(0.0)
+    , m_highThreshold(1.0)
 {
     ui->setupUi(this);
     initializeUI();
@@ -126,21 +127,160 @@ cv::Mat PickImagesPage::getSelectedImage() const
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
 }
 
+
+QString PickImagesPage::getApiKey() {
+    QFile file("../../../env");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open .env file";
+        return QString();
+    }
+
+    while (!file.atEnd()) {
+        QString line = file.readLine().trimmed();
+        if (line.startsWith("api_key=")) {
+            return line.mid(8); // Removes "api_key=" from the start
+        }
+    }
+    return QString();
+}
+
 void PickImagesPage::fetchRandomImages(int numImages)
 {
+    if (numImages <= 0) {
+        qDebug("Invalid number of images requested");
+        return;
+    }
+
     qDebug() << "Fetching" << numImages << "random images...";
 
-    // Reset fetch counter
-    static int currentFetchIndex = 0;
-    currentFetchIndex = 0;
-
     for (int i = 0; i < numImages; ++i) {
-        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-        QNetworkReply *reply = m_networkManager->get(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-            handleImageResponse(reply);
-        });
+        try {
+            // Validate URL
+            QUrl url("https://10.101.3.119:50169/generate");
+            if (!url.isValid()) {
+                qDebug("Invalid API URL");
+                continue;
+            }
+
+            QNetworkRequest request(url);
+
+            // SSL Configuration with error handling
+            try {
+                QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+                sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
+                request.setSslConfiguration(sslConfig);
+            } catch (const std::exception& e) {
+                qDebug("SSL Configuration error");
+                continue;
+            }
+
+            // Validate API key
+            QByteArray apiKey = getApiKey().toUtf8();
+
+            if (apiKey.isEmpty()) {
+                qDebug("Missing API key");
+                continue;
+            }
+            request.setRawHeader("x-api-key", apiKey);
+
+            // Validate and set query parameters
+            QString prompt = getPrompt();
+            if (prompt.isEmpty()) {
+                qDebug("Empty prompt");
+                continue;
+            }
+
+            double lowThreshold = getLowThreshold();
+            double highThreshold = getHighThreshold();
+
+            QUrlQuery query;
+            query.addQueryItem("prompt", prompt);
+            query.addQueryItem("style", getIsRealistic() ? "realistic" : "animated");
+            query.addQueryItem("lo_threshold", QString::number(lowThreshold));
+            query.addQueryItem("hi_threshold", QString::number(highThreshold));
+
+            // Image processing with error handling
+            cv::Mat frameImage = m_selectedFrame->getImage();
+            if (frameImage.empty()) {
+                qDebug("Failed to get frame image");
+                continue;
+            }
+
+            std::vector<uchar> buf;
+            try {
+                if (!cv::imencode(".jpg", frameImage, buf)) {
+                    qDebug("Failed to encode image");
+                    continue;
+                }
+            } catch (const cv::Exception& e) {
+                qDebug("OpenCV error");
+                continue;
+            }
+
+            // Prepare POST data
+            QByteArray postData;
+            // Add your POST data here
+
+            // Send request with timeout
+            QNetworkReply *reply = m_networkManager->post(request, postData);
+            if (!reply) {
+                qDebug("Failed to create network request");
+                continue;
+            }
+
+            // Set timeout for request
+            QTimer *timer = new QTimer(this);
+            timer->setSingleShot(true);
+            connect(timer, &QTimer::timeout, this, [reply, timer]() {
+                if (reply->isRunning()) {
+                    reply->abort();
+                    reply->deleteLater();
+                    timer->deleteLater();
+                }
+            });
+            timer->start(30000); // 30 second timeout
+
+            // Handle response
+            connect(reply, &QNetworkReply::finished, this, [this, reply, timer]() {
+                timer->stop();
+                timer->deleteLater();
+
+                if (reply->error() == QNetworkReply::NoError) {
+                    // Check response code
+                    int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                    if (httpStatus >= 200 && httpStatus < 300) {
+                        handleImageResponse(reply);
+                    } else {
+                        qDebug("HTTP error:");
+                    }
+                } else {
+                    // Handle specific network errors
+                    switch (reply->error()) {
+                    case QNetworkReply::ConnectionRefusedError:
+                        qDebug("Connection refused");
+                        break;
+                    case QNetworkReply::TimeoutError:
+                        qDebug("Request timed out");
+                        break;
+                    case QNetworkReply::SslHandshakeFailedError:
+                        qDebug("SSL handshake failed");
+                        break;
+                    default:
+                        qDebug("Network error:");
+                    }
+                }
+                reply->deleteLater();
+            });
+
+            // Handle network errors during transmission
+            connect(reply, &QNetworkReply::errorOccurred, this, [this](QNetworkReply::NetworkError error) {
+                qDebug("Network error during transmission");
+            });
+
+        } catch (const std::exception& e) {
+            qDebug("Unexpected error");
+            continue;
+        }
     }
 }
 
@@ -215,7 +355,8 @@ void PickImagesPage::clearImages()
     for (int i = 0; i < m_imageFrames.size(); ++i) {
         ClickableFrame* frame = m_imageFrames[i];
         // Explicitly clear image data
-        frame->setImage(cv::Mat());
+        cv::Mat emptyImage = cv::Mat::zeros(frame->size().height(), frame->size().width(), CV_8UC3);
+        frame->setImage(emptyImage);
         qDebug() << "Cleared frame" << i;
     }
 }

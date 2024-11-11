@@ -485,7 +485,7 @@ void CalibrationPage::sortPointsClockwise(std::array<cv::Point2f, 4>& points)
 // Find the closest corner to the given coordinates within a specified radius
 int CalibrationPage::findClosestCorner(int x, int y)
 {
-    const float cornerRadius = 20.0f;
+    const float cornerRadius = 100.0f;
     for (int i = 0; i < numSelectedPoints; ++i) {
         if (cv::norm(selectedPoints[i] - cv::Point2f(x, y)) < cornerRadius) {
             return i;

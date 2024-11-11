@@ -53,6 +53,18 @@ class PickImagesPage : public QWidget
         void clearSelections();
         void refreshImages();
 
+        // Getters
+        QString getPrompt() const { return m_prompt; }
+        bool getIsRealistic() const { return m_isRealistic; }
+        double getLowThreshold() const { return m_lowThreshold; }
+        double getHighThreshold() const { return m_highThreshold; }
+
+        // Setters
+        void setPrompt(const QString& prompt) { m_prompt = prompt; }
+        void setIsRealistic(bool isRealistic) { m_isRealistic = isRealistic; }
+        void setLowThreshold(double threshold) { m_lowThreshold = threshold; }
+        void setHighThreshold(double threshold) { m_highThreshold = threshold; }
+
     signals:
         void navigateToTextVisionPage();
         void navigateToSensitivityPage();
@@ -70,6 +82,15 @@ class PickImagesPage : public QWidget
         QList<ClickableFrame*> m_imageFrames;
         ClickableFrame* m_selectedFrame;
         QNetworkAccessManager *m_networkManager;
+
+        // to pass in for the api
+        QString m_prompt;
+        bool m_isRealistic;
+        double m_lowThreshold;
+        double m_highThreshold;
+
+        QString getApiKey();
+
 
         void initializeUI();
         QLabel* createTitleLabel();

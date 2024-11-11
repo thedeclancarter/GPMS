@@ -24,7 +24,7 @@ public:
     void clearInput();
 
 signals:
-    void navigateToPickImagesPage();
+    void navigateToPickImagesPage(QString prompt, bool isRealistic);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -62,6 +62,7 @@ private:
 
     QString m_visionText;
     bool m_isRealistic;
+
     const QString SELECTED_STYLE = "color: #FFD700; background-color: #4E4E4E; "
                                    "border: 2px solid #FFD700; border-radius: 15px;"
                                    " min-width: 120px; max-width: 120px;"
