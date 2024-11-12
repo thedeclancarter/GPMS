@@ -7,9 +7,14 @@
 #include <QKeyEvent>
 #include <QDebug>
 
+#include <QStandardPaths>
+#include <QDir>
+#include <QDateTime>
+
 // OpenCV includes
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+
 
 // Constants for frame dimensions
 static constexpr int WIDTH = 1280;
@@ -506,7 +511,59 @@ bool CalibrationPage::isValidPoint(const cv::Point2f& newPoint, double minDistan
     return true;
 }
 
+QPixmap CalibrationPage::getImage() {
+    if (!m_imageLabel) {
+        qDebug() << "Label is null";
+        return QPixmap();
+    }
 
+    // Get the pixmap (returns a copy)
+    QPixmap currentPixmap = m_imageLabel->pixmap(Qt::ReturnByValue);
+    if (currentPixmap.isNull()) {
+        qDebug() << "No image found in label";
+        return QPixmap();
+    }
+
+    // Create directory if it doesn't exist
+    QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
+    QDir().mkpath(saveDir);
+
+    // Generate filename with timestamp
+    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+    QString filePath = saveDir + "/image_" + timestamp + ".png";
+
+    // Save the image
+    if (currentPixmap.save(filePath)) {
+        qDebug() << "Image saved to:" << filePath;
+    } else {
+        qDebug() << "Failed to save image to:" << filePath;
+    }
+
+    return currentPixmap;
+}
+
+QImage CalibrationPage::getQImage() {
+    if (!qimg.isNull()) {  // assuming qimg is your QImage member variable
+        // Create directory if it doesn't exist
+        QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
+        QDir().mkpath(saveDir);
+
+        // Generate filename with timestamp
+        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+        QString filePath = saveDir + "/image_" + timestamp + ".png";
+
+        // Save the image
+        if (qimg.save(filePath)) {
+            qDebug() << "Image saved to:" << filePath;
+        } else {
+            qDebug() << "Failed to save image to:" << filePath;
+        }
+        return qimg;
+    } else {
+        qDebug() << "QImage is null";
+        return QImage();
+    }
+}
 
 // UI FUNCTIONS
 
@@ -572,13 +629,6 @@ QFrame* CalibrationPage::createImageFrame()
     return cameraFrame;
 
 }
-
-// void CalibrationPage::updateImage(const QImage& image)
-// {
-//     if (!image.isNull()) {
-//         m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-//     }
-// }
 
 // Creates the button layout
 QHBoxLayout* CalibrationPage::createButtonLayout()

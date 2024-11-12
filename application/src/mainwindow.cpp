@@ -169,15 +169,19 @@ void MainWindow::navigateToSensitivityPage()
 {
     stackedWidget->setCurrentWidget(sensitivityPage);
     sensitivityPage->updateSensitivity();
+    QImage image = calibrationPage->getQImage();
+    pickImagesPage->setAPIImage(image);
 }
 
 void MainWindow::navigateToTextVisionPageFromSensitivity(int low, int high)
 {
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
+
     stackedWidget->setCurrentWidget(textVisionPage);
     // set threshold here
     pickImagesPage->setLowThreshold(low);
     pickImagesPage->setHighThreshold(high);
+
 }
 
 void MainWindow::navigateToTextVisionPage()
@@ -197,6 +201,7 @@ void MainWindow::navigateFromTextVisionToPickImages(QString prompt, bool isReali
     stackedWidget->setCurrentWidget(pickImagesPage);
     pickImagesPage->setPrompt(prompt);
     pickImagesPage->setIsRealistic(isRealistic);
+    pickImagesPage->fetchRandomImages(2);
 }
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)

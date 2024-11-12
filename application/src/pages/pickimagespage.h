@@ -58,12 +58,14 @@ class PickImagesPage : public QWidget
         bool getIsRealistic() const { return m_isRealistic; }
         double getLowThreshold() const { return m_lowThreshold; }
         double getHighThreshold() const { return m_highThreshold; }
+        void fetchRandomImages(int numImages);
 
         // Setters
         void setPrompt(const QString& prompt) { m_prompt = prompt; }
         void setIsRealistic(bool isRealistic) { m_isRealistic = isRealistic; }
         void setLowThreshold(double threshold) { m_lowThreshold = threshold; }
         void setHighThreshold(double threshold) { m_highThreshold = threshold; }
+        void setAPIImage(QImage image) { m_actual_image = image; }
 
     signals:
         void navigateToTextVisionPage();
@@ -88,7 +90,18 @@ class PickImagesPage : public QWidget
         bool m_isRealistic;
         double m_lowThreshold;
         double m_highThreshold;
+        QImage m_actual_image;
 
+        // for api
+        bool validateInputs(int numImages);
+        QNetworkRequest createNetworkRequest();
+        QUrlQuery createQueryParameters();
+        cv::Mat prepareImageData();
+        QByteArray encodeToPNG(const cv::Mat& image);
+        void sendNetworkRequest(const QNetworkRequest& request, const QByteArray& postData);
+        void setupRequestTimeout(QNetworkReply* reply);
+        void setupResponseHandlers(QNetworkReply* reply);
+        void handleNetworkReply(QNetworkReply* reply);
         QString getApiKey();
 
 
@@ -98,11 +111,13 @@ class PickImagesPage : public QWidget
         QHBoxLayout* createButtonLayout();
         QPushButton* styleButton(QPushButton* button, const QString& text, const QString& bgColor);
         void updateSelectedImages(ClickableFrame *clickedFrame);
-        void fetchRandomImages(int numImages);
+
 
         // image methods
         cv::Mat qimage_to_mat(const QImage& img);
         void clearImages();
+
+
 
 };
 

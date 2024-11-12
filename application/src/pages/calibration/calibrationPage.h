@@ -27,6 +27,8 @@ public:
 
     void resetPoints();
     void finalizeSelection();
+    QPixmap getImage();
+    QImage getQImage();
 
 private slots:
     void captureFrame();
