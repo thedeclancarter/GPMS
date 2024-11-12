@@ -1,5 +1,3 @@
-# api-server/app.py
-
 import sys
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file
@@ -13,6 +11,8 @@ import logging
 from functools import wraps
 from dotenv import load_dotenv
 import torch
+import threading  # Import threading
+import uuid  # Import uuid for unique filenames
 
 # Add project root to sys.path if necessary
 project_root = Path(__file__).resolve().parent.parent
@@ -83,6 +83,9 @@ def initialize_pipelines():
 with app.app_context():
     initialize_pipelines()
 
+# Create a global lock
+generate_image_lock = threading.Lock()
+
 @app.route('/generate', methods=['POST'])
 @require_api_key  # Apply the API key requirement
 def generate():
@@ -98,8 +101,10 @@ def generate():
         return jsonify({'error': 'No selected file'}), 400
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        upload_path = INPUT_FOLDER / filename
+        # Generate a unique filename using UUID
+        file_ext = file.filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
+        upload_path = INPUT_FOLDER / unique_filename
         file.save(upload_path)
         logger.info(f"Image saved to {upload_path}.")
     else:
@@ -108,7 +113,7 @@ def generate():
 
     # Get additional form data
     prompt = request.form.get('prompt')
-    style = request.form.get('style', "animated") # Default style
+    style = request.form.get('style', "animated")  # Default style
     lo_treshold = request.form.get('lo_treshold', 100)
     hi_treshold = request.form.get('hi_treshold', 200)
 
@@ -117,14 +122,17 @@ def generate():
         return jsonify({'error': 'No prompt provided'}), 400
 
     try:
-        # Generate the image using the pipeline
-        generated_image = generate_image(
-            image_path=str(upload_path),
-            prompt=prompt,
-            style=style,
-            lo_treshold=lo_treshold,
-            hi_treshold=hi_treshold
-        )
+        # Acquire the lock before starting image generation
+        with generate_image_lock:
+            logger.info(f"Processing image generation for {upload_path} with prompt '{prompt}'.")
+            # Generate the image using the pipeline
+            generated_image = generate_image(
+                image_path=str(upload_path),
+                prompt=prompt,
+                style=style,
+                lo_treshold=lo_treshold,
+                hi_treshold=hi_treshold
+            )
 
         # Convert PIL Image to bytes
         img_byte_arr = io.BytesIO()
@@ -132,8 +140,8 @@ def generate():
         img_byte_arr.seek(0)
 
         # Optionally, save the generated image to the output folder
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_image_filename = f"{timestamp}.png"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        output_image_filename = f"{timestamp}_{uuid.uuid4().hex}.png"
         output_image_path = OUTPUT_FOLDER / output_image_filename
         generated_image.save(output_image_path)
         logger.info(f"Generated image saved to {output_image_path}.")
@@ -151,6 +159,10 @@ def generate():
 
     except Exception as e:
         logger.exception("Error during image generation.")
+        # Ensure the uploaded file is removed even if an error occurs
+        if os.path.exists(upload_path):
+            os.remove(upload_path)
+            logger.info(f"Uploaded file {upload_path} removed after error.")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(413)
