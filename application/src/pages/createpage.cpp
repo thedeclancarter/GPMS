@@ -7,16 +7,77 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QGraphicsDropShadowEffect>
+#include <QDebug>
+#include <QTimer>
 
+// Constants for frame dimensions
+static constexpr int WIDTH = 1280;
+static constexpr int HEIGHT = 720;
+
+// In CreatePage constructor
 CreatePage::CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::CreatePage)
     , m_projectionWindow(projectionWindow)
     , createButton(nullptr)
+    , timer(new QTimer(this))  // Initialize timer
 {
-    // ui->setupUi(this);
     setupUI();
     setupConnections();
+
+    connect(timer, &QTimer::timeout, this, &CreatePage::captureFrame);  // Connect timer to captureFrame
+
+    // Start the camera feed immediately after the UI is set up
+    startCamera();
+}
+
+void CreatePage::stopCamera()
+{
+    if (cap.isOpened()) {
+        cap.release();  // Release the camera
+    }
+    timer->stop();  // Stop the frame capture
+}
+
+
+void CreatePage::startCamera()
+{
+    if (!cap.isOpened()) {
+        cap.open(0);
+        if (!cap.isOpened()) {
+            qDebug() << "Error: Could not open camera.";
+            return;
+        }
+        qDebug() << "Camera successfully opened.";
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
+    }
+    timer->start(30);  // Restart the timer
+}
+
+void CreatePage::captureFrame()
+{
+    cap >> frame;  // Capture a frame from the camera
+    if (frame.empty()) {
+        qDebug() << "Error: Could not capture frame.";
+        return;
+    }
+
+    qDebug() << "Captured a frame";  // Debug message to check if frame is captured
+
+    // Convert the frame to QImage format
+    QImage qtImage((const unsigned char*) frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
+
+    if (qtImage.isNull()) {
+        qDebug() << "Error: Failed to convert frame to QImage.";
+        return;
+    }
+
+    // Display the frame in previewLabel
+    previewLabel->setPixmap(QPixmap::fromImage(qtImage).scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    previewLabel->setScaledContents(true);
+
+    update();
 }
 
 void CreatePage::setupUI()
@@ -130,17 +191,25 @@ void CreatePage::setupLeftColumn(QGridLayout *layout, int row, int column)
 void CreatePage::setupRightColumn(QGridLayout *layout, int row, int column)
 {
     QWidget *previewContainer = new QWidget(this);
-    previewContainer->setFixedHeight(275);  // Match the height of the steps container
+    previewContainer->setFixedHeight(275);
     previewContainer->setStyleSheet("background-color: #2C2C2E; border-radius: 15px;");
 
     QVBoxLayout *previewLayout = new QVBoxLayout(previewContainer);
-    QLabel *previewLabel = new QLabel("Preview of Your Projection Will Appear Here", previewContainer);
+
+    // Use the class member variable previewLabel
+    previewLabel = new QLabel(previewContainer);
     previewLabel->setAlignment(Qt::AlignCenter);
-    previewLabel->setStyleSheet("color: #a0aec0;");
+    previewLabel->setStyleSheet("background-color: black;");  // Optional: Set a background for the label
+
+    previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // Ensure it expands to fill space
+    previewLabel->setScaledContents(true);  // Allow scaling of the image inside the label
+
     previewLayout->addWidget(previewLabel);
 
     layout->addWidget(previewContainer, row, column);
 }
+
+
 
 void CreatePage::setupCreateButton(QVBoxLayout *layout)
 {
@@ -180,8 +249,10 @@ void CreatePage::setupConnections()
 
 void CreatePage::onCreateButtonClicked()
 {
+    stopCamera(); // Stop camera before navigating
     emit navigateToCalibrationPage();
 }
+
 
 CreatePage::~CreatePage()
 {
