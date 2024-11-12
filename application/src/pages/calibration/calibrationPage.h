@@ -27,6 +27,9 @@ public:
 
     void resetPoints();
     void finalizeSelection();
+    QPixmap getImage();
+    QImage getQImage();
+    QImage getCleanQImage();
 
 private slots:
     void captureFrame();
@@ -69,7 +72,7 @@ private:
     // Methods
     void processFrame();
     void updateProjectionWindow(); // Method to update the projection window
-    void drawMagnifyingGlass(const cv::Mat& sourceFrame, cv::Mat& drawFrame, int x, int y, int zoomFactor = 2, int radius = 50);
+    void drawMagnifyingGlass(const cv::Mat& sourceFrame, cv::Mat& drawFrame, int x, int y, int zoomFactor = 2, int radius = 80);
     void drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& selectedPoints);
     void sortPointsClockwise(std::array<cv::Point2f, 4>& points);
     int findClosestCorner(int x, int y);

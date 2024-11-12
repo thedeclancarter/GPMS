@@ -67,9 +67,10 @@ private slots:
     // create page pages
     void navigateToCalibrationPage();
     void navigateToSensitivityPage();
+    void navigateToTextVisionPageFromSensitivity(int low, int high);
     void navigateToTextVisionPage();
     void navigateFromProjectPageToPickImagesPage();
-    void navigateFromTextVisionToPickImages(); // in order to refresh
+    void navigateFromTextVisionToPickImages(QString prompt, bool isRealistic); // in order to pass in vars
     void navigateToProjectPage(const cv::Mat& image);
 
 

@@ -115,7 +115,7 @@ void MainWindow::setupConnections()
     connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 
     // from sensitivity page
-    connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
+    connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPageFromSensitivity);
     connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
@@ -169,6 +169,19 @@ void MainWindow::navigateToSensitivityPage()
 {
     stackedWidget->setCurrentWidget(sensitivityPage);
     sensitivityPage->updateSensitivity();
+    QImage image = calibrationPage->getCleanQImage();
+    pickImagesPage->setAPIImage(image);
+}
+
+void MainWindow::navigateToTextVisionPageFromSensitivity(int low, int high)
+{
+    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
+
+    stackedWidget->setCurrentWidget(textVisionPage);
+    // set threshold here
+    pickImagesPage->setLowThreshold(low);
+    pickImagesPage->setHighThreshold(high);
+
 }
 
 void MainWindow::navigateToTextVisionPage()
@@ -182,12 +195,13 @@ void MainWindow::navigateFromProjectPageToPickImagesPage()
     stackedWidget->setCurrentWidget(pickImagesPage);
 }
 
-// to only refresh when nav from textVision
-void MainWindow::navigateFromTextVisionToPickImages()
+// to pass in from text vision page
+void MainWindow::navigateFromTextVisionToPickImages(QString prompt, bool isRealistic)
 {
     stackedWidget->setCurrentWidget(pickImagesPage);
-    // pickImagesPage->refreshImages();
-
+    pickImagesPage->setPrompt(prompt);
+    pickImagesPage->setIsRealistic(isRealistic);
+    pickImagesPage->fetchRandomImages(2);
 }
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)

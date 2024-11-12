@@ -8,6 +8,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QEvent>
+#include <QMouseEvent>
 
 TextVisionPage::TextVisionPage(QWidget *parent)
     : QWidget(parent)
@@ -35,7 +36,7 @@ TextVisionPage::TextVisionPage(QWidget *parent)
         if (!QFile::exists(m_wvkbdPath)) {
             qDebug() << "Warning: wvkbd not found at" << m_wvkbdPath;
         }
-
+        this->installEventFilter(this); // to see when clicking out
         m_visionInput->installEventFilter(this);
     }
 }
@@ -65,17 +66,30 @@ void TextVisionPage::clearInput(){
 
 bool TextVisionPage::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_visionInput && m_onRaspberryPi) {
+    if (m_onRaspberryPi) {
         switch (event->type()) {
-        case QEvent::FocusIn: {
-            qDebug() << "Focus in event - showing wvkbd";
-            showKeyboard();
-            return false;
+        case QEvent::MouseButtonPress: {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (obj == m_visionInput) {
+                qDebug() << "Click inside input - showing wvkbd";
+                showKeyboard();
+                m_visionInput->setFocus();
+                return false;
+            } else {
+                qDebug() << "Click outside input - hiding wvkbd";
+                hideKeyboard();
+                m_visionInput->clearFocus();
+                return false;
+            }
+            break;
         }
-        case QEvent::FocusOut: {
-            qDebug() << "Focus out event - hiding wvkbd";
-            hideKeyboard();
-            return false;
+        case QEvent::FocusIn: {
+            if (obj == m_visionInput) {
+                qDebug() << "Focus in event - showing wvkbd";
+                showKeyboard();
+                return false;
+            }
+            break;
         }
         default:
             break;
@@ -229,21 +243,15 @@ void TextVisionPage::updateButtonStyles()
     m_animatedButton->setStyleSheet(m_isRealistic ? UNSELECTED_STYLE : SELECTED_STYLE);
 }
 
-// void TextVisionPage::onSubmitButtonClicked()
-// {
-//     m_visionText = m_visionInput->toPlainText();
-//     emit navigateToPickImagesPage();
-// }
-
 void TextVisionPage::onSubmitButtonClicked()
 {
     m_visionText = m_visionInput->toPlainText();
 
-    // if (m_visionText.isEmpty()) {
-    //     return;
-    // }
+    if (m_visionText.isEmpty()) {
+        return;
+    }
 
-    emit navigateToPickImagesPage();
+    emit navigateToPickImagesPage(m_visionText, m_isRealistic);
 }
 
 
