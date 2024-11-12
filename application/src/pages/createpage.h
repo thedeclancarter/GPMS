@@ -17,6 +17,8 @@ class CreatePage : public QWidget
     public:
         explicit CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~CreatePage();
+        void startCamera();
+        void stopCamera();
 
     signals:
         void navigateToCalibrationPage();
@@ -24,12 +26,21 @@ class CreatePage : public QWidget
 
     private slots:
         void onCreateButtonClicked();
+        void captureFrame();
 
     private:
         Ui::CreatePage *ui;
         QPushButton *createButton;
         QPushButton *backButton;
         ImageProjectionWindow *m_projectionWindow;
+
+        QLabel *previewLabel;
+
+        QTimer* timer;
+        cv::VideoCapture cap;
+        cv::Mat frame;
+        QImage qimg;
+        QLabel* m_imageLabel; // for image on monitor
 
         void setupUI();
         void setupHeader(QVBoxLayout *layout);

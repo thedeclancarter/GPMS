@@ -52,10 +52,6 @@ CalibrationPage::CalibrationPage(ImageProjectionWindow *projectionWindow, QWidge
 
     // **Connect the rejectCalibrationButton to resetPoints()**
     connect(ui->rejectCalibrationButton, &QPushButton::clicked, this, &CalibrationPage::resetPoints);
-
-
-    // Start the camera
-    startCamera();
 }
 
 // Destructor
@@ -77,6 +73,7 @@ void CalibrationPage::startCamera()
         cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
     }
+    qDebug() << "Camera started, Cal!";
     timer->start(30); // Adjust the interval as needed (e.g., ~30 FPS)
 }
 
@@ -87,6 +84,7 @@ void CalibrationPage::stopCamera()
         cap.release();
     }
     timer->stop();
+    qDebug() << "Camera Stopped, Cal!";
 }
 
 // Capture a frame from the camera
@@ -136,14 +134,16 @@ void CalibrationPage::processFrame()
         cv::cvtColor(scaledFrame, rgbFrame, cv::COLOR_BGR2RGB);
         qimg = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888).copy();
 
-        // If four points are selected and a still frame hasn't been captured yet, capture it
-        if (numSelectedPoints == 4 && !stillFrameCaptured) {
-            stillFrame = frame.clone();
-            stillFrameCaptured = true;
-            stopCamera();
-            updateProjectionWindow();
-            updateDisplayWithStillFrame(); // Update display with the still frame
-        }
+        // From Previous Iteration, now I realize it's never called
+        // // If four points are selected and a still frame hasn't been captured yet, capture it
+        // if (numSelectedPoints == 4 && !stillFrameCaptured) {
+        //     stillFrame = frame.clone();
+        //     stillFrameCaptured = true;
+        //     qDebug() << "Still Frame Captured!";
+        //     stopCamera();
+        //     updateProjectionWindow();
+        //     updateDisplayWithStillFrame(); // Update display with the still frame
+        // }
 
     } else {
         // Still frame handling
@@ -277,10 +277,10 @@ void CalibrationPage::mousePressEvent(QMouseEvent* event)
                 if (numSelectedPoints == 4) {
                     stillFrame = frame.clone();
                     stillFrameCaptured = true;
-                    timer->stop();
+                    stopCamera();
                     updateProjectionWindow();
                     updateDisplayWithStillFrame();
-                    ui->completeButton->setEnabled(numSelectedPoints == 4);
+                    ui->completeButton->setEnabled(true);
                 }
             } else {
                 qDebug() << "Point is too close to an existing point.";
@@ -369,6 +369,7 @@ void CalibrationPage::resetPoints()
     pointsChanged = false; // Reset the flag
     qimg = QImage(); // Clear the image
     qDebug() << "Points reset. Please select 4 new points.";
+    ui->completeButton->setEnabled(false);
 
     // Clear the image in the projection window using clearImage
     m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);

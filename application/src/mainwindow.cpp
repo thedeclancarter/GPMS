@@ -149,6 +149,17 @@ void MainWindow::navigateToCreatePage()
     // proj window should show video, currently will be still image
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
+
+    // proj window should show white
+    if (imageProjectionWindow->getIsCalibrated())
+    {
+        createPage->startCamera();
+    }
+    else
+    {
+        calibrationPage->stopCamera();
+        createPage->startCamera();
+    }
 }
 
 void MainWindow::navigateToCalibrationPage()
@@ -161,6 +172,7 @@ void MainWindow::navigateToCalibrationPage()
     else
     {
         imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::SCANNING);
+        calibrationPage->startCamera();
     }
     stackedWidget->setCurrentWidget(calibrationPage);
 }
