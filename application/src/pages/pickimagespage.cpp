@@ -74,7 +74,9 @@ void PickImagesPage::fetchRandomImages(int numImages) {
 
     for (int i = 0; i < numImages; ++i) {
         try {
+            qDebug("Creating network request");
             QNetworkRequest request = createNetworkRequest();
+            qDebug("Created network request");
             cv::Mat imageData = prepareImageData();
 
             if (imageData.empty()) {
@@ -351,7 +353,8 @@ void PickImagesPage::clearImages()
         ClickableFrame* frame = m_imageFrames[i];
         // Explicitly clear image data
         cv::Mat emptyImage = cv::Mat::zeros(frame->size().height(), frame->size().width(), CV_8UC3);
-        frame->setImage(emptyImage);
+        // frame->setImage(emptyImage);
+        frame->clearImage();
         qDebug() << "Cleared frame" << i;
     }
 }
@@ -515,20 +518,99 @@ QPushButton *PickImagesPage::styleButton(QPushButton *button, const QString &tex
 
 
 
-// ClickableFrame implementation
+// // ClickableFrame implementation
+// ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
+//     ,m_selected(false)
+//     ,m_imageLabel(nullptr)
+//     ,m_image(cv::Mat())
+// {
+//     setLayout(new QVBoxLayout(this));
+//     m_imageLabel = new QLabel(this);
+//     m_imageLabel->setAlignment(Qt::AlignCenter);
+//     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//     m_imageLabel->setScaledContents(true);
+//     m_imageLabel->setContentsMargins(5, 5, 5, 5);
+//     layout()->addWidget(m_imageLabel);
+//     updateStyle();
+// }
+
+
+
+
+// void ClickableFrame::setImage(const cv::Mat& mat)
+// {
+//     if (mat.type() != CV_8UC3) {
+//         qDebug() << "Invalid image format. Expected CV_8UC3.";
+//         return;
+//     }
+//     m_image = mat.clone();
+
+//     // Convert cv::Mat to QImage without copying data
+//     QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
+//     m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+// }
+
+
+
+
 ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     ,m_selected(false)
     ,m_imageLabel(nullptr)
+    ,m_loadingLabel(nullptr)
     ,m_image(cv::Mat())
 {
     setLayout(new QVBoxLayout(this));
+
+    // Create loading label
+    m_loadingLabel = new QLabel("Loading...", this);
+    m_loadingLabel->setAlignment(Qt::AlignCenter);
+    m_loadingLabel->setStyleSheet("QLabel { color: #FFFFFF; font-size: 16px; }");
+
+    // Create image label
     m_imageLabel = new QLabel(this);
     m_imageLabel->setAlignment(Qt::AlignCenter);
     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_imageLabel->setScaledContents(true);
     m_imageLabel->setContentsMargins(5, 5, 5, 5);
+
+    // Stack the labels
+    m_imageLabel->setVisible(false);  // Initially hide the image label
+    layout()->addWidget(m_loadingLabel);
     layout()->addWidget(m_imageLabel);
+
     updateStyle();
+}
+
+void ClickableFrame::setImage(const cv::Mat& mat)
+{
+    if (mat.empty()) {
+        m_imageLabel->setVisible(false);
+        m_loadingLabel->setVisible(true);
+        m_image = cv::Mat();
+        return;
+    }
+
+    if (mat.type() != CV_8UC3) {
+        qDebug() << "Invalid image format. Expected CV_8UC3.";
+        return;
+    }
+
+    m_image = mat.clone();
+    // Convert cv::Mat to QImage without copying data
+    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
+    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+    // Show image and hide loading text
+    m_imageLabel->setVisible(true);
+    m_loadingLabel->setVisible(false);
+}
+
+void ClickableFrame::clearImage()
+{
+    m_image = cv::Mat();
+    m_imageLabel->clear();
+    m_imageLabel->setVisible(false);
+    m_loadingLabel->setVisible(true);
 }
 
 
@@ -541,19 +623,6 @@ void ClickableFrame::setSelected(bool selected)
 bool ClickableFrame::isSelected() const
 {
     return m_selected;
-}
-
-void ClickableFrame::setImage(const cv::Mat& mat)
-{
-    if (mat.type() != CV_8UC3) {
-        qDebug() << "Invalid image format. Expected CV_8UC3.";
-        return;
-    }
-    m_image = mat.clone();
-
-    // Convert cv::Mat to QImage without copying data
-    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
-    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 cv::Mat ClickableFrame::getImage() const

@@ -23,6 +23,7 @@ public:
     bool isSelected() const;
     void setImage(const cv::Mat& mat);
     cv::Mat getImage() const;
+    void clearImage();
 
 signals:
     void clicked();
@@ -34,6 +35,8 @@ private:
     bool m_selected;
     cv::Mat m_image;
     QLabel* m_imageLabel;
+    QLabel* m_loadingLabel;
+
     void updateStyle();
 };
 
