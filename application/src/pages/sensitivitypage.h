@@ -28,7 +28,7 @@ class SensitivityPage : public QWidget
         void endCaptureTimer();
 
     signals:
-        void navigateToTextVisionPage();
+        void navigateToTextVisionPage(int lower, int upper);
         void navigateToCalibrationPage();
 
     private slots:

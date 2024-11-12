@@ -7,9 +7,14 @@
 #include <QKeyEvent>
 #include <QDebug>
 
+#include <QStandardPaths>
+#include <QDir>
+#include <QDateTime>
+
 // OpenCV includes
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+
 
 // Constants for frame dimensions
 static constexpr int WIDTH = 1280;
@@ -109,7 +114,7 @@ void CalibrationPage::processFrame()
 
         // Draw selected points
         for (int i = 0; i < numSelectedPoints; ++i) {
-            cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
+            cv::circle(displayFrame, selectedPoints[i], 10, cv::Scalar(0, 255, 0), -1);
         }
 
         // Draw ROI if 4 points are selected
@@ -176,7 +181,7 @@ void CalibrationPage::updateDisplayWithStillFrame()
 
     // Draw selected points
     for (int i = 0; i < numSelectedPoints; ++i) {
-        cv::circle(displayFrame, selectedPoints[i], 5, cv::Scalar(0, 255, 0), -1);
+        cv::circle(displayFrame, selectedPoints[i], 10, cv::Scalar(0, 255, 0), -1);
     }
 
     // Draw ROI
@@ -445,7 +450,7 @@ void CalibrationPage::drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& 
 
     // Draw the rectangle (ROI)
     for (int i = 0; i < 4; i++) {
-        cv::line(frame, sortedPoints[i], sortedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
+        cv::line(frame, sortedPoints[i], sortedPoints[(i + 1) % 4], cv::Scalar(0, 255, 0), 4);
     }
 
     const float oneThird = 1.0f / 3.0f;
@@ -458,12 +463,12 @@ void CalibrationPage::drawROI(cv::Mat& frame, const std::array<cv::Point2f, 4>& 
     cv::Point2f vec4 = sortedPoints[2] - sortedPoints[1];
 
     // Draw vertical grid lines
-    cv::line(frame, sortedPoints[0] + vec1 * oneThird, sortedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, sortedPoints[0] + vec1 * twoThirds, sortedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec1 * oneThird, sortedPoints[3] + vec2 * oneThird, cv::Scalar(0, 255, 0), 2);
+    cv::line(frame, sortedPoints[0] + vec1 * twoThirds, sortedPoints[3] + vec2 * twoThirds, cv::Scalar(0, 255, 0), 2);
 
     // Draw horizontal grid lines
-    cv::line(frame, sortedPoints[0] + vec3 * oneThird, sortedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 1);
-    cv::line(frame, sortedPoints[0] + vec3 * twoThirds, sortedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 1);
+    cv::line(frame, sortedPoints[0] + vec3 * oneThird, sortedPoints[1] + vec4 * oneThird, cv::Scalar(0, 255, 0), 2);
+    cv::line(frame, sortedPoints[0] + vec3 * twoThirds, sortedPoints[1] + vec4 * twoThirds, cv::Scalar(0, 255, 0), 2);
 }
 
 // Sort points in clockwise order based on their angles from the center
@@ -485,7 +490,7 @@ void CalibrationPage::sortPointsClockwise(std::array<cv::Point2f, 4>& points)
 // Find the closest corner to the given coordinates within a specified radius
 int CalibrationPage::findClosestCorner(int x, int y)
 {
-    const float cornerRadius = 20.0f;
+    const float cornerRadius = 100.0f;
     for (int i = 0; i < numSelectedPoints; ++i) {
         if (cv::norm(selectedPoints[i] - cv::Point2f(x, y)) < cornerRadius) {
             return i;
@@ -506,7 +511,91 @@ bool CalibrationPage::isValidPoint(const cv::Point2f& newPoint, double minDistan
     return true;
 }
 
+QPixmap CalibrationPage::getImage() {
+    if (!m_imageLabel) {
+        qDebug() << "Label is null";
+        return QPixmap();
+    }
 
+    // Get the pixmap (returns a copy)
+    QPixmap currentPixmap = m_imageLabel->pixmap(Qt::ReturnByValue);
+    if (currentPixmap.isNull()) {
+        qDebug() << "No image found in label";
+        return QPixmap();
+    }
+
+    // Create directory if it doesn't exist
+    QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
+    QDir().mkpath(saveDir);
+
+    // Generate filename with timestamp
+    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+    QString filePath = saveDir + "/image_" + timestamp + ".png";
+
+    // Save the image
+    if (currentPixmap.save(filePath)) {
+        qDebug() << "Image saved to:" << filePath;
+    } else {
+        qDebug() << "Failed to save image to:" << filePath;
+    }
+
+    return currentPixmap;
+}
+
+QImage CalibrationPage::getQImage() {
+    if (!qimg.isNull()) {  // assuming qimg is your QImage member variable
+        // Create directory if it doesn't exist
+        QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
+        QDir().mkpath(saveDir);
+
+        // Generate filename with timestamp
+        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+        QString filePath = saveDir + "/image_" + timestamp + ".png";
+
+        // Save the image
+        if (qimg.save(filePath)) {
+            qDebug() << "Image saved to:" << filePath;
+        } else {
+            qDebug() << "Failed to save image to:" << filePath;
+        }
+        return qimg;
+    } else {
+        qDebug() << "QImage is null";
+        return QImage();
+    }
+}
+
+QImage CalibrationPage::getCleanQImage() {
+    if (!stillFrame.empty()) {
+        // Convert to RGB at full resolution (without any drawings)
+        cv::Mat rgbFrame;
+        cv::cvtColor(stillFrame, rgbFrame, cv::COLOR_BGR2RGB);
+
+        // Create clean QImage at full resolution
+        QImage cleanImage = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows,
+                                   rgbFrame.step, QImage::Format_RGB888).copy();
+
+        // Save image functionality
+        QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
+        QDir().mkpath(saveDir);
+
+        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+        QString filePath = saveDir + "/clean_image_" + timestamp + ".png";
+
+        if (cleanImage.save(filePath)) {
+            qDebug() << "Clean image saved to:" << filePath;
+        } else {
+            qDebug() << "Failed to save clean image to:" << filePath;
+        }
+
+        qDebug() << "Clean image dimensions:" << cleanImage.width() << "x" << cleanImage.height();
+
+        return cleanImage;
+    } else {
+        qDebug() << "Still frame is null";
+        return QImage();
+    }
+}
 
 // UI FUNCTIONS
 
@@ -560,7 +649,7 @@ QFrame* CalibrationPage::createImageFrame()
     cameraFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     cameraFrame->setLineWidth(2);
     cameraFrame->setStyleSheet("border-radius: 10px; background-color: #2E2E2E;");
-    cameraFrame->setFixedSize(800,400);
+    cameraFrame->setFixedSize(800,380);
 
     QVBoxLayout *cameraLayout = new QVBoxLayout(cameraFrame);
     m_imageLabel = new QLabel(cameraFrame);
@@ -572,13 +661,6 @@ QFrame* CalibrationPage::createImageFrame()
     return cameraFrame;
 
 }
-
-// void CalibrationPage::updateImage(const QImage& image)
-// {
-//     if (!image.isNull()) {
-//         m_imageLabel->setPixmap(QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-//     }
-// }
 
 // Creates the button layout
 QHBoxLayout* CalibrationPage::createButtonLayout()

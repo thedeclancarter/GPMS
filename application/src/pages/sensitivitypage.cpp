@@ -210,7 +210,7 @@ void SensitivityPage::onRejectButtonClicked()
 void SensitivityPage::onAcceptButtonClicked()
 {
     // endCaptureTimer();
-    emit navigateToTextVisionPage();
+    emit navigateToTextVisionPage(lowerSlider->value(), upperSlider->value());
 }
 
 bool SensitivityPage::checkCameraAvailability()

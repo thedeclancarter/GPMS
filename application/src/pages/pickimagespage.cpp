@@ -12,82 +12,9 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QTimer>
-
-
-// ClickableFrame implementation
-ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
-    ,m_selected(false)
-    ,m_imageLabel(nullptr)
-    ,m_image(cv::Mat())
-{
-    setLayout(new QVBoxLayout(this));
-    m_imageLabel = new QLabel(this);
-    m_imageLabel->setAlignment(Qt::AlignCenter);
-    m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_imageLabel->setScaledContents(true);
-    m_imageLabel->setContentsMargins(5, 5, 5, 5);
-    layout()->addWidget(m_imageLabel);
-    updateStyle();
-
-    // // Add a layout to the frame for displaying an image
-    // QVBoxLayout *layout = new QVBoxLayout(this);
-    // this->setLayout(layout); // Ensure layout is applied to frame
-}
-
-
-void ClickableFrame::setSelected(bool selected)
-{
-    m_selected = selected;
-    updateStyle();
-}
-
-bool ClickableFrame::isSelected() const
-{
-    return m_selected;
-}
-
-void ClickableFrame::setImage(const cv::Mat& mat)
-{
-    if (mat.type() != CV_8UC3) {
-        qDebug() << "Invalid image format. Expected CV_8UC3.";
-        return;
-    }
-    m_image = mat.clone();
-
-    // Convert cv::Mat to QImage without copying data
-    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
-    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-}
-
-cv::Mat ClickableFrame::getImage() const
-{
-    return m_image;
-}
-
-void ClickableFrame::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        setSelected(!m_selected);
-        emit clicked();
-    }
-    QFrame::mousePressEvent(event);
-}
-
-void ClickableFrame::updateStyle()
-{
-    QString style = QString(
-                        "ClickableFrame {"
-                        "   border-radius: 20px;"
-                        "   background-color: #3E3E3E;"
-                        "   border: %1px solid %2;"
-                        "}")
-                        .arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
-
-    setStyleSheet(style);
-}
-
-
+#include <QDir>
+#include <QUrlQuery>
+#include <QProcessEnvironment>
 
 
 // Pick Images Page
@@ -97,6 +24,11 @@ PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget 
     , m_projectionWindow(projectionWindow)
     , m_selectedFrame(nullptr)
     , m_networkManager(new QNetworkAccessManager(this))
+    , m_prompt("")
+    , m_isRealistic(false)
+    , m_lowThreshold(0.0)
+    , m_highThreshold(1.0)
+    , m_actual_image(0,0)
 {
     ui->setupUi(this);
     initializeUI();
@@ -106,8 +38,6 @@ PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget 
     connect(ui->selectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onAcceptButtonClicked);
     connect(ui->rejectImagesButton, &QPushButton::clicked, this, &PickImagesPage::onRejectButtonClicked);
     connect(ui->retakePhotoButton, &QPushButton::clicked, this, &PickImagesPage::onRetakePhotoButtonClicked);
-
-    fetchRandomImages(2);
 }
 
 PickImagesPage::~PickImagesPage()
@@ -126,23 +56,228 @@ cv::Mat PickImagesPage::getSelectedImage() const
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
 }
 
-void PickImagesPage::fetchRandomImages(int numImages)
-{
-    qDebug() << "Fetching" << numImages << "random images...";
+QString PickImagesPage::getApiKey() {
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    QString apiKey = env.value("API_KEY", "");
 
-    // Reset fetch counter
-    static int currentFetchIndex = 0;
-    currentFetchIndex = 0;
+    if (apiKey.isEmpty()) {
+        qDebug() << "Warning: MY_API_KEY environment variable not found";
+    }
+
+    return apiKey;
+}
+
+void PickImagesPage::fetchRandomImages(int numImages) {
+    if (!validateInputs(numImages)) {
+        return;
+    }
 
     for (int i = 0; i < numImages; ++i) {
-        QNetworkRequest request(QUrl("https://picsum.photos/1280/720"));
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-        QNetworkReply *reply = m_networkManager->get(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-            handleImageResponse(reply);
-        });
+        try {
+            QNetworkRequest request = createNetworkRequest();
+            cv::Mat imageData = prepareImageData();
+
+            if (imageData.empty()) {
+                qDebug() << "Failed to prepare image data";
+                continue;
+            }
+
+            QByteArray postData = encodeToPNG(imageData);
+            if (postData.isEmpty()) {
+                qDebug() << "Failed to encode image to PNG";
+                continue;
+            }
+
+            sendNetworkRequest(request, postData);
+
+        } catch (const std::exception& e) {
+            qDebug() << "Unexpected error:" << e.what();
+            continue;
+        }
     }
 }
+
+bool PickImagesPage::validateInputs(int numImages) {
+    if (numImages <= 0 || m_actual_image.isNull()) {
+        qDebug() << "Invalid number of images or empty actual image";
+        return false;
+    }
+    return true;
+}
+
+
+QUrl getEnvironmentUrl() {
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+    QString host = env.value("API_HOST", "");
+    QString port = env.value("API_PORT", "");
+    QString endpoint = env.value("API_ENDPOINT", "");
+
+    // Construct the URL
+    QString urlStr = QString("https://%1:%2/%3")
+                         .arg(host)
+                         .arg(port)
+                         .arg(endpoint);
+
+    qDebug() << "Generated URL:" << urlStr;
+
+    return QUrl(urlStr);
+}
+
+QNetworkRequest PickImagesPage::createNetworkRequest() {
+
+
+    QUrl url = getEnvironmentUrl();
+
+    if (!url.isValid()) {
+        throw std::runtime_error("Invalid API URL");
+    }
+
+    QNetworkRequest request(url);
+
+    // SSL Configuration
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(sslConfig);
+
+    // Set API Key
+    QByteArray apiKey = getApiKey().toUtf8();
+    if (apiKey.isEmpty()) {
+        throw std::runtime_error("Missing API key");
+    }
+    request.setRawHeader("x-api-key", apiKey);
+
+    // Instead of setting query parameters, we'll send them in the multipart data
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "multipart/form-data; boundary=boundary");
+
+    return request;
+}
+
+QUrlQuery PickImagesPage::createQueryParameters() {
+    QString prompt = getPrompt();
+    if (prompt.isEmpty()) {
+        throw std::runtime_error("Empty prompt");
+    }
+
+    QUrlQuery query;
+    query.addQueryItem("prompt", prompt);
+    query.addQueryItem("style", getIsRealistic() ? "realistic" : "animated");
+    query.addQueryItem("lo_threshold", QString::number(getLowThreshold()));
+    query.addQueryItem("hi_threshold", QString::number(getHighThreshold()));
+
+    return query;
+}
+
+cv::Mat PickImagesPage::prepareImageData() {
+    qDebug() << "Original pixmap size:" << m_actual_image.size();
+    qDebug() << "Is original pixmap null:" << m_actual_image.isNull();
+
+    QImage qImage = m_actual_image; //.toImage();
+    qDebug() << "Converted QImage size:" << qImage.size();
+    qDebug() << "Converted QImage format:" << qImage.format();
+
+    cv::Mat mat = ImageUtils::qimage_to_mat(qImage);
+    qDebug() << "Resulting Mat size:" << mat.size().width << "x" << mat.size().height;
+    qDebug() << "Is Mat empty:" << mat.empty();
+
+    return mat;
+}
+
+QByteArray PickImagesPage::encodeToPNG(const cv::Mat& image) {
+    std::vector<uchar> buffer;
+    std::vector<int> png_params;
+    png_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+    png_params.push_back(9); // Maximum compression
+
+    if (!cv::imencode(".png", image, buffer, png_params)) {
+        return QByteArray();
+    }
+
+    return QByteArray(reinterpret_cast<char*>(buffer.data()), buffer.size());
+}
+
+void PickImagesPage::sendNetworkRequest(const QNetworkRequest& request, const QByteArray& imageData) {
+    // Create multipart data
+    QByteArray multipartData;
+    QString boundary = "boundary";
+
+    // Add form fields
+    QMap<QString, QString> formFields;
+    formFields["prompt"] = getPrompt();
+    formFields["style"] = getIsRealistic() ? "realistic" : "animated";
+    formFields["lo_threshold"] = QString::number(getLowThreshold());
+    formFields["hi_threshold"] = QString::number(getHighThreshold());
+
+    // Add form fields to multipart data
+    for (auto it = formFields.begin(); it != formFields.end(); ++it) {
+        multipartData.append("--" + boundary.toUtf8() + "\r\n");
+        multipartData.append("Content-Disposition: form-data; name=\"" + it.key().toUtf8() + "\"\r\n\r\n");
+        multipartData.append(it.value().toUtf8() + "\r\n");
+    }
+
+    // Add image data
+    multipartData.append("--" + boundary.toUtf8() + "\r\n");
+    multipartData.append("Content-Disposition: form-data; name=\"image\"; filename=\"image.png\"\r\n");
+    multipartData.append("Content-Type: image/png\r\n\r\n");
+    multipartData.append(imageData);
+    multipartData.append("\r\n");
+
+    // Add closing boundary
+    multipartData.append("--" + boundary.toUtf8() + "--\r\n");
+
+    // Send the request
+    QNetworkReply *reply = m_networkManager->post(request, multipartData);
+    setupRequestTimeout(reply);
+    setupResponseHandlers(reply);
+}
+
+void PickImagesPage::setupRequestTimeout(QNetworkReply* reply) {
+    QTimer *timer = new QTimer(this);
+    timer->setSingleShot(true);
+    connect(timer, &QTimer::timeout, this, [reply, timer]() {
+        if (reply->isRunning()) {
+            reply->abort();
+            reply->deleteLater();
+            timer->deleteLater();
+        }
+    });
+    timer->start(30000); // 30 second timeout
+}
+
+void PickImagesPage::setupResponseHandlers(QNetworkReply* reply) {
+    // Handle completion
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        handleNetworkReply(reply);
+    });
+
+    // Handle errors during transmission
+    connect(reply, &QNetworkReply::errorOccurred, this,
+            [](QNetworkReply::NetworkError error) {
+                qDebug() << "Network error during transmission:" << error;
+            });
+}
+
+void PickImagesPage::handleNetworkReply(QNetworkReply* reply) {
+    QSharedPointer<QTimer> timer(qobject_cast<QTimer*>(reply->parent()));
+    if (timer) {
+        timer->stop();
+        timer->deleteLater();
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
+        int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (httpStatus >= 200 && httpStatus < 300) {
+            handleImageResponse(reply);
+        } else {
+            qDebug() << "HTTP error:" << httpStatus;
+        }
+    } else {
+        qDebug() << "Network error:" << reply->errorString();
+    }
+    reply->deleteLater();
+}
+
+
 
 void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 {
@@ -215,7 +350,8 @@ void PickImagesPage::clearImages()
     for (int i = 0; i < m_imageFrames.size(); ++i) {
         ClickableFrame* frame = m_imageFrames[i];
         // Explicitly clear image data
-        frame->setImage(cv::Mat());
+        cv::Mat emptyImage = cv::Mat::zeros(frame->size().height(), frame->size().width(), CV_8UC3);
+        frame->setImage(emptyImage);
         qDebug() << "Cleared frame" << i;
     }
 }
@@ -233,6 +369,7 @@ void PickImagesPage::refreshImages()
     // Now fetch new images
     qDebug() << "Fetching new images...";
     fetchRandomImages(2);
+    qDebug("Done fetching");
 }
 
 
@@ -376,3 +513,73 @@ QPushButton *PickImagesPage::styleButton(QPushButton *button, const QString &tex
 }
 
 
+
+
+// ClickableFrame implementation
+ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
+    ,m_selected(false)
+    ,m_imageLabel(nullptr)
+    ,m_image(cv::Mat())
+{
+    setLayout(new QVBoxLayout(this));
+    m_imageLabel = new QLabel(this);
+    m_imageLabel->setAlignment(Qt::AlignCenter);
+    m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_imageLabel->setScaledContents(true);
+    m_imageLabel->setContentsMargins(5, 5, 5, 5);
+    layout()->addWidget(m_imageLabel);
+    updateStyle();
+}
+
+
+void ClickableFrame::setSelected(bool selected)
+{
+    m_selected = selected;
+    updateStyle();
+}
+
+bool ClickableFrame::isSelected() const
+{
+    return m_selected;
+}
+
+void ClickableFrame::setImage(const cv::Mat& mat)
+{
+    if (mat.type() != CV_8UC3) {
+        qDebug() << "Invalid image format. Expected CV_8UC3.";
+        return;
+    }
+    m_image = mat.clone();
+
+    // Convert cv::Mat to QImage without copying data
+    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
+    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+cv::Mat ClickableFrame::getImage() const
+{
+    return m_image;
+}
+
+void ClickableFrame::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        setSelected(!m_selected);
+        emit clicked();
+    }
+    QFrame::mousePressEvent(event);
+}
+
+void ClickableFrame::updateStyle()
+{
+    QString style = QString(
+                        "ClickableFrame {"
+                        "   border-radius: 20px;"
+                        "   background-color: #3E3E3E;"
+                        "   border: %1px solid %2;"
+                        "}")
+                        .arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
+
+    setStyleSheet(style);
+}
