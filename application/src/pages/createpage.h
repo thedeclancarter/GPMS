@@ -42,8 +42,6 @@ class CreatePage : public QWidget
         QImage qimg;
         QLabel* m_imageLabel; // for image on monitor
 
-        bool stillFrameCaptured = false;
-
         void setupUI();
         void setupHeader(QVBoxLayout *layout);
 

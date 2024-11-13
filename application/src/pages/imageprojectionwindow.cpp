@@ -331,28 +331,24 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
     }
 
     QImage image;
-    const uchar* matData = mat.data;
-
     if (mat.channels() == 3)
     {
         // Convert BGR to RGB directly into QImage without extra cv::Mat
         cv::Mat rgbMat;
         cv::cvtColor(mat, rgbMat, cv::COLOR_BGR2RGB);
-        matData = rgbMat.data;
-        image = QImage(matData, rgbMat.cols, rgbMat.rows, static_cast<int>(rgbMat.step), QImage::Format_RGB888);
+        image = QImage(rgbMat.data, rgbMat.cols, rgbMat.rows, static_cast<int>(rgbMat.step), QImage::Format_RGB888).copy();
     }
     else if (mat.channels() == 4)
     {
         // Convert BGRA to RGBA directly
         cv::Mat rgbaMat;
         cv::cvtColor(mat, rgbaMat, cv::COLOR_BGRA2RGBA);
-        matData = rgbaMat.data;
-        image = QImage(matData, rgbaMat.cols, rgbaMat.rows, static_cast<int>(rgbaMat.step), QImage::Format_RGBA8888);
+        image = QImage(rgbaMat.data, rgbaMat.cols, rgbaMat.rows, static_cast<int>(rgbaMat.step), QImage::Format_RGBA8888).copy();
     }
     else if (mat.channels() == 1)
     {
         // Grayscale image
-        image = QImage(matData, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
+        image = QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8).copy();
     }
     else
     {
@@ -362,9 +358,6 @@ void ImageProjectionWindow::updateImage(const cv::Mat &mat)
 
     if (!image.isNull())
     {
-        // Since matData might go out of scope, we need to make a deep copy now
-        image = image.copy();
-
         // Scale the image to fit the label while maintaining aspect ratio
         QPixmap pixmap = QPixmap::fromImage(image).scaled(
             m_imageLabel->size(),

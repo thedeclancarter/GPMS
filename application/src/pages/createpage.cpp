@@ -10,6 +10,11 @@
 #include <QDebug>
 #include <QTimer>
 
+// Ensure that necessary OpenCV headers are included, as this is a Qt project
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
+
 // Constants for frame dimensions
 static constexpr int WIDTH = 1280;
 static constexpr int HEIGHT = 720;
@@ -20,7 +25,7 @@ CreatePage::CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     , ui(new Ui::CreatePage)
     , m_projectionWindow(projectionWindow)
     , createButton(nullptr)
-    , timer(new QTimer(this))  // Initialize timer
+    , timer(new QTimer(this))
 {
     setupUI();
     setupConnections();
@@ -31,14 +36,15 @@ CreatePage::CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     startCamera();
 }
 
+
+// Stop the camera and halt frame capture
 void CreatePage::stopCamera()
 {
     if (cap.isOpened()) {
-        cap.release();  // Release the camera
+        cap.release();
     }
-    timer->stop();  // Stop the frame capture
+    timer->stop();
 }
-
 
 void CreatePage::startCamera()
 {
@@ -46,38 +52,46 @@ void CreatePage::startCamera()
         cap.open(0);
         if (!cap.isOpened()) {
             qDebug() << "Error: Could not open camera.";
-            return;
+            return;  // If opening fails, exit the function
         }
         qDebug() << "Camera successfully opened.";
+        // Set frame width and height
         cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
     }
-    timer->start(30);  // Restart the timer
+
+    // Start the timer for periodic frame capture
+    timer->start(100); // Capture a frame every 30ms (~33 FPS)
 }
 
+
+// In your captureFrame method:
 void CreatePage::captureFrame()
 {
-    cap >> frame;  // Capture a frame from the camera
-    if (frame.empty()) {
-        qDebug() << "Error: Could not capture frame.";
-        return;
-    }
+        cap >> frame;  // Capture a frame from the camera
 
-    qDebug() << "Captured a frame";  // Debug message to check if frame is captured
+        // Check if the frame is empty
+        if (frame.empty()) {
+            qDebug() << "Error: Could not capture frame.";
+            return;
+        }
 
-    // Convert the frame to QImage format
-    QImage qtImage((const unsigned char*) frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
+        // Convert the frame to QImage format
+        QImage qtImage((const unsigned char*) frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
 
-    if (qtImage.isNull()) {
-        qDebug() << "Error: Failed to convert frame to QImage.";
-        return;
-    }
+        if (qtImage.isNull()) {
+            qDebug() << "Error: Failed to convert frame to QImage.";
+            return;
+        }
 
-    // Display the frame in previewLabel
-    previewLabel->setPixmap(QPixmap::fromImage(qtImage).scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    previewLabel->setScaledContents(true);
+        // Display the frame in previewLabel
+        previewLabel->setPixmap(QPixmap::fromImage(qtImage).scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        previewLabel->setScaledContents(true);
+        // Optionally, log the frame capture status
+        qDebug() << "Frame captured!";
 
-    update();
+        // Update the UI with the captured frame (optional, assuming you're displaying in a QLabel)
+        update();  // This could be used to trigger a repaint for displaying the frame in the UI
 }
 
 void CreatePage::setupUI()
@@ -196,20 +210,17 @@ void CreatePage::setupRightColumn(QGridLayout *layout, int row, int column)
 
     QVBoxLayout *previewLayout = new QVBoxLayout(previewContainer);
 
-    // Use the class member variable previewLabel
+    // QLabel for camera preview
     previewLabel = new QLabel(previewContainer);
     previewLabel->setAlignment(Qt::AlignCenter);
-    previewLabel->setStyleSheet("background-color: black;");  // Optional: Set a background for the label
-
-    previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // Ensure it expands to fill space
-    previewLabel->setScaledContents(true);  // Allow scaling of the image inside the label
+    previewLabel->setStyleSheet("background-color: black;");
+    previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    previewLabel->setScaledContents(true);
 
     previewLayout->addWidget(previewLabel);
 
     layout->addWidget(previewContainer, row, column);
 }
-
-
 
 void CreatePage::setupCreateButton(QVBoxLayout *layout)
 {
@@ -256,5 +267,6 @@ void CreatePage::onCreateButtonClicked()
 
 CreatePage::~CreatePage()
 {
+    stopCamera();
     delete ui;
 }
