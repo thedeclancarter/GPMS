@@ -7,16 +7,91 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QGraphicsDropShadowEffect>
+#include <QDebug>
+#include <QTimer>
 
+// Ensure that necessary OpenCV headers are included, as this is a Qt project
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
+
+// Constants for frame dimensions
+static constexpr int WIDTH = 1280;
+static constexpr int HEIGHT = 720;
+
+// In CreatePage constructor
 CreatePage::CreatePage(ImageProjectionWindow *projectionWindow, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::CreatePage)
     , m_projectionWindow(projectionWindow)
     , createButton(nullptr)
+    , timer(new QTimer(this))
 {
-    // ui->setupUi(this);
     setupUI();
     setupConnections();
+
+    connect(timer, &QTimer::timeout, this, &CreatePage::captureFrame);  // Connect timer to captureFrame
+
+    // Start the camera feed immediately after the UI is set up
+    startCamera();
+}
+
+
+// Stop the camera and halt frame capture
+void CreatePage::stopCamera()
+{
+    if (cap.isOpened()) {
+        cap.release();
+    }
+    qDebug() << "Camera Stopped, create!";
+    timer->stop();
+}
+
+void CreatePage::startCamera()
+{
+    if (!cap.isOpened()) {
+        cap.open(0);
+        if (!cap.isOpened()) {
+            qDebug() << "Error: Could not open camera.";
+            return;  // If opening fails, exit the function
+        }
+        qDebug() << "Camera successfully opened.";
+        // Set frame width and height
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
+    }
+
+    qDebug() << "Camera Started, create!";
+    // Start the timer for periodic frame capture
+    timer->start(100); // Capture a frame every 30ms (~33 FPS)
+}
+
+
+// In your captureFrame method:
+void CreatePage::captureFrame()
+{
+        cap >> frame;  // Capture a frame from the camera
+
+        // Check if the frame is empty
+        if (frame.empty()) {
+            qDebug() << "Error: Could not capture frame.";
+            return;
+        }
+
+        // Convert the frame to QImage format
+        QImage qtImage((const unsigned char*) frame.data, frame.cols, frame.rows, frame.step, QImage::Format_BGR888);
+
+        if (qtImage.isNull()) {
+            qDebug() << "Error: Failed to convert frame to QImage.";
+            return;
+        }
+
+        // Display the frame in previewLabel
+        previewLabel->setPixmap(QPixmap::fromImage(qtImage).scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        previewLabel->setScaledContents(true);
+
+        // Update the UI with the captured frame (optional, assuming you're displaying in a QLabel)
+        update();  // This could be used to trigger a repaint for displaying the frame in the UI
 }
 
 void CreatePage::setupUI()
@@ -130,13 +205,18 @@ void CreatePage::setupLeftColumn(QGridLayout *layout, int row, int column)
 void CreatePage::setupRightColumn(QGridLayout *layout, int row, int column)
 {
     QWidget *previewContainer = new QWidget(this);
-    previewContainer->setFixedHeight(275);  // Match the height of the steps container
+    previewContainer->setFixedHeight(275);
     previewContainer->setStyleSheet("background-color: #2C2C2E; border-radius: 15px;");
 
     QVBoxLayout *previewLayout = new QVBoxLayout(previewContainer);
-    QLabel *previewLabel = new QLabel("Preview of Your Projection Will Appear Here", previewContainer);
+
+    // QLabel for camera preview
+    previewLabel = new QLabel(previewContainer);
     previewLabel->setAlignment(Qt::AlignCenter);
-    previewLabel->setStyleSheet("color: #a0aec0;");
+    previewLabel->setStyleSheet("background-color: black;");
+    previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    previewLabel->setScaledContents(true);
+
     previewLayout->addWidget(previewLabel);
 
     layout->addWidget(previewContainer, row, column);
@@ -180,8 +260,10 @@ void CreatePage::setupConnections()
 
 void CreatePage::onCreateButtonClicked()
 {
+    stopCamera(); // Stop camera before navigating
     emit navigateToCalibrationPage();
 }
+
 
 CreatePage::~CreatePage()
 {
