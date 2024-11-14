@@ -135,7 +135,7 @@ void MainWindow::setupConnections()
 
 void MainWindow::logoClicked(){
     navigateToCreatePage();
-    pickImagesPage->refreshImages();
+    pickImagesPage->resetState();
 }
 
 void MainWindow::navigateToCreatePage()

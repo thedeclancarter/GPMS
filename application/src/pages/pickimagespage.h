@@ -28,6 +28,7 @@ class PickImagesPage : public QWidget
         cv::Mat getSelectedImage() const;
         void clearSelections();
         void refreshImages();
+        void resetState();
 
         // Getters
         QString getPrompt() const { return m_prompt; }
