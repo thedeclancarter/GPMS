@@ -23,6 +23,7 @@ public:
     bool isSelected() const;
     void setImage(const cv::Mat& mat);
     cv::Mat getImage() const;
+    void clearImage();
 
 signals:
     void clicked();
@@ -34,7 +35,10 @@ private:
     bool m_selected;
     cv::Mat m_image;
     QLabel* m_imageLabel;
+    QLabel* m_loadingLabel;
+
     void updateStyle();
+    bool hasValidImage() const;
 };
 
 namespace Ui {
@@ -93,6 +97,8 @@ class PickImagesPage : public QWidget
         QImage m_actual_image;
 
         // for api
+        QMap<QNetworkReply*, QTimer*> m_replyTimers;
+
         bool validateInputs(int numImages);
         QNetworkRequest createNetworkRequest();
         QUrlQuery createQueryParameters();
