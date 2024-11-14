@@ -15,6 +15,7 @@
 #include <QDir>
 #include <QUrlQuery>
 #include <QProcessEnvironment>
+#include <QPainter>
 
 
 // Pick Images Page
@@ -89,7 +90,7 @@ void PickImagesPage::fetchRandomImages(int numImages) {
                 qDebug() << "Failed to encode image to PNG";
                 continue;
             }
-
+            qDebug() << "sending network request: " << i;
             sendNetworkRequest(request, postData);
 
         } catch (const std::exception& e) {
@@ -174,7 +175,30 @@ cv::Mat PickImagesPage::prepareImageData() {
     qDebug() << "Original pixmap size:" << m_actual_image.size();
     qDebug() << "Is original pixmap null:" << m_actual_image.isNull();
 
-    QImage qImage = m_actual_image; //.toImage();
+    // Convert to QImage
+    QImage qImage = m_actual_image;
+
+    // Scale to exactly 1280x720 while maintaining aspect ratio
+    qImage = qImage.scaled(1280, 720, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    // If the image isn't exactly 1280x720 after scaling (due to aspect ratio),
+    // create a black background image and center the scaled image
+    if (qImage.size() != QSize(1280, 720)) {
+        QImage finalImage(1280, 720, QImage::Format_RGB888);
+        finalImage.fill(Qt::black);
+
+        // Calculate position to center the image
+        int x = (1280 - qImage.width()) / 2;
+        int y = (720 - qImage.height()) / 2;
+
+        // Create painter to draw the scaled image onto the black background
+        QPainter painter(&finalImage);
+        painter.drawImage(x, y, qImage);
+        painter.end();
+
+        qImage = finalImage;
+    }
+
     qDebug() << "Converted QImage size:" << qImage.size();
     qDebug() << "Converted QImage format:" << qImage.format();
 
@@ -228,26 +252,58 @@ void PickImagesPage::sendNetworkRequest(const QNetworkRequest& request, const QB
     multipartData.append("--" + boundary.toUtf8() + "--\r\n");
 
     // Send the request
-    QNetworkReply *reply = m_networkManager->post(request, multipartData);
-    setupRequestTimeout(reply);
-    setupResponseHandlers(reply);
+    qDebug() << "posting request now";
+    try {
+        QNetworkReply *reply = m_networkManager->post(request, multipartData);
+        if (!reply) {
+            qDebug() << "Failed to create network reply";
+            return;
+        }
+
+        setupRequestTimeout(reply);
+        setupResponseHandlers(reply);
+
+    } catch (const std::exception& e) {
+        qDebug() << "Exception in sendNetworkRequest:" << e.what();
+    }
 }
 
 void PickImagesPage::setupRequestTimeout(QNetworkReply* reply) {
     QTimer *timer = new QTimer(this);
     timer->setSingleShot(true);
-    connect(timer, &QTimer::timeout, this, [reply, timer]() {
-        if (reply->isRunning()) {
-            reply->abort();
+
+    // Store the timer with its associated reply
+    m_replyTimers[reply] = timer;
+
+    // Explicitly capture timer in the lambda
+    connect(timer, &QTimer::timeout, this, [this, reply, timer]() {
+        if (m_replyTimers.contains(reply)) {
+            // Check if the reply is still valid and running
+            if (!reply->isFinished()) {
+                reply->abort();
+            }
+            // Clean up
+            m_replyTimers.remove(reply);
+            timer->deleteLater();
             reply->deleteLater();
+        }
+    });
+
+    // Explicitly capture timer in this lambda too
+    connect(reply, &QNetworkReply::finished, this, [this, reply, timer]() {
+        if (m_replyTimers.contains(reply)) {
+            m_replyTimers.remove(reply);
+            timer->stop();
             timer->deleteLater();
         }
     });
-    timer->start(30000); // 30 second timeout
+
+    timer->start(100000); // 100 second timeout
 }
 
 void PickImagesPage::setupResponseHandlers(QNetworkReply* reply) {
     // Handle completion
+    qDebug() << "Got reply " << reply;
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         handleNetworkReply(reply);
     });
@@ -260,8 +316,15 @@ void PickImagesPage::setupResponseHandlers(QNetworkReply* reply) {
 }
 
 void PickImagesPage::handleNetworkReply(QNetworkReply* reply) {
-    QSharedPointer<QTimer> timer(qobject_cast<QTimer*>(reply->parent()));
-    if (timer) {
+    // Ensure the reply is still valid
+    if (!reply) {
+        return;
+    }
+
+    // Clean up the timer if it exists
+    if (m_replyTimers.contains(reply)) {
+        QTimer* timer = m_replyTimers[reply];
+        m_replyTimers.remove(reply);
         timer->stop();
         timer->deleteLater();
     }
@@ -276,6 +339,7 @@ void PickImagesPage::handleNetworkReply(QNetworkReply* reply) {
     } else {
         qDebug() << "Network error:" << reply->errorString();
     }
+
     reply->deleteLater();
 }
 
@@ -306,6 +370,7 @@ void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 
                     // Reset counter if we've filled all frames
                     if (currentFrameIndex >= m_imageFrames.size()) {
+                        qDebug("setting current frame to 0");
                         currentFrameIndex = 0;
                     }
                 }
@@ -370,6 +435,7 @@ void PickImagesPage::refreshImages()
     }
 
     // Now fetch new images
+    clearImages();
     qDebug() << "Fetching new images...";
     fetchRandomImages(2);
     qDebug("Done fetching");
@@ -596,8 +662,15 @@ void ClickableFrame::setImage(const cv::Mat& mat)
     }
 
     m_image = mat.clone();
+
     // Convert cv::Mat to QImage without copying data
     QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
+    if (qimg.isNull()) {
+        qDebug() << "Failed to create QImage";
+        clearImage();
+        return;
+    }
+
     m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     // Show image and hide loading text
@@ -625,14 +698,18 @@ bool ClickableFrame::isSelected() const
     return m_selected;
 }
 
+bool ClickableFrame::hasValidImage() const {
+    return !m_image.empty();
+}
+
 cv::Mat ClickableFrame::getImage() const
 {
-    return m_image;
+    return hasValidImage() ? m_image : cv::Mat();
 }
 
 void ClickableFrame::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::LeftButton && hasValidImage())
     {
         setSelected(!m_selected);
         emit clicked();
