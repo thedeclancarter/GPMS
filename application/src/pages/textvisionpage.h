@@ -63,7 +63,6 @@ private:
 
 
     // for loading feature
-    QLabel* m_loadingLabel;
     void showLoading();
 
 
