@@ -56,9 +56,9 @@ void ClickableFrame::setImage(const cv::Mat& mat)
         return;
     }
 
-    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    QPixmap pixmap = QPixmap::fromImage(qimg);
+    m_imageLabel->setPixmap(pixmap);  // Don't scale, keep original size
 
-    // Show image and hide loading text
     m_imageLabel->setVisible(true);
     m_loadingLabel->setVisible(false);
 }

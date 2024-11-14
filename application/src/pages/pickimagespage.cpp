@@ -503,7 +503,7 @@ QFrame *PickImagesPage::createImagesGrid()
     QFrame *gridFrame = new QFrame(this);
     gridFrame->setFrameStyle(QFrame::NoFrame);
     gridFrame->setStyleSheet("background-color: transparent;");
-    gridFrame->setFixedWidth(900);
+    gridFrame->setFixedWidth(1000);
 
     QGridLayout *gridLayout = new QGridLayout(gridFrame);
     gridLayout->setSpacing(10);
@@ -511,7 +511,7 @@ QFrame *PickImagesPage::createImagesGrid()
     for (int i = 0; i < 2; ++i)
     {
         ClickableFrame *imageFrame = new ClickableFrame(this);
-        imageFrame->setFixedSize(400, 350);
+        imageFrame->setFixedSize(450, 330);
         connect(imageFrame, &ClickableFrame::clicked, this, [this, imageFrame]() {
             updateSelectedImages(imageFrame);
         });

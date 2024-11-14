@@ -193,6 +193,8 @@ void MainWindow::navigateToTextVisionPageFromSensitivity(int low, int high)
     // set threshold here
     pickImagesPage->setLowThreshold(low);
     pickImagesPage->setHighThreshold(high);
+    // remove loading icon
+    textVisionPage->hideLoading();
 
 }
 
@@ -200,6 +202,8 @@ void MainWindow::navigateToTextVisionPage()
 {
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
     stackedWidget->setCurrentWidget(textVisionPage);
+    // remove loading icon
+    textVisionPage->hideLoading();
 }
 
 void MainWindow::navigateFromProjectPageToPickImagesPage()
