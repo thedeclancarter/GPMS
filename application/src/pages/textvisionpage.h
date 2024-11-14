@@ -23,6 +23,8 @@ public:
     bool isRealistic() const { return m_isRealistic; }
     void clearInput();
 
+    void hideLoading(); // hide loading
+
 signals:
     void navigateToPickImagesPage(QString prompt, bool isRealistic);
 
@@ -58,6 +60,12 @@ private:
     QTextEdit *m_visionInput;
     QPushButton *m_submitButton;
     bool isRunningOnRaspberryPi();
+
+
+    // for loading feature
+    QLabel* m_loadingLabel;
+    void showLoading();
+
 
 
     QString m_visionText;

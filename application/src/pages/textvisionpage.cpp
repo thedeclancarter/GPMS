@@ -160,6 +160,20 @@ void TextVisionPage::setupUI()
     m_animatedButton->setCursor(Qt::PointingHandCursor);
 }
 
+void TextVisionPage::showLoading()
+{
+    // m_submitButton->setText("Loading...");
+    m_submitButton->setEnabled(false);
+    m_visionInput->setEnabled(false);
+}
+
+void TextVisionPage::hideLoading()
+{
+    // m_submitButton->setText("+ SUBMIT");
+    m_submitButton->setEnabled(true);
+    m_visionInput->setEnabled(true);
+}
+
 QLabel* TextVisionPage::createTitleLabel()
 {
     QLabel *titleLabel = new QLabel("Describe Your Vision In 1-2 Sentences!", this);
@@ -191,6 +205,7 @@ void TextVisionPage::setupLayouts()
     mainLayout->addLayout(optionsLayout);
     mainLayout->addWidget(m_visionInput, 0, Qt::AlignHCenter);
     mainLayout->addWidget(m_submitButton, 0, Qt::AlignHCenter);
+    mainLayout->addWidget(m_loadingLabel, 0, Qt::AlignHCenter);
 
     setLayout(mainLayout);
 }
@@ -245,6 +260,7 @@ void TextVisionPage::updateButtonStyles()
 
 void TextVisionPage::onSubmitButtonClicked()
 {
+    showLoading();
     m_visionText = m_visionInput->toPlainText();
 
     if (m_visionText.isEmpty()) {

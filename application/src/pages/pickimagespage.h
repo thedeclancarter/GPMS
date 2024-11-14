@@ -11,35 +11,7 @@
 #include <QNetworkReply>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
-
-
-class ClickableFrame : public QFrame
-{
-    Q_OBJECT
-
-public:
-    explicit ClickableFrame(QWidget *parent = nullptr);
-    void setSelected(bool selected);
-    bool isSelected() const;
-    void setImage(const cv::Mat& mat);
-    cv::Mat getImage() const;
-    void clearImage();
-
-signals:
-    void clicked();
-
-protected:
-    void mousePressEvent(QMouseEvent *event) override;
-
-private:
-    bool m_selected;
-    cv::Mat m_image;
-    QLabel* m_imageLabel;
-    QLabel* m_loadingLabel;
-
-    void updateStyle();
-    bool hasValidImage() const;
-};
+#include <clickableframe.h>
 
 namespace Ui {
 class PickImagesPage;
@@ -98,7 +70,9 @@ class PickImagesPage : public QWidget
 
         // for api
         QMap<QNetworkReply*, QTimer*> m_replyTimers;
+        QList<QNetworkReply*> m_activeReplies;  // Track active network replies
 
+        void cleanupNetworkRequests();  // New method for cleanup
         bool validateInputs(int numImages);
         QNetworkRequest createNetworkRequest();
         QUrlQuery createQueryParameters();

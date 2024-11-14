@@ -74,6 +74,8 @@ set(PROJECT_SOURCES
     src/pages/calibration/calibrationPage.cpp
     src/pages/calibration/calibrationPage.ui
     src/utils/image_utils.h
+    src/pages/clickableframe.cpp
+    src/pages/clickableframe.h
 )
 
 add_executable(gpms_ui ${PROJECT_SOURCES})
