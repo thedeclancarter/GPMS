@@ -213,7 +213,7 @@ void MainWindow::navigateFromTextVisionToPickImages(QString prompt, bool isReali
     stackedWidget->setCurrentWidget(pickImagesPage);
     pickImagesPage->setPrompt(prompt);
     pickImagesPage->setIsRealistic(isRealistic);
-    pickImagesPage->fetchRandomImages(2);
+    pickImagesPage->refreshImages();
 }
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)

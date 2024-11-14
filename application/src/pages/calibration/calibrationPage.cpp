@@ -576,19 +576,6 @@ QImage CalibrationPage::getCleanQImage() {
         QImage cleanImage = QImage(rgbFrame.data, rgbFrame.cols, rgbFrame.rows,
                                    rgbFrame.step, QImage::Format_RGB888).copy();
 
-        // Save image functionality
-        QString saveDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/MyAppImages";
-        QDir().mkpath(saveDir);
-
-        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
-        QString filePath = saveDir + "/clean_image_" + timestamp + ".png";
-
-        if (cleanImage.save(filePath)) {
-            qDebug() << "Clean image saved to:" << filePath;
-        } else {
-            qDebug() << "Failed to save clean image to:" << filePath;
-        }
-
         qDebug() << "Clean image dimensions:" << cleanImage.width() << "x" << cleanImage.height();
 
         return cleanImage;

@@ -2,6 +2,7 @@
 #include "ui_pickimagespage.h"
 #include "../utils/image_utils.h"
 #include "imageprojectionwindow.h"
+#include "clickableframe.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -43,6 +44,7 @@ PickImagesPage::PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget 
 
 PickImagesPage::~PickImagesPage()
 {
+    cleanupNetworkRequests();
     delete ui;
 }
 
@@ -173,8 +175,6 @@ QUrlQuery PickImagesPage::createQueryParameters() {
 
 cv::Mat PickImagesPage::prepareImageData() {
     qDebug() << "Original pixmap size:" << m_actual_image.size();
-    qDebug() << "Is original pixmap null:" << m_actual_image.isNull();
-
     // Convert to QImage
     QImage qImage = m_actual_image;
 
@@ -199,12 +199,8 @@ cv::Mat PickImagesPage::prepareImageData() {
         qImage = finalImage;
     }
 
-    qDebug() << "Converted QImage size:" << qImage.size();
-    qDebug() << "Converted QImage format:" << qImage.format();
-
     cv::Mat mat = ImageUtils::qimage_to_mat(qImage);
     qDebug() << "Resulting Mat size:" << mat.size().width << "x" << mat.size().height;
-    qDebug() << "Is Mat empty:" << mat.empty();
 
     return mat;
 }
@@ -220,6 +216,29 @@ QByteArray PickImagesPage::encodeToPNG(const cv::Mat& image) {
     }
 
     return QByteArray(reinterpret_cast<char*>(buffer.data()), buffer.size());
+}
+
+void PickImagesPage::cleanupNetworkRequests()
+{
+    // Abort and cleanup all active network requests
+    for (QNetworkReply* reply : m_activeReplies) {
+        if (reply) {
+            disconnect(reply, nullptr, this, nullptr);  // Disconnect all signals
+            reply->abort();  // Abort the request
+            reply->deleteLater();
+            qDebug() << "Ending network request for: " << m_prompt;
+        }
+    }
+    m_activeReplies.clear();
+
+    // Clean up associated timers
+    for (QTimer* timer : m_replyTimers.values()) {
+        if (timer) {
+            timer->stop();
+            timer->deleteLater();
+        }
+    }
+    m_replyTimers.clear();
 }
 
 void PickImagesPage::sendNetworkRequest(const QNetworkRequest& request, const QByteArray& imageData) {
@@ -259,6 +278,8 @@ void PickImagesPage::sendNetworkRequest(const QNetworkRequest& request, const QB
             qDebug() << "Failed to create network reply";
             return;
         }
+
+        m_activeReplies.append(reply);  // Track the new reply
 
         setupRequestTimeout(reply);
         setupResponseHandlers(reply);
@@ -315,11 +336,16 @@ void PickImagesPage::setupResponseHandlers(QNetworkReply* reply) {
             });
 }
 
+
+// connected from setup response handlers
 void PickImagesPage::handleNetworkReply(QNetworkReply* reply) {
     // Ensure the reply is still valid
     if (!reply) {
         return;
     }
+
+    // Remove from active replies list
+    m_activeReplies.removeOne(reply);
 
     // Clean up the timer if it exists
     if (m_replyTimers.contains(reply)) {
@@ -344,7 +370,7 @@ void PickImagesPage::handleNetworkReply(QNetworkReply* reply) {
 }
 
 
-
+// called by handle network reply
 void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 {
     static int currentFrameIndex = 0;
@@ -370,7 +396,7 @@ void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 
                     // Reset counter if we've filled all frames
                     if (currentFrameIndex >= m_imageFrames.size()) {
-                        qDebug("setting current frame to 0");
+                        qDebug("Filled all frames, resetting index");
                         currentFrameIndex = 0;
                     }
                 }
@@ -383,7 +409,7 @@ void PickImagesPage::handleImageResponse(QNetworkReply* reply)
 
 void PickImagesPage::onRejectButtonClicked()
 {
-    refreshImages();
+    cleanupNetworkRequests();
     QTimer::singleShot(300, this, [this]() {
         emit navigateToTextVisionPage();
     });
@@ -391,7 +417,7 @@ void PickImagesPage::onRejectButtonClicked()
 
 void PickImagesPage::onRetakePhotoButtonClicked()
 {
-    refreshImages();
+    cleanupNetworkRequests();
     QTimer::singleShot(100, this, [this]() {
         emit navigateToSensitivityPage();
     });
@@ -438,7 +464,6 @@ void PickImagesPage::refreshImages()
     clearImages();
     qDebug() << "Fetching new images...";
     fetchRandomImages(2);
-    qDebug("Done fetching");
 }
 
 
@@ -518,7 +543,6 @@ void PickImagesPage::updateSelectedImages(ClickableFrame *clickedFrame)
         m_selectedFrame = nullptr;  // Clear the selection if the frame was deselected
         // change proj to show rainbow
         m_projectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
-        qDebug("is null");
     }
 
     // Enable or disable the select button based on whether any frame is selected
@@ -579,153 +603,4 @@ QPushButton *PickImagesPage::styleButton(QPushButton *button, const QString &tex
     // Set the hand cursor when hovering over the button
     button->setCursor(Qt::PointingHandCursor);
     return button;
-}
-
-
-
-
-// // ClickableFrame implementation
-// ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
-//     ,m_selected(false)
-//     ,m_imageLabel(nullptr)
-//     ,m_image(cv::Mat())
-// {
-//     setLayout(new QVBoxLayout(this));
-//     m_imageLabel = new QLabel(this);
-//     m_imageLabel->setAlignment(Qt::AlignCenter);
-//     m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-//     m_imageLabel->setScaledContents(true);
-//     m_imageLabel->setContentsMargins(5, 5, 5, 5);
-//     layout()->addWidget(m_imageLabel);
-//     updateStyle();
-// }
-
-
-
-
-// void ClickableFrame::setImage(const cv::Mat& mat)
-// {
-//     if (mat.type() != CV_8UC3) {
-//         qDebug() << "Invalid image format. Expected CV_8UC3.";
-//         return;
-//     }
-//     m_image = mat.clone();
-
-//     // Convert cv::Mat to QImage without copying data
-//     QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
-//     m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-// }
-
-
-
-
-ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
-    ,m_selected(false)
-    ,m_imageLabel(nullptr)
-    ,m_loadingLabel(nullptr)
-    ,m_image(cv::Mat())
-{
-    setLayout(new QVBoxLayout(this));
-
-    // Create loading label
-    m_loadingLabel = new QLabel("Loading...", this);
-    m_loadingLabel->setAlignment(Qt::AlignCenter);
-    m_loadingLabel->setStyleSheet("QLabel { color: #FFFFFF; font-size: 16px; }");
-
-    // Create image label
-    m_imageLabel = new QLabel(this);
-    m_imageLabel->setAlignment(Qt::AlignCenter);
-    m_imageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_imageLabel->setScaledContents(true);
-    m_imageLabel->setContentsMargins(5, 5, 5, 5);
-
-    // Stack the labels
-    m_imageLabel->setVisible(false);  // Initially hide the image label
-    layout()->addWidget(m_loadingLabel);
-    layout()->addWidget(m_imageLabel);
-
-    updateStyle();
-}
-
-void ClickableFrame::setImage(const cv::Mat& mat)
-{
-    if (mat.empty()) {
-        m_imageLabel->setVisible(false);
-        m_loadingLabel->setVisible(true);
-        m_image = cv::Mat();
-        return;
-    }
-
-    if (mat.type() != CV_8UC3) {
-        qDebug() << "Invalid image format. Expected CV_8UC3.";
-        return;
-    }
-
-    m_image = mat.clone();
-
-    // Convert cv::Mat to QImage without copying data
-    QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
-    if (qimg.isNull()) {
-        qDebug() << "Failed to create QImage";
-        clearImage();
-        return;
-    }
-
-    m_imageLabel->setPixmap(QPixmap::fromImage(qimg).scaled(m_imageLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-    // Show image and hide loading text
-    m_imageLabel->setVisible(true);
-    m_loadingLabel->setVisible(false);
-}
-
-void ClickableFrame::clearImage()
-{
-    m_image = cv::Mat();
-    m_imageLabel->clear();
-    m_imageLabel->setVisible(false);
-    m_loadingLabel->setVisible(true);
-}
-
-
-void ClickableFrame::setSelected(bool selected)
-{
-    m_selected = selected;
-    updateStyle();
-}
-
-bool ClickableFrame::isSelected() const
-{
-    return m_selected;
-}
-
-bool ClickableFrame::hasValidImage() const {
-    return !m_image.empty();
-}
-
-cv::Mat ClickableFrame::getImage() const
-{
-    return hasValidImage() ? m_image : cv::Mat();
-}
-
-void ClickableFrame::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton && hasValidImage())
-    {
-        setSelected(!m_selected);
-        emit clicked();
-    }
-    QFrame::mousePressEvent(event);
-}
-
-void ClickableFrame::updateStyle()
-{
-    QString style = QString(
-                        "ClickableFrame {"
-                        "   border-radius: 20px;"
-                        "   background-color: #3E3E3E;"
-                        "   border: %1px solid %2;"
-                        "}")
-                        .arg(m_selected ? "2" : "1", m_selected ? "#FFD700" : "#3E3E3E");
-
-    setStyleSheet(style);
 }
