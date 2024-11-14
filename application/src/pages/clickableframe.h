@@ -1,9 +1,12 @@
+// clickableframe.h
+
 #ifndef CLICKABLEFRAME_H
 #define CLICKABLEFRAME_H
 
 #include <QFrame>
 #include <QLabel>
-#include <opencv2/core.hpp>
+#include <QTimer>
+#include <opencv2/opencv.hpp>
 
 class ClickableFrame : public QFrame
 {
@@ -11,11 +14,12 @@ class ClickableFrame : public QFrame
 
 public:
     explicit ClickableFrame(QWidget *parent = nullptr);
+    void setImage(const cv::Mat& mat);
+    void clearImage();
     void setSelected(bool selected);
     bool isSelected() const;
-    void setImage(const cv::Mat& mat);
+    bool hasValidImage() const;
     cv::Mat getImage() const;
-    void clearImage();
 
 signals:
     void clicked();
@@ -23,14 +27,21 @@ signals:
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 
+private slots:
+    void updateLoadingDots();
+
 private:
+    void updateStyle();
+
     bool m_selected;
-    cv::Mat m_image;
     QLabel* m_imageLabel;
     QLabel* m_loadingLabel;
+    cv::Mat m_image;
 
-    void updateStyle();
-    bool hasValidImage() const;
+    // New members for loading animation
+    QTimer* m_loadingTimer;
+    QString m_loadingBaseText;
+    int m_dotCount;
 };
 
 #endif // CLICKABLEFRAME_H

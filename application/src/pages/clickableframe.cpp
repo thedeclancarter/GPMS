@@ -1,19 +1,25 @@
+// clickableframe.cpp
+
 #include "clickableframe.h"
 
-#include <QLayout>
+#include <QVBoxLayout>
 #include <QDebug>
 #include <QMouseEvent>
 
-ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
-    ,m_selected(false)
-    ,m_imageLabel(nullptr)
-    ,m_loadingLabel(nullptr)
-    ,m_image(cv::Mat())
+ClickableFrame::ClickableFrame(QWidget *parent)
+    : QFrame(parent),
+      m_selected(false),
+      m_imageLabel(nullptr),
+      m_loadingLabel(nullptr),
+      m_image(cv::Mat()),
+      m_loadingTimer(new QTimer(this)),
+      m_loadingBaseText("Loading Your Image"),
+      m_dotCount(0)
 {
     setLayout(new QVBoxLayout(this));
 
-    // Create loading label
-    m_loadingLabel = new QLabel("Loading...", this);
+    // Create loading label without dots
+    m_loadingLabel = new QLabel(m_loadingBaseText, this);
     m_loadingLabel->setAlignment(Qt::AlignCenter);
     m_loadingLabel->setStyleSheet("QLabel { color: #FFFFFF; font-size: 16px; }");
 
@@ -30,13 +36,21 @@ ClickableFrame::ClickableFrame(QWidget *parent) : QFrame(parent)
     layout()->addWidget(m_imageLabel);
 
     updateStyle();
+
+    // Setup loading timer
+    connect(m_loadingTimer, &QTimer::timeout, this, &ClickableFrame::updateLoadingDots);
 }
 
 void ClickableFrame::setImage(const cv::Mat& mat)
 {
+    // Stop the loading animation as the image is received
+    m_loadingTimer->stop();
+    m_loadingLabel->setVisible(false);
+
     if (mat.empty()) {
         m_imageLabel->setVisible(false);
         m_loadingLabel->setVisible(true);
+        m_loadingTimer->start(500); // Restart loading animation if needed
         m_image = cv::Mat();
         return;
     }
@@ -48,7 +62,7 @@ void ClickableFrame::setImage(const cv::Mat& mat)
 
     m_image = mat.clone();
 
-    // Convert cv::Mat to QImage without copying data
+    // Convert cv::Mat to QImage
     QImage qimg(m_image.data, m_image.cols, m_image.rows, m_image.step, QImage::Format_RGB888);
     if (qimg.isNull()) {
         qDebug() << "Failed to create QImage";
@@ -57,7 +71,7 @@ void ClickableFrame::setImage(const cv::Mat& mat)
     }
 
     QPixmap pixmap = QPixmap::fromImage(qimg);
-    m_imageLabel->setPixmap(pixmap);  // Don't scale, keep original size
+    m_imageLabel->setPixmap(pixmap);  // Display the image without scaling
 
     m_imageLabel->setVisible(true);
     m_loadingLabel->setVisible(false);
@@ -69,8 +83,8 @@ void ClickableFrame::clearImage()
     m_imageLabel->clear();
     m_imageLabel->setVisible(false);
     m_loadingLabel->setVisible(true);
+    m_loadingTimer->start(500); // Start loading animation
 }
-
 
 void ClickableFrame::setSelected(bool selected)
 {
@@ -115,3 +129,9 @@ void ClickableFrame::updateStyle()
     setStyleSheet(style);
 }
 
+void ClickableFrame::updateLoadingDots()
+{
+    m_dotCount = (m_dotCount + 1) % 4; // Cycle through 0 to 3 dots
+    QString dots = QString(m_dotCount, '.');
+    m_loadingLabel->setText(m_loadingBaseText + dots);
+}
