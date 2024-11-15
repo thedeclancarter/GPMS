@@ -239,6 +239,8 @@ void ImageProjectionWindow::activateLogo(){
     {
         qDebug() << "Failed to load logo image from resource";
     }
+    // set calibrated to false
+    m_isCalibrated = false;
 }
 
 // Activate SCANNING state (whiteout the current frame)
