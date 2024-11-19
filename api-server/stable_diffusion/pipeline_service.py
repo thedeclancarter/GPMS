@@ -60,8 +60,8 @@ def generate_image(
     control_guidance_end: float = 0.8,
     num_inference_steps: int = 60,
     num_refiner_steps: int = 40,
-    lo_treshold: int = 100,
-    hi_treshold: int = 200
+    lo_threshold: int = 100,
+    hi_threshold: int = 200
 ) -> Image.Image:
     """
     Generates and refines an image using the Stable Diffusion pipeline with style-specific prompts.
@@ -84,7 +84,7 @@ def generate_image(
 
     with torch.no_grad():
         # Read and process the ControlNet image
-        controlnet_img, new_width, new_height = process_controlnet_image(image_path, lo_treshold, hi_treshold)
+        controlnet_img, new_width, new_height = process_controlnet_image(image_path, lo_threshold, hi_threshold)
 
         # Generate the base image
         base_images = pipe(

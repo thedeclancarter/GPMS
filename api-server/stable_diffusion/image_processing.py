@@ -17,7 +17,7 @@ def HWC3(x):
         y = color * alpha + 255.0 * (1.0 - alpha)
         return y.clip(0, 255).astype(np.uint8)
 
-def process_controlnet_image(image_path, lo_treshold = 100, hi_treshold = 200):
+def process_controlnet_image(image_path, lo_threshold = 100, hi_threshold = 200):
     controlnet_img = cv2.imread(image_path)
     height, width, _ = controlnet_img.shape
     ratio = np.sqrt(1024 * 1024 / (width * height))
@@ -26,7 +26,8 @@ def process_controlnet_image(image_path, lo_treshold = 100, hi_treshold = 200):
 
     gray = cv2.cvtColor(controlnet_img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, lo_treshold, hi_treshold)
+    print("lo/hi", lo_threshold, hi_threshold)
+    edges = cv2.Canny(blurred, lo_threshold, hi_threshold)
     edges = cv2.GaussianBlur(edges, (5, 5), 0)
     controlnet_img = HWC3(edges)
 
