@@ -130,7 +130,7 @@ void MainWindow::setupConnections()
     // from project page
     connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
     connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
-    connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::refreshImages);
+    connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::resetState);
 }
 
 void MainWindow::logoClicked(){
