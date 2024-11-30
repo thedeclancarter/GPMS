@@ -26,8 +26,8 @@ class PickImagesPage : public QWidget
         explicit PickImagesPage(ImageProjectionWindow *projectionWindow, QWidget *parent = nullptr);
         ~PickImagesPage();
         cv::Mat getSelectedImage() const;
-        void clearSelections();
         void refreshImages();
+        void resetState();
 
         // Getters
         QString getPrompt() const { return m_prompt; }
@@ -44,7 +44,7 @@ class PickImagesPage : public QWidget
         void setAPIImage(QImage image) { m_actual_image = image; }
 
     signals:
-        void navigateToTextVisionPage();
+        void navigateToTextVisionPage(int low = 150, int high= 15);
         void navigateToSensitivityPage();
         void navigateToProjectPage(const cv::Mat& image);
 

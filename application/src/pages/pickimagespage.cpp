@@ -48,12 +48,6 @@ PickImagesPage::~PickImagesPage()
     delete ui;
 }
 
-void PickImagesPage::clearSelections(){
-    if (m_selectedFrame){
-        m_selectedFrame->setSelected(false);
-    }
-}
-
 cv::Mat PickImagesPage::getSelectedImage() const
 {
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
@@ -240,6 +234,12 @@ void PickImagesPage::cleanupNetworkRequests()
     }
     m_replyTimers.clear();
 }
+
+void PickImagesPage::resetState(){
+    cleanupNetworkRequests();
+    clearImages();
+}
+
 
 void PickImagesPage::sendNetworkRequest(const QNetworkRequest& request, const QByteArray& imageData) {
     // Create multipart data
@@ -439,6 +439,14 @@ void PickImagesPage::onAcceptButtonClicked()
 void PickImagesPage::clearImages()
 {
     qDebug() << "Clearing images...";
+
+    // Clear selection first
+    if (m_selectedFrame) {
+        m_selectedFrame->setSelected(false);
+        m_selectedFrame = nullptr;
+    }
+    ui->selectImagesButton->setEnabled(false);
+
     // Clear all frame images properly
     for (int i = 0; i < m_imageFrames.size(); ++i) {
         ClickableFrame* frame = m_imageFrames[i];
@@ -453,12 +461,6 @@ void PickImagesPage::clearImages()
 void PickImagesPage::refreshImages()
 {
     qDebug() << "Starting refresh...";
-
-    // Clear selection first
-    if (m_selectedFrame) {
-        m_selectedFrame->setSelected(false);
-        m_selectedFrame = nullptr;
-    }
 
     // Now fetch new images
     clearImages();

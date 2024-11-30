@@ -205,7 +205,6 @@ void TextVisionPage::setupLayouts()
     mainLayout->addLayout(optionsLayout);
     mainLayout->addWidget(m_visionInput, 0, Qt::AlignHCenter);
     mainLayout->addWidget(m_submitButton, 0, Qt::AlignHCenter);
-    mainLayout->addWidget(m_loadingLabel, 0, Qt::AlignHCenter);
 
     setLayout(mainLayout);
 }

@@ -6,8 +6,6 @@
 #include <QStackedWidget>
 
 #include "pages/createpage.h"
-#include "pages/takepicture.h"
-
 #include "pages/calibration/calibrationPage.h"
 #include "pages/sensitivitypage.h"
 #include "pages/textvisionpage.h"
@@ -28,50 +26,51 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    // for the pages
+    enum class Page {
+        CREATE,
+        CALIBRATION,
+        SENSITIVITY,
+        TEXT_VISION,
+        PICK_IMAGES,
+        PROJECT
+    };
+
     // image projection page
     ImageProjectionWindow *imageProjectionWindow;
 
-private:
 
-    Ui::MainWindow *ui;
+private:
     QPushButton *logoButton;
     QStackedWidget *stackedWidget;
 
     // pages
     CreatePage *createPage;
-    TakePicture *takePicture;
-
     CalibrationPage *calibrationPage;
     SensitivityPage *sensitivityPage;
     TextVisionPage *textVisionPage;
     PickImagesPage *pickImagesPage;
     ProjectPage *projectPage;
 
-    QWidget* m_projectionContainer;
+    Page currentPage = Page::CREATE;
 
     // functions
     void setupUI();
     void setupPages();
     void setupConnections();
+    void navigateToPage(Page page);
 
     // for projection window
     void showImageProjectionWindow();
-    QScreen* findProjectorScreen();
 
 
 private slots:
-    // main page
     void navigateToCreatePage();
-    void logoClicked();
-
-    // create page pages
     void navigateToCalibrationPage();
     void navigateToSensitivityPage();
-    void navigateToTextVisionPageFromSensitivity(int low, int high);
-    void navigateToTextVisionPage();
-    void navigateFromProjectPageToPickImagesPage();
-    void navigateFromTextVisionToPickImages(QString prompt, bool isRealistic); // in order to pass in vars
-    void navigateToProjectPage(const cv::Mat& image);
+    void navigateToTextVisionPage(int low, int high);
+    void navigateToPickImagesPage(QString prompt, bool isRealistic); // in order to pass in vars
+    void navigateToProjectPage(const cv::Mat& image = cv::Mat());
 
 
 };

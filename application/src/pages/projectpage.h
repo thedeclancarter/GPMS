@@ -22,7 +22,7 @@ public:
     void setSelectedImage(const cv::Mat& selectedImage);
 
 signals:
-    void navigateToPickImagesPage();
+    void navigateToPickImagesPage(QString prompt = "", bool isRealistic = false);
     void navigateToCreatePage();
     void requestImageRefresh();
 

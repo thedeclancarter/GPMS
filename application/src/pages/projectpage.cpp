@@ -55,7 +55,7 @@ void ProjectPage::setSelectedImage(const cv::Mat& mat)
 
 QLabel* ProjectPage::createTitleLabel()
 {
-    QLabel *titleLabel = new QLabel("Change The Sensitivity of the Outline", this);
+    QLabel *titleLabel = new QLabel("Projecting Your Image", this);
     titleLabel->setStyleSheet(
         "color: white;"
         "font-size: 30px;"
