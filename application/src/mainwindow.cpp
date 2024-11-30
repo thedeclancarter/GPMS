@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
 #include <QVBoxLayout>
 #include <QFile>
 #include <QDir>
@@ -10,10 +9,8 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
 {
     qDebug() << "Qt version:" << QT_VERSION_STR;
-    ui->setupUi(this);
     setupUI();
     setupPages();
     setupConnections();
@@ -106,7 +103,7 @@ void MainWindow::showImageProjectionWindow()
 void MainWindow::setupConnections()
 {
     // logo
-    connect(logoButton, &QPushButton::clicked, this, &MainWindow::logoClicked);
+    connect(logoButton, &QPushButton::clicked, this, &MainWindow::navigateToCreatePage);
 
     // from create page
     connect(createPage, &CreatePage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
@@ -115,11 +112,11 @@ void MainWindow::setupConnections()
     connect(calibrationPage, &CalibrationPage::navigateToSensitivityPage, this, &MainWindow::navigateToSensitivityPage);
 
     // from sensitivity page
-    connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPageFromSensitivity);
+    connect(sensitivityPage, &SensitivityPage::navigateToTextVisionPage, this, &MainWindow::navigateToTextVisionPage);
     connect(sensitivityPage, &SensitivityPage::navigateToCalibrationPage, this, &MainWindow::navigateToCalibrationPage);
 
     // from text vision page
-    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateFromTextVisionToPickImages);
+    connect(textVisionPage, &TextVisionPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
         // take picture here when clicked
 
     // from pick images page
@@ -129,14 +126,10 @@ void MainWindow::setupConnections()
 
     // from project page
     connect(projectPage, &ProjectPage::navigateToCreatePage, this, &MainWindow::navigateToCreatePage);
-    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateFromProjectPageToPickImagesPage);
+    connect(projectPage, &ProjectPage::navigateToPickImagesPage, this, &MainWindow::navigateToPickImagesPage);
     connect(projectPage, &ProjectPage::requestImageRefresh, pickImagesPage, &PickImagesPage::resetState);
 }
 
-void MainWindow::logoClicked(){
-    navigateToCreatePage();
-    pickImagesPage->resetState();
-}
 
 void MainWindow::navigateToCreatePage()
 {
@@ -144,11 +137,12 @@ void MainWindow::navigateToCreatePage()
     calibrationPage->resetPoints(); // points for calibration
     sensitivityPage->resetSensitivitySliders(); // reset sensitivity bars
     textVisionPage->clearInput();// clear textbox
-    pickImagesPage->clearSelections();// selected photos
+    pickImagesPage->resetState();
 
     // proj window should show video, currently will be still image
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::LOGO);
     stackedWidget->setCurrentWidget(createPage);
+    currentPage = Page::CREATE;
 
     // proj window should show white
     if (imageProjectionWindow->getIsCalibrated())
@@ -175,58 +169,56 @@ void MainWindow::navigateToCalibrationPage()
         calibrationPage->startCamera();
     }
     stackedWidget->setCurrentWidget(calibrationPage);
+    currentPage = Page::CALIBRATION;
 }
 
 void MainWindow::navigateToSensitivityPage()
 {
     stackedWidget->setCurrentWidget(sensitivityPage);
+    currentPage = Page::SENSITIVITY;
+
     sensitivityPage->updateSensitivity();
     QImage image = calibrationPage->getCleanQImage();
     pickImagesPage->setAPIImage(image);
 }
 
-void MainWindow::navigateToTextVisionPageFromSensitivity(int low, int high)
+// default vals set in .h
+void MainWindow::navigateToTextVisionPage(int low, int high)
 {
-    imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
+    if (currentPage == Page::SENSITIVITY){
+        // set threshold here
+        pickImagesPage->setLowThreshold(low);
+        pickImagesPage->setHighThreshold(high);
+    }
 
-    stackedWidget->setCurrentWidget(textVisionPage);
-    // set threshold here
-    pickImagesPage->setLowThreshold(low);
-    pickImagesPage->setHighThreshold(high);
-    // remove loading icon
-    textVisionPage->hideLoading();
-
-}
-
-void MainWindow::navigateToTextVisionPage()
-{
     imageProjectionWindow->setProjectionState(ImageProjectionWindow::projectionState::RAINBOW_EDGE);
     stackedWidget->setCurrentWidget(textVisionPage);
-    // remove loading icon
-    textVisionPage->hideLoading();
+    textVisionPage->hideLoading(); // remove loading icon
+
+    currentPage = Page::TEXT_VISION;
 }
 
-void MainWindow::navigateFromProjectPageToPickImagesPage()
+// to pass in from text vision page, default values set in .h
+void MainWindow::navigateToPickImagesPage(QString prompt, bool isRealistic)
 {
+    // if coming from text vision, need to set new data
+    if (currentPage == Page::TEXT_VISION){
+        pickImagesPage->setPrompt(prompt);
+        pickImagesPage->setIsRealistic(isRealistic);
+        pickImagesPage->refreshImages();
+    }
     stackedWidget->setCurrentWidget(pickImagesPage);
-}
-
-// to pass in from text vision page
-void MainWindow::navigateFromTextVisionToPickImages(QString prompt, bool isRealistic)
-{
-    stackedWidget->setCurrentWidget(pickImagesPage);
-    pickImagesPage->setPrompt(prompt);
-    pickImagesPage->setIsRealistic(isRealistic);
-    pickImagesPage->refreshImages();
+    currentPage = Page::PICK_IMAGES;
 }
 
 void MainWindow::navigateToProjectPage(const cv::Mat& selectedImage)
 {
     projectPage->setSelectedImage(selectedImage);
     stackedWidget->setCurrentWidget(projectPage);
+    currentPage = Page::PROJECT;
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    // delete ui;
 }

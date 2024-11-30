@@ -48,12 +48,6 @@ PickImagesPage::~PickImagesPage()
     delete ui;
 }
 
-void PickImagesPage::clearSelections(){
-    if (m_selectedFrame){
-        m_selectedFrame->setSelected(false);
-    }
-}
-
 cv::Mat PickImagesPage::getSelectedImage() const
 {
     return m_selectedFrame ? m_selectedFrame->getImage() : cv::Mat();
