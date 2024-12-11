@@ -3,6 +3,12 @@
 venv/
 env/
 .venv/
+.env
+local_packages/
+ssl_cert/
+input_images/
+output_images/
+api.log
 
 # Python Bytecode
 __pycache__/
