@@ -29,53 +29,54 @@ find_package(OpenCV REQUIRED)
 
 set(PROJECT_SOURCES
     ${PROJECT_ROOT}/src/main.cpp
-    ${PROJECT_ROOT}/src/mainwindow.cpp
-    ${PROJECT_ROOT}/src/mainwindow.h
-    ${PROJECT_ROOT}/src/mainwindow.ui
+    ${PROJECT_ROOT}/src/windows/mainwindow.cpp
+    ${PROJECT_ROOT}/src/windows/mainwindow.h
+    ${PROJECT_ROOT}/src/windows/mainwindow.ui
+    ${PROJECT_ROOT}/src/windows/imageprojectionwindow.h
+    ${PROJECT_ROOT}/src/windows/imageprojectionwindow.cpp
+    ${PROJECT_ROOT}/src/windows/imageprojectionwindow.ui
 
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.h
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.cpp
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/userpage.ui
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.h
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.cpp
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/favoritespage.ui
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.h
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.cpp
-    ${PROJECT_ROOT}/src/pages/sidebar_pages/settingspage.ui
+    # Sidebar module; artifacts of early prototype, left in to be iterated on
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/userpage.h
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/userpage.cpp
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/userpage.ui
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/favoritespage.h
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/favoritespage.cpp
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/favoritespage.ui
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/settingspage.h
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/settingspage.cpp
+    # ${PROJECT_ROOT}/src/pages/sidebarPages/settingspage.ui
 
-    ${PROJECT_ROOT}/src/pages/createpage.h
-    ${PROJECT_ROOT}/src/pages/createpage.cpp
-    ${PROJECT_ROOT}/src/pages/createpage.ui
+    ${PROJECT_ROOT}/src/pages/calibration/calibrationPage.h
+    ${PROJECT_ROOT}/src/pages/calibration/calibrationPage.cpp
+    ${PROJECT_ROOT}/src/pages/calibration/calibrationPage.ui
 
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.h
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.cpp
-    ${PROJECT_ROOT}/src/pages/sensitivitypage.ui
-    ${PROJECT_ROOT}/src/pages/textvisionpage.h
-    ${PROJECT_ROOT}/src/pages/textvisionpage.cpp
-    ${PROJECT_ROOT}/src/pages/textvisionpage.ui
-    ${PROJECT_ROOT}/src/pages/pickimagespage.h
-    ${PROJECT_ROOT}/src/pages/pickimagespage.cpp
-    ${PROJECT_ROOT}/src/pages/pickimagespage.ui
-    ${PROJECT_ROOT}/src/pages/projectpage.h
-    ${PROJECT_ROOT}/src/pages/projectpage.cpp
-    ${PROJECT_ROOT}/src/pages/projectpage.ui
+    ${PROJECT_ROOT}/src/pages/create/createpage.h
+    ${PROJECT_ROOT}/src/pages/create/createpage.cpp
+    ${PROJECT_ROOT}/src/pages/create/createpage.ui
 
-    ${PROJECT_ROOT}/src/pages/takepicture.h
-    ${PROJECT_ROOT}/src/pages/takepicture.cpp
-    ${PROJECT_ROOT}/src/pages/takepicture.ui
+    ${PROJECT_ROOT}/src/pages/pickImages/pickimagespage.h
+    ${PROJECT_ROOT}/src/pages/pickImages/pickimagespage.cpp
+    ${PROJECT_ROOT}/src/pages/pickImages/pickimagespage.ui
+    ${PROJECT_ROOT}/src/pages/pickImages/clickableframe.cpp
+    ${PROJECT_ROOT}/src/pages/pickImages/clickableframe.h
+
+    ${PROJECT_ROOT}/src/pages/project/projectpage.h
+    ${PROJECT_ROOT}/src/pages/project/projectpage.cpp
+    ${PROJECT_ROOT}/src/pages/project/projectpage.ui
+
+    ${PROJECT_ROOT}/src/pages/sensitivity/sensitivitypage.h
+    ${PROJECT_ROOT}/src/pages/sensitivity/sensitivitypage.cpp
+    ${PROJECT_ROOT}/src/pages/sensitivity/sensitivitypage.ui
+
+    ${PROJECT_ROOT}/src/pages/textVision/textvisionpage.h
+    ${PROJECT_ROOT}/src/pages/textVision/textvisionpage.cpp
+    ${PROJECT_ROOT}/src/pages/textVision/textvisionpage.ui
+
+    ${PROJECT_ROOT}/src/utils/image_utils.h
 
     ${PROJECT_ROOT}/resources/images.qrc
     ${PROJECT_ROOT}/resources/styles.qrc
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.h
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.cpp
-    ${PROJECT_ROOT}/src/pages/imageprojectionwindow.ui
-
-    src/pages/calibration/calibrationPage.h
-    src/pages/calibration/calibrationPage.cpp
-    src/pages/calibration/calibrationPage.ui
-    src/utils/image_utils.h
-    src/pages/clickableframe.cpp
-    src/pages/clickableframe.h
 )
 
 add_executable(gpms_ui ${PROJECT_SOURCES})
@@ -86,7 +87,7 @@ target_link_libraries(gpms_ui PRIVATE
     Qt5::MultimediaWidgets
     Qt5::Core
     Qt5::Gui
-     Qt5::Quick
+    Qt5::Quick
     Qt5::QuickControls2
     ${OpenCV_LIBS}
 )

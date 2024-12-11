@@ -1,7 +1,7 @@
 #ifndef CALIBRATIONPAGE_H
 #define CALIBRATIONPAGE_H
 
-#include "imageprojectionwindow.h"
+#include "windows/imageprojectionwindow.h"
 #include <QWidget>
 #include <QTimer>
 #include <QImage>
